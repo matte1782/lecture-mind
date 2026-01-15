@@ -30,7 +30,7 @@ numba==0.63.1
 numpy==2.2.6
 onnxruntime==1.23.2
 openai-whisper==20250625
-opencv-python==4.12.0.88
+opencv-python-headless==4.12.0.88
 packaging==25.0
 pathspec==1.0.3
 pillow==12.1.0
