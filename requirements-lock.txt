@@ -17,7 +17,6 @@ idna==3.11
 iniconfig==2.3.0
 Jinja2==3.1.6
 joblib==1.5.3
--e git+https://github.com/matte1782/lecture-mind.git@9c984fb1a2130a09f8e37dde4cd5bc83111a60b9#egg=lecture_mind
 librt==0.7.7
 llvmlite==0.46.0
 MarkupSafe==3.0.3
