@@ -28,12 +28,10 @@ jobs:
         run: pip install pip-audit safety bandit
 
       - name: Run pip-audit (dependency vulnerabilities)
-        run: pip-audit --strict --ignore-vuln GHSA-jh3w-4vvf-mjgr || true
-        continue-on-error: true
+        run: pip-audit --strict --ignore-vuln GHSA-jh3w-4vvf-mjgr
 
       - name: Run bandit (code security)
-        run: bandit -r src/ -ll -ii || true
-        continue-on-error: true
+        run: bandit -r src/ -ll -ii
 
   lint:
     name: Lint & Format
