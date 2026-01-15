@@ -67,3 +67,9 @@ Thumbs.db
 .claude-backup/
 CLAUDE.md
 docs/.claude/
+
+# MkDocs build output
+site/
+
+# Playwright MCP cache
+.playwright-mcp/
