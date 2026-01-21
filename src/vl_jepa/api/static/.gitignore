@@ -1,0 +1,9 @@
+# Node modules
+node_modules/
+
+# Coverage reports
+coverage/
+
+# OS files
+.DS_Store
+Thumbs.db
