@@ -21,8 +21,8 @@
     "transform": {},
     "verbose": true,
     "collectCoverageFrom": [
-      "storage/**/*.js",
-      "!storage/**/*.test.js"
+      "**/storage/**/*.js",
+      "!**/storage/**/*.test.js"
     ]
   }
 }

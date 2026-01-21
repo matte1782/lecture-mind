@@ -94,6 +94,60 @@ let dbInstance = null;
 /** @type {Promise<IDBDatabase>|null} Connection promise for pooling */
 let connectionPromise = null;
 
+/** @type {string[]} Valid store names for validation */
+const VALID_STORE_NAMES = Object.keys(STORES);
+
+/**
+ * Validate that a store name is valid.
+ * @param {string} storeName - The store name to validate
+ * @throws {Error} If store name is invalid
+ */
+function validateStoreName(storeName) {
+  if (typeof storeName !== 'string' || storeName.length === 0) {
+    throw new Error('Store name must be a non-empty string');
+  }
+  if (!VALID_STORE_NAMES.includes(storeName)) {
+    throw new Error(`Invalid store name: "${storeName}". Valid stores are: ${VALID_STORE_NAMES.join(', ')}`);
+  }
+}
+
+/**
+ * Validate that a value is a valid object for storage.
+ * @param {any} value - The value to validate
+ * @param {string} storeName - The store name (for keyPath validation)
+ * @throws {Error} If value is invalid
+ */
+function validateValue(value, storeName) {
+  if (value === null || value === undefined) {
+    throw new Error('Value cannot be null or undefined');
+  }
+  if (typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('Value must be a plain object');
+  }
+  // Check for prototype pollution attempts
+  if (Object.prototype.hasOwnProperty.call(value, '__proto__') ||
+      Object.prototype.hasOwnProperty.call(value, 'constructor') ||
+      Object.prototype.hasOwnProperty.call(value, 'prototype')) {
+    throw new Error('Value contains forbidden properties (__proto__, constructor, prototype)');
+  }
+  // Validate keyPath exists
+  const keyPath = STORES[storeName].keyPath;
+  if (!Object.prototype.hasOwnProperty.call(value, keyPath)) {
+    throw new Error(`Value must contain keyPath field: "${keyPath}"`);
+  }
+}
+
+/**
+ * Validate a key for retrieval/deletion.
+ * @param {any} key - The key to validate
+ * @throws {Error} If key is invalid
+ */
+function validateKey(key) {
+  if (key === null || key === undefined) {
+    throw new Error('Key cannot be null or undefined');
+  }
+}
+
 /**
  * Check if IndexedDB is available in the current environment.
  * @returns {boolean} True if IndexedDB is available
@@ -226,9 +280,12 @@ export async function deleteDatabase() {
  *
  * @param {string} storeName - The object store name
  * @param {string} key - The record key
- * @returns {Promise<any>} The record, or undefined if not found
+ * @returns {Promise<any|undefined>} The record, or undefined if not found
+ * @throws {Error} If storeName is invalid or key is null/undefined
  */
 export async function get(storeName, key) {
+  validateStoreName(storeName);
+  validateKey(key);
   const db = await openDatabase();
 
   return new Promise((resolve, reject) => {
@@ -256,8 +313,11 @@ export async function get(storeName, key) {
  * @param {string} storeName - The object store name
  * @param {Object} value - The record to store (must include keyPath field)
  * @returns {Promise<string>} The key of the stored record
+ * @throws {Error} If storeName is invalid or value fails validation
  */
 export async function put(storeName, value) {
+  validateStoreName(storeName);
+  validateValue(value, storeName);
   const db = await openDatabase();
 
   return new Promise((resolve, reject) => {
@@ -285,8 +345,11 @@ export async function put(storeName, value) {
  * @param {string} storeName - The object store name
  * @param {string} key - The record key to delete
  * @returns {Promise<void>}
+ * @throws {Error} If storeName is invalid or key is null/undefined
  */
 export async function remove(storeName, key) {
+  validateStoreName(storeName);
+  validateKey(key);
   const db = await openDatabase();
 
   return new Promise((resolve, reject) => {
@@ -314,8 +377,10 @@ export async function remove(storeName, key) {
  * @param {string} storeName - The object store name
  * @param {number} [limit] - Optional limit on number of records
  * @returns {Promise<Array>} Array of all records
+ * @throws {Error} If storeName is invalid
  */
 export async function getAll(storeName, limit) {
+  validateStoreName(storeName);
   const db = await openDatabase();
 
   return new Promise((resolve, reject) => {
@@ -344,8 +409,10 @@ export async function getAll(storeName, limit) {
  * @param {string} indexName - The index to query
  * @param {IDBKeyRange|any} query - The query (key or key range)
  * @returns {Promise<Array>} Matching records
+ * @throws {Error} If storeName is invalid
  */
 export async function queryByIndex(storeName, indexName, query) {
+  validateStoreName(storeName);
   const db = await openDatabase();
 
   return new Promise((resolve, reject) => {
@@ -375,8 +442,10 @@ export async function queryByIndex(storeName, indexName, query) {
  * @param {string} [indexName] - Optional index to count by
  * @param {IDBKeyRange|any} [query] - Optional query for index
  * @returns {Promise<number>} The count
+ * @throws {Error} If storeName is invalid
  */
 export async function count(storeName, indexName, query) {
+  validateStoreName(storeName);
   const db = await openDatabase();
 
   return new Promise((resolve, reject) => {
@@ -404,8 +473,10 @@ export async function count(storeName, indexName, query) {
  *
  * @param {string} storeName - The object store name
  * @returns {Promise<void>}
+ * @throws {Error} If storeName is invalid
  */
 export async function clear(storeName) {
+  validateStoreName(storeName);
   const db = await openDatabase();
 
   return new Promise((resolve, reject) => {
@@ -433,8 +504,22 @@ export async function clear(storeName) {
  * @param {string} storeName - The object store name
  * @param {Array<{type: 'put'|'delete', value?: Object, key?: string}>} operations - Operations to execute
  * @returns {Promise<void>}
+ * @throws {Error} If storeName is invalid or operation type is unknown
  */
 export async function batch(storeName, operations) {
+  validateStoreName(storeName);
+
+  // Validate all operations before starting transaction
+  for (const op of operations) {
+    if (op.type === 'put') {
+      validateValue(op.value, storeName);
+    } else if (op.type === 'delete') {
+      validateKey(op.key);
+    } else {
+      throw new Error(`Unknown batch operation type: "${op.type}". Valid types are: put, delete`);
+    }
+  }
+
   const db = await openDatabase();
 
   return new Promise((resolve, reject) => {

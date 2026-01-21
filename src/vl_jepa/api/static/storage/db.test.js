@@ -23,7 +23,7 @@ import {
 } from './db.js';
 
 // Helper to generate unique IDs
-const generateId = () => `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+const generateId = () => `test-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
 describe('Database Configuration', () => {
   test('DB_NAME is defined', () => {
@@ -34,8 +34,11 @@ describe('Database Configuration', () => {
     expect(DB_VERSION).toBe(1);
   });
 
-  test('STORES has 10 object stores', () => {
-    expect(Object.keys(STORES)).toHaveLength(10);
+  test('STORES has correct number of object stores', () => {
+    const expectedStoreCount = Object.keys(STORES).length;
+    expect(Object.keys(STORES)).toHaveLength(expectedStoreCount);
+    // Verify we have all required stores (this test ensures no stores are accidentally removed)
+    expect(expectedStoreCount).toBe(10);
   });
 
   test('STORES contains all required stores', () => {
@@ -78,7 +81,7 @@ describe('Database Connection', () => {
     const db = await openDatabase();
     const storeNames = Array.from(db.objectStoreNames);
 
-    expect(storeNames).toHaveLength(10);
+    expect(storeNames).toHaveLength(Object.keys(STORES).length);
     for (const storeName of Object.keys(STORES)) {
       expect(storeNames).toContain(storeName);
     }
@@ -304,7 +307,7 @@ describe('LectureMindDB Class', () => {
 
   test('storeNames returns all store names', () => {
     const names = LectureMindDB.storeNames;
-    expect(names).toHaveLength(10);
+    expect(names).toHaveLength(Object.keys(STORES).length);
     expect(names).toContain('flashcards');
   });
 
@@ -445,5 +448,153 @@ describe('Connection Persistence', () => {
     expect(result.value).toBe('should-persist');
 
     await deleteDatabase();
+  });
+});
+
+describe('Concurrent Connection Handling', () => {
+  afterEach(async () => {
+    await deleteDatabase();
+  });
+
+  test('concurrent openDatabase calls return same instance', async () => {
+    // Start multiple concurrent connection attempts
+    const connections = await Promise.all([
+      openDatabase(),
+      openDatabase(),
+      openDatabase(),
+      openDatabase(),
+      openDatabase()
+    ]);
+
+    // All should be the same instance
+    const firstDb = connections[0];
+    for (const db of connections) {
+      expect(db).toBe(firstDb);
+    }
+
+    // All should be functional
+    for (let i = 0; i < connections.length; i++) {
+      await put('settings', { key: `concurrent-${i}`, value: `value-${i}` });
+    }
+
+    const all = await getAll('settings');
+    expect(all).toHaveLength(5);
+  });
+
+  test('rapid open/close cycles do not cause race conditions', async () => {
+    // Rapidly open and close multiple times
+    for (let i = 0; i < 5; i++) {
+      const db = await openDatabase();
+      expect(db).toBeDefined();
+      closeDatabase();
+    }
+
+    // Final open should still work
+    const db = await openDatabase();
+    expect(db).toBeDefined();
+    await put('settings', { key: 'after-cycles', value: 'works' });
+    const result = await get('settings', 'after-cycles');
+    expect(result.value).toBe('works');
+  });
+});
+
+describe('Input Validation', () => {
+  beforeEach(async () => {
+    await openDatabase();
+  });
+
+  afterEach(async () => {
+    await deleteDatabase();
+  });
+
+  describe('Store name validation', () => {
+    test('get throws error for invalid store name', async () => {
+      await expect(get('invalidStore', 'key')).rejects.toThrow('Invalid store name');
+    });
+
+    test('put throws error for invalid store name', async () => {
+      await expect(put('invalidStore', { key: 'test' })).rejects.toThrow('Invalid store name');
+    });
+
+    test('remove throws error for invalid store name', async () => {
+      await expect(remove('invalidStore', 'key')).rejects.toThrow('Invalid store name');
+    });
+
+    test('getAll throws error for invalid store name', async () => {
+      await expect(getAll('invalidStore')).rejects.toThrow('Invalid store name');
+    });
+
+    test('clear throws error for invalid store name', async () => {
+      await expect(clear('invalidStore')).rejects.toThrow('Invalid store name');
+    });
+
+    test('batch throws error for invalid store name', async () => {
+      await expect(batch('invalidStore', [])).rejects.toThrow('Invalid store name');
+    });
+
+    test('empty store name throws error', async () => {
+      await expect(get('', 'key')).rejects.toThrow('Store name must be a non-empty string');
+    });
+  });
+
+  describe('Key validation', () => {
+    test('get throws error for null key', async () => {
+      await expect(get('settings', null)).rejects.toThrow('Key cannot be null or undefined');
+    });
+
+    test('get throws error for undefined key', async () => {
+      await expect(get('settings', undefined)).rejects.toThrow('Key cannot be null or undefined');
+    });
+
+    test('remove throws error for null key', async () => {
+      await expect(remove('settings', null)).rejects.toThrow('Key cannot be null or undefined');
+    });
+  });
+
+  describe('Value validation', () => {
+    test('put throws error for null value', async () => {
+      await expect(put('settings', null)).rejects.toThrow('Value cannot be null or undefined');
+    });
+
+    test('put throws error for undefined value', async () => {
+      await expect(put('settings', undefined)).rejects.toThrow('Value cannot be null or undefined');
+    });
+
+    test('put throws error for non-object value', async () => {
+      await expect(put('settings', 'string')).rejects.toThrow('Value must be a plain object');
+    });
+
+    test('put throws error for array value', async () => {
+      await expect(put('settings', ['item'])).rejects.toThrow('Value must be a plain object');
+    });
+
+    test('put throws error for missing keyPath', async () => {
+      await expect(put('settings', { value: 'no-key' })).rejects.toThrow('Value must contain keyPath field');
+    });
+
+    test('put throws error for prototype pollution attempt with __proto__', async () => {
+      const malicious = { key: 'test' };
+      Object.defineProperty(malicious, '__proto__', { value: {}, enumerable: true });
+      await expect(put('settings', malicious)).rejects.toThrow('forbidden properties');
+    });
+
+    test('put throws error for prototype pollution attempt with constructor', async () => {
+      const malicious = { key: 'test', constructor: {} };
+      await expect(put('settings', malicious)).rejects.toThrow('forbidden properties');
+    });
+  });
+
+  describe('Batch operation validation', () => {
+    test('batch throws error for unknown operation type', async () => {
+      await expect(batch('settings', [{ type: 'unknown' }])).rejects.toThrow('Unknown batch operation type');
+    });
+
+    test('batch validates put operations', async () => {
+      await expect(batch('settings', [{ type: 'put', value: null }])).rejects.toThrow('Value cannot be null or undefined');
+    });
+
+    test('batch validates delete operations', async () => {
+      await expect(batch('settings', [{ type: 'delete', key: null }])).rejects.toThrow('Key cannot be null or undefined');
+    });
   });
 });
