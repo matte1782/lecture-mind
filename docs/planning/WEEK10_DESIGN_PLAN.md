@@ -1,9 +1,13 @@
 # Week 10 Plan: Design System Enhancement + Animation Framework
 
+> **⚠️ SUPERSEDED**: This document has been superseded by `WEEK10_UNIFIED_PLAN.md`.
+> Do NOT use this document for implementation. Refer to the unified plan only.
+> — Marked 2026-01-21 per hostile-reviewer condition N1
+
 **Duration**: 5 days @ 4 hours/day = 20 hours total
 **Goal**: Establish premium design foundation for Student Playground (v0.4.0)
 **Agent**: ARCHITECT (frontend-design focus)
-**Status**: READY FOR EXECUTION
+**Status**: ~~READY FOR EXECUTION~~ **SUPERSEDED**
 
 ---
 

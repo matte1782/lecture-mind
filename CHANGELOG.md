@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Marked WEEK10_PLAN.md, WEEK10_STORAGE_PLAN.md, WEEK10_DESIGN_PLAN.md as SUPERSEDED
+- Updated WEEK10_UNIFIED_PLAN.md to v1.1 with Safari deferral statements (N6)
+- All hostile-reviewer pre-execution conditions now addressed
+
 ## [0.3.0] - 2026-01-09
 
 ### Added

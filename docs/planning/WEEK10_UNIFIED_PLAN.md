@@ -1,8 +1,9 @@
 # Week 10 Unified Plan: Foundation + Architecture
 
-**Version:** 1.0 (Unified)
+**Version:** 1.1 (Unified)
 **Created:** 2026-01-09
-**Status:** Addressing Hostile Review NEEDS_REVISION
+**Updated:** 2026-01-21
+**Status:** ✅ APPROVED — Hostile review conditions addressed (N1, N6)
 
 ---
 
@@ -414,7 +415,7 @@ function getFlashcardClass(flashcard) {
 
 ### Week 10A Exit Criteria
 - [ ] All storage tests pass
-- [ ] IndexedDB works in Chrome, Firefox, Edge
+- [ ] IndexedDB works in Chrome, Firefox, Edge **(Safari deferred to Week 11 — see N6)**
 - [ ] SM-2 algorithm verified against spec
 - [ ] Migration system tested
 - [ ] API documented in JSDoc
@@ -450,7 +451,7 @@ Week 10A complete → Week 10B Day 5 (integration)
 |------|------------|--------|------------|
 | IndexedDB browser bugs | Medium | High | Use feature detection, fallback to localStorage |
 | Animation jank | Medium | Medium | Test on low-end devices, use CSS only |
-| Safari compatibility | Low | Medium | Test in BrowserStack (defer if needed) |
+| Safari compatibility | Low | Medium | **DEFERRED to Week 11** — Windows dev environment cannot test Safari; will use BrowserStack in Week 11 |
 | Scope creep | High | High | Strict task boundaries, defer extras |
 
 ---

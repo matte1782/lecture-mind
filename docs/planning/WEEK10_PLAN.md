@@ -1,9 +1,13 @@
 # Week 10 Plan: Foundation + Architecture
 
+> **⚠️ SUPERSEDED**: This document has been superseded by `WEEK10_UNIFIED_PLAN.md`.
+> Do NOT use this document for implementation. Refer to the unified plan only.
+> — Marked 2026-01-21 per hostile-reviewer condition N1
+
 **Version:** 1.0.0
 **Duration:** 5 days @ 4 hours/day = 20 hours total
 **Goal:** Establish the architectural foundation for Student Playground features
-**Status:** DRAFT - Pending hostile-reviewer approval
+**Status:** ~~DRAFT - Pending hostile-reviewer approval~~ **SUPERSEDED**
 
 ---
 

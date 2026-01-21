@@ -1,8 +1,12 @@
 # Week 10 Plan: IndexedDB Storage Layer + Multi-Lecture Data Model
 
+> **⚠️ SUPERSEDED**: This document has been superseded by `WEEK10_UNIFIED_PLAN.md`.
+> Do NOT use this document for implementation. Refer to the unified plan only.
+> — Marked 2026-01-21 per hostile-reviewer condition N1
+
 **Duration**: 5 days @ 4 hours/day = 20 hours total
 **Goal**: Design and implement browser-based storage infrastructure for Student Playground
-**Status**: READY FOR EXECUTION
+**Status**: ~~READY FOR EXECUTION~~ **SUPERSEDED**
 **Author**: ARCHITECT
 **Version**: 1.0.0
 
