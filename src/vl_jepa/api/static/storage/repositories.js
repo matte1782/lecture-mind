@@ -956,6 +956,27 @@ export const SyncQueueRepository = {
   },
 
   /**
+   * Get items stuck in SYNCING state (from crashed sessions).
+   * @returns {Promise<Array>} Items in SYNCING state
+   */
+  async getStuck() {
+    return queryByIndex('syncQueue', 'status', SYNC_STATUS.SYNCING);
+  },
+
+  /**
+   * Reset an item back to PENDING state for retry.
+   * @param {string} id - Item ID
+   * @returns {Promise<Object>} Updated item
+   */
+  async resetToPending(id) {
+    const item = await this.getById(id);
+    if (!item) throw new Error('Sync item not found');
+    const updated = { ...item, status: SYNC_STATUS.PENDING };
+    await put('syncQueue', updated);
+    return updated;
+  },
+
+  /**
    * Clear completed items.
    * @returns {Promise<void>}
    */
