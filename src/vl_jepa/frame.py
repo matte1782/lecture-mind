@@ -135,4 +135,5 @@ class FrameSampler:
         normalized = frame.astype(np.float32) / 127.5 - 1.0
 
         # Clamp to ensure bounds (safety)
-        return np.clip(normalized, -1.0, 1.0)
+        result: np.ndarray = np.clip(normalized, -1.0, 1.0)
+        return result
