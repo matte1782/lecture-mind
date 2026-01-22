@@ -51,13 +51,26 @@ export function calculateBackoff(retryCount, withJitter = true) {
 
 /**
  * Manages offline sync queue with automatic retry and conflict resolution.
+ *
+ * @example
+ * const manager = new SyncManager({ autoSync: true });
+ *
+ * // IMPORTANT: Call recoverStuckItems on app startup to handle
+ * // items that were stuck in SYNCING state from crashed sessions
+ * await manager.recoverStuckItems();
+ *
  * @class
  */
 export class SyncManager {
   /**
-   * @param {Object} [options]
+   * Creates a new SyncManager instance.
+   *
+   * NOTE: After construction, callers should invoke recoverStuckItems()
+   * to reset any items stuck in SYNCING state from previous crashed sessions.
+   *
+   * @param {Object} [options] - Configuration options
    * @param {string} [options.syncEndpoint='/api/sync'] - Server sync endpoint
-   * @param {boolean} [options.autoSync=false] - Auto-sync when online
+   * @param {boolean} [options.autoSync=false] - Auto-sync when coming online
    */
   constructor(options = {}) {
     this.syncEndpoint = options.syncEndpoint || '/api/sync';
@@ -275,8 +288,8 @@ export class SyncManager {
         const isPermanentError = status >= 400 && status < 500;
 
         if (isPermanentError) {
-          // 4xx errors are permanent - mark as completed with error (don't retry)
-          await SyncQueueRepository.markFailed(currentItem.id);
+          // 4xx errors are permanent - mark as failed without incrementing retryCount
+          await SyncQueueRepository.markPermanentlyFailed(currentItem.id);
           const error = new Error(`Permanent error: ${status} ${response.statusText || ''}`);
           error.permanent = true;
           error.status = status;

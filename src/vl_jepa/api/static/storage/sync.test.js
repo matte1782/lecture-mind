@@ -789,7 +789,7 @@ describe('HTTP Error Differentiation (M3)', () => {
     jest.clearAllMocks();
   });
 
-  test('4xx error is treated as permanent (no retry)', async () => {
+  test('4xx error is treated as permanent (no retry, retryCount NOT incremented)', async () => {
     // Mock 400 Bad Request
     global.fetch = jest.fn().mockResolvedValue({
       ok: false,
@@ -803,11 +803,17 @@ describe('HTTP Error Differentiation (M3)', () => {
       entityId: generateId(),
       payload: {}
     });
+    expect(item.retryCount).toBe(0);
 
     const result = await manager.syncItem(item);
     expect(result.success).toBe(false);
     expect(result.permanent).toBe(true);
     expect(result.error).toContain('Permanent error');
+
+    // Verify retryCount is NOT incremented for permanent errors
+    const updated = await SyncQueueRepository.getById(item.id);
+    expect(updated.status).toBe(SYNC_STATUS.FAILED);
+    expect(updated.retryCount).toBe(0); // NOT incremented for permanent errors
   });
 
   test('5xx error is treated as transient (allows retry)', async () => {

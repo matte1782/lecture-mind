@@ -957,10 +957,20 @@ export const SyncQueueRepository = {
 
   /**
    * Get items stuck in SYNCING state (from crashed sessions).
-   * @returns {Promise<Array>} Items in SYNCING state
+   * @param {number} [maxAgeMs] - Optional max age in milliseconds. Items newer than this are considered legitimately syncing.
+   * @returns {Promise<Array>} Items in SYNCING state (filtered by age if maxAgeMs provided)
    */
-  async getStuck() {
-    return queryByIndex('syncQueue', 'status', SYNC_STATUS.SYNCING);
+  async getStuck(maxAgeMs) {
+    const syncingItems = await queryByIndex('syncQueue', 'status', SYNC_STATUS.SYNCING);
+
+    // If no age filter, return all SYNCING items
+    if (maxAgeMs === undefined) {
+      return syncingItems;
+    }
+
+    // Filter to only items older than maxAgeMs (likely stuck from crashed session)
+    const cutoffTime = Date.now() - maxAgeMs;
+    return syncingItems.filter(item => item.createdAt < cutoffTime);
   },
 
   /**
@@ -972,6 +982,20 @@ export const SyncQueueRepository = {
     const item = await this.getById(id);
     if (!item) throw new Error('Sync item not found');
     const updated = { ...item, status: SYNC_STATUS.PENDING };
+    await put('syncQueue', updated);
+    return updated;
+  },
+
+  /**
+   * Mark item as permanently failed (e.g., 4xx error).
+   * Unlike markFailed, this does NOT increment retryCount since no retry is intended.
+   * @param {string} id - Item ID
+   * @returns {Promise<Object>} Updated item
+   */
+  async markPermanentlyFailed(id) {
+    const item = await this.getById(id);
+    if (!item) throw new Error('Sync item not found');
+    const updated = { ...item, status: SYNC_STATUS.FAILED };
     await put('syncQueue', updated);
     return updated;
   },

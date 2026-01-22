@@ -6,7 +6,8 @@
 import {
   openDatabase,
   deleteDatabase,
-  closeDatabase
+  closeDatabase,
+  put
 } from './db.js';
 
 import {
@@ -832,6 +833,105 @@ describe('SyncQueueRepository', () => {
     const all = await SyncQueueRepository.getAll();
     expect(all).toHaveLength(1);
     expect(all[0].status).toBe('pending');
+  });
+
+  test('getStuck returns items in SYNCING state', async () => {
+    const item1 = await SyncQueueRepository.enqueue({
+      operation: SYNC_OPERATION.CREATE,
+      entityType: 'lecture',
+      entityId: generateId(),
+      payload: {}
+    });
+    await SyncQueueRepository.markSyncing(item1.id);
+
+    // Create a pending item (should not be returned)
+    await SyncQueueRepository.enqueue({
+      operation: SYNC_OPERATION.UPDATE,
+      entityType: 'lecture',
+      entityId: generateId(),
+      payload: {}
+    });
+
+    const stuck = await SyncQueueRepository.getStuck();
+    expect(stuck).toHaveLength(1);
+    expect(stuck[0].id).toBe(item1.id);
+    expect(stuck[0].status).toBe('syncing');
+  });
+
+  test('getStuck with maxAgeMs filters by age', async () => {
+    // Create an item and set its createdAt to be old (simulating stuck item)
+    const oldItem = await SyncQueueRepository.enqueue({
+      operation: SYNC_OPERATION.CREATE,
+      entityType: 'flashcard',
+      entityId: generateId(),
+      payload: {}
+    });
+    await SyncQueueRepository.markSyncing(oldItem.id);
+
+    // Manually update createdAt to be 10 seconds ago
+    const oldItemData = await SyncQueueRepository.getById(oldItem.id);
+    oldItemData.createdAt = Date.now() - 10000; // 10 seconds ago
+    await put('syncQueue', oldItemData);
+
+    // Create a recent item in SYNCING state
+    const recentItem = await SyncQueueRepository.enqueue({
+      operation: SYNC_OPERATION.UPDATE,
+      entityType: 'bookmark',
+      entityId: generateId(),
+      payload: {}
+    });
+    await SyncQueueRepository.markSyncing(recentItem.id);
+
+    // Without filter - should return both
+    const allStuck = await SyncQueueRepository.getStuck();
+    expect(allStuck).toHaveLength(2);
+
+    // With 5 second age filter - only old item should be returned
+    const oldStuck = await SyncQueueRepository.getStuck(5000);
+    expect(oldStuck).toHaveLength(1);
+    expect(oldStuck[0].id).toBe(oldItem.id);
+
+    // With 20 second age filter - neither should be returned (both are newer)
+    const noneStuck = await SyncQueueRepository.getStuck(20000);
+    expect(noneStuck).toHaveLength(0);
+  });
+
+  test('resetToPending resets item status to pending', async () => {
+    const item = await SyncQueueRepository.enqueue({
+      operation: SYNC_OPERATION.CREATE,
+      entityType: 'lecture',
+      entityId: generateId(),
+      payload: {}
+    });
+    await SyncQueueRepository.markSyncing(item.id);
+
+    const reset = await SyncQueueRepository.resetToPending(item.id);
+    expect(reset.status).toBe('pending');
+  });
+
+  test('markPermanentlyFailed sets status to failed WITHOUT incrementing retryCount', async () => {
+    const item = await SyncQueueRepository.enqueue({
+      operation: SYNC_OPERATION.CREATE,
+      entityType: 'flashcard',
+      entityId: generateId(),
+      payload: {}
+    });
+    expect(item.retryCount).toBe(0);
+
+    const failed = await SyncQueueRepository.markPermanentlyFailed(item.id);
+    expect(failed.status).toBe('failed');
+    expect(failed.retryCount).toBe(0); // NOT incremented
+
+    // Verify it's persisted correctly
+    const retrieved = await SyncQueueRepository.getById(item.id);
+    expect(retrieved.status).toBe('failed');
+    expect(retrieved.retryCount).toBe(0);
+  });
+
+  test('markPermanentlyFailed throws for non-existent item', async () => {
+    await expect(
+      SyncQueueRepository.markPermanentlyFailed('non-existent-id')
+    ).rejects.toThrow('Sync item not found');
   });
 });
 
