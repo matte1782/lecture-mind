@@ -1,0 +1,227 @@
+/**
+ * Lecture Mind - Design Token System v2 (Student Playground Extension)
+ *
+ * Extends tokens.css with mastery, confusion, glass, gradient,
+ * 3D, and celebration tokens for the Student Playground.
+ *
+ * IMPORTANT: Load AFTER tokens.css. Does not replace any existing tokens.
+ */
+
+/* ============================================
+   DISPLAY FONT TOKEN (Playground-scoped)
+   ============================================ */
+:root {
+  --font-display-sp: 'Outfit', 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ============================================
+   SEMANTIC BACKGROUND TOKENS
+   ============================================ */
+:root {
+  --primary-bg: rgba(6, 182, 212, 0.1);
+}
+
+.dark {
+  --primary-bg: rgba(34, 211, 238, 0.1);
+}
+
+/* ============================================
+   MASTERY COLOR TOKENS (SM-2 Flashcard States)
+   ============================================ */
+:root {
+  /* New - Neutral gray, unreviewed */
+  --color-mastery-new: #94a3b8;
+  --color-mastery-new-bg: rgba(148, 163, 184, 0.12);
+
+  /* Learning - Amber, actively studying */
+  --color-mastery-learning: #f59e0b;
+  --color-mastery-learning-bg: rgba(245, 158, 11, 0.12);
+
+  /* Review - Cyan, scheduled for review */
+  --color-mastery-review: #06b6d4;
+  --color-mastery-review-bg: rgba(6, 182, 212, 0.12);
+
+  /* Known - Indigo, well-practiced */
+  --color-mastery-known: #6366f1;
+  --color-mastery-known-bg: rgba(99, 102, 241, 0.12);
+
+  /* Mastered - Emerald, fully learned */
+  --color-mastery-mastered: #10b981;
+  --color-mastery-mastered-bg: rgba(16, 185, 129, 0.12);
+}
+
+.dark {
+  --color-mastery-new: #cbd5e1;
+  --color-mastery-new-bg: rgba(203, 213, 225, 0.1);
+
+  --color-mastery-learning: #fbbf24;
+  --color-mastery-learning-bg: rgba(251, 191, 36, 0.12);
+
+  --color-mastery-review: #22d3ee;
+  --color-mastery-review-bg: rgba(34, 211, 238, 0.1);
+
+  --color-mastery-known: #818cf8;
+  --color-mastery-known-bg: rgba(129, 140, 248, 0.12);
+
+  --color-mastery-mastered: #34d399;
+  --color-mastery-mastered-bg: rgba(52, 211, 153, 0.12);
+}
+
+/* ============================================
+   CONFUSION COLOR TOKENS (Heatmap Gradients)
+   ============================================ */
+:root {
+  /* Low - Soft green, easy to understand */
+  --color-confusion-low: #10b981;
+  --color-confusion-low-bg: rgba(16, 185, 129, 0.1);
+
+  /* Medium - Amber, somewhat confusing */
+  --color-confusion-medium: #f59e0b;
+  --color-confusion-medium-bg: rgba(245, 158, 11, 0.1);
+
+  /* High - Orange, quite confusing */
+  --color-confusion-high: #f97316;
+  --color-confusion-high-bg: rgba(249, 115, 22, 0.1);
+
+  /* Critical - Rose, very confusing */
+  --color-confusion-critical: #f43f5e;
+  --color-confusion-critical-bg: rgba(244, 63, 94, 0.12);
+}
+
+.dark {
+  --color-confusion-low: #34d399;
+  --color-confusion-low-bg: rgba(52, 211, 153, 0.1);
+
+  --color-confusion-medium: #fbbf24;
+  --color-confusion-medium-bg: rgba(251, 191, 36, 0.1);
+
+  --color-confusion-high: #fb923c;
+  --color-confusion-high-bg: rgba(251, 146, 60, 0.1);
+
+  --color-confusion-critical: #fb7185;
+  --color-confusion-critical-bg: rgba(251, 113, 133, 0.12);
+}
+
+/* ============================================
+   GLASS TOKENS (Frosted Glass Effects)
+   ============================================ */
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-bg-heavy: rgba(255, 255, 255, 0.8);
+  --glass-blur: 12px;
+  --glass-blur-heavy: 20px;
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.dark {
+  --glass-bg: rgba(15, 23, 42, 0.6);
+  --glass-bg-heavy: rgba(15, 23, 42, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   MULTI-STOP GRADIENT TOKENS
+   ============================================ */
+:root {
+  /* Brand gradient - Primary to Accent sweep */
+  --gradient-brand: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-accent-500) 100%);
+
+  /* Mastery gradient - Full progression spectrum */
+  --gradient-mastery: linear-gradient(
+    90deg,
+    var(--color-mastery-new) 0%,
+    var(--color-mastery-learning) 25%,
+    var(--color-mastery-review) 50%,
+    var(--color-mastery-known) 75%,
+    var(--color-mastery-mastered) 100%
+  );
+
+  /* Hero gradient - Rich dark background */
+  --gradient-hero: linear-gradient(
+    135deg,
+    var(--color-neutral-900) 0%,
+    var(--color-neutral-800) 40%,
+    var(--color-primary-900) 100%
+  );
+
+  /* Surface gradient - Subtle depth */
+  --gradient-surface: linear-gradient(
+    180deg,
+    var(--surface) 0%,
+    var(--background-subtle) 100%
+  );
+
+  /* Accent glow gradient */
+  --gradient-glow: radial-gradient(
+    ellipse at 50% 0%,
+    rgba(6, 182, 212, 0.15) 0%,
+    transparent 70%
+  );
+}
+
+.dark {
+  --gradient-hero: linear-gradient(
+    135deg,
+    var(--color-neutral-950) 0%,
+    var(--color-neutral-900) 40%,
+    #0c2d3e 100%
+  );
+
+  --gradient-glow: radial-gradient(
+    ellipse at 50% 0%,
+    rgba(34, 211, 238, 0.12) 0%,
+    transparent 70%
+  );
+}
+
+/* ============================================
+   3D EFFECT TOKENS (Flashcard Flip)
+   ============================================ */
+:root {
+  /* Perspective for card container */
+  --perspective-card: 1200px;
+
+  /* Front face shadow */
+  --shadow-3d-front: 0 4px 12px rgba(0, 0, 0, 0.08),
+                     0 1px 3px rgba(0, 0, 0, 0.06);
+
+  /* Back face shadow (slightly deeper) */
+  --shadow-3d-back: 0 6px 16px rgba(0, 0, 0, 0.1),
+                    0 2px 4px rgba(0, 0, 0, 0.08);
+
+  /* Lifted state (during flip transition) */
+  --shadow-3d-lifted: 0 12px 28px rgba(0, 0, 0, 0.12),
+                      0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+.dark {
+  --shadow-3d-front: 0 4px 12px rgba(0, 0, 0, 0.3),
+                     0 1px 3px rgba(0, 0, 0, 0.2);
+
+  --shadow-3d-back: 0 6px 16px rgba(0, 0, 0, 0.35),
+                    0 2px 4px rgba(0, 0, 0, 0.25);
+
+  --shadow-3d-lifted: 0 12px 28px rgba(0, 0, 0, 0.4),
+                      0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   CELEBRATION COLOR TOKENS (Confetti Particles)
+   ============================================ */
+:root {
+  --color-confetti-1: #06b6d4; /* Cyan */
+  --color-confetti-2: #6366f1; /* Indigo */
+  --color-confetti-3: #10b981; /* Emerald */
+  --color-confetti-4: #f59e0b; /* Amber */
+  --color-confetti-5: #f43f5e; /* Rose */
+}
+
+.dark {
+  --color-confetti-1: #22d3ee;
+  --color-confetti-2: #818cf8;
+  --color-confetti-3: #34d399;
+  --color-confetti-4: #fbbf24;
+  --color-confetti-5: #fb7185;
+}
