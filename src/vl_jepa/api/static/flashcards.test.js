@@ -770,7 +770,8 @@ describe('Study View UI', () => {
     const goodBtn = controls.querySelector('.sp-study-controls__quality-btn--good');
     goodBtn.click();
 
-    await new Promise(r => setTimeout(r, 400));
+    // Wait for async submitReview + 300ms transition delay + re-render
+    await new Promise(r => setTimeout(r, 1000));
 
     const cardArea = document.getElementById('study-card-area');
     expect(cardArea.textContent).toContain('Q2');

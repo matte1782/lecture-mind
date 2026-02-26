@@ -45,22 +45,25 @@ function registerListener(target, eventType, handler, options = {}) {
 }
 
 function cleanupListeners() {
-  _listeners.forEach((listeners) => {
+  _listeners.forEach((listeners, eventType) => {
     listeners.forEach(({ target, handler, options }) => {
-      target.removeEventListener(handler.name || '', handler, options);
-      try { target.removeEventListener(handler.name || '', handler, options); } catch (_e) { /* noop */ }
+      target.removeEventListener(eventType, handler, options);
     });
   });
   _listeners.clear();
 }
 
 function removeListenersForTarget(target) {
-  _listeners.forEach((listeners) => {
+  _listeners.forEach((listeners, eventType) => {
+    const toRemove = [];
     for (const entry of listeners) {
       if (entry.target === target) {
-        target.removeEventListener(entry.handler.name || '', entry.handler, entry.options);
-        listeners.delete(entry);
+        target.removeEventListener(eventType, entry.handler, entry.options);
+        toRemove.push(entry);
       }
+    }
+    for (const entry of toRemove) {
+      listeners.delete(entry);
     }
   });
 }
@@ -1259,24 +1262,24 @@ function openCreateCardModal(lectureId, session) {
   // Focus the first input
   frontInput.focus();
 
-  // Close handlers
+  // Escape handler (references closeModal via closure — safe because called async)
+  let escHandler;
+
+  // Close modal and clean up escape handler
   const closeModal = () => {
+    document.removeEventListener('keydown', escHandler);
     if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
   };
+
+  escHandler = (e) => {
+    if (e.key === 'Escape') closeModal();
+  };
+  document.addEventListener('keydown', escHandler);
 
   registerListener(cancelBtn, 'click', closeModal);
   registerListener(overlay, 'click', (e) => {
     if (e.target === overlay) closeModal();
   });
-
-  // Escape to close
-  const escHandler = (e) => {
-    if (e.key === 'Escape') {
-      closeModal();
-      document.removeEventListener('keydown', escHandler);
-    }
-  };
-  document.addEventListener('keydown', escHandler);
 
   // Focus trap
   registerListener(modal, 'keydown', (e) => {
@@ -1388,17 +1391,20 @@ function openEditCardModal(card, onComplete) {
 
   frontInput.focus();
 
+  let escHandler;
+
   const closeModal = () => {
+    document.removeEventListener('keydown', escHandler);
     if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
   };
 
-  registerListener(cancelBtn, 'click', closeModal);
-  registerListener(overlay, 'click', (e) => { if (e.target === overlay) closeModal(); });
-
-  const escHandler = (e) => {
-    if (e.key === 'Escape') { closeModal(); document.removeEventListener('keydown', escHandler); }
+  escHandler = (e) => {
+    if (e.key === 'Escape') closeModal();
   };
   document.addEventListener('keydown', escHandler);
+
+  registerListener(cancelBtn, 'click', closeModal);
+  registerListener(overlay, 'click', (e) => { if (e.target === overlay) closeModal(); });
 
   registerListener(saveBtn, 'click', async () => {
     const front = frontInput.value.trim();
