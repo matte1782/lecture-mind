@@ -1038,6 +1038,11 @@ async function loadResults() {
 
     showToast('success', 'Processing Complete', 'Your video is ready to explore');
 
+    // Dispatch event for library.js to import lecture into Student Playground
+    window.dispatchEvent(new CustomEvent('lecturemind:processed', {
+      detail: { result: data.result, jobId: currentJobId }
+    }));
+
   } catch (error) {
     showToast('error', 'Error', error.message);
   }

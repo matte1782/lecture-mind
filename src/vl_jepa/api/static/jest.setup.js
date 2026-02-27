@@ -9,3 +9,15 @@ if (typeof structuredClone === 'undefined') {
     return JSON.parse(JSON.stringify(obj));
   };
 }
+
+// Mock IntersectionObserver for jsdom (not natively available)
+if (typeof IntersectionObserver === 'undefined') {
+  global.IntersectionObserver = class IntersectionObserver {
+    constructor(callback) { this._callback = callback; }
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+    /** Test helper: manually trigger with entries */
+    _trigger(entries) { this._callback(entries, this); }
+  };
+}

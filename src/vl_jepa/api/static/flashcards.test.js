@@ -771,7 +771,15 @@ describe('Study View UI', () => {
     goodBtn.click();
 
     // Wait for async submitReview + 300ms transition delay + re-render
-    await new Promise(r => setTimeout(r, 1000));
+    // Use polling instead of fixed timeout for deterministic behavior
+    let found = false;
+    for (let i = 0; i < 30 && !found; i++) {
+      await new Promise(r => setTimeout(r, 200));
+      const cardArea = document.getElementById('study-card-area');
+      if (cardArea && cardArea.textContent.includes('Q2')) {
+        found = true;
+      }
+    }
 
     const cardArea = document.getElementById('study-card-area');
     expect(cardArea.textContent).toContain('Q2');

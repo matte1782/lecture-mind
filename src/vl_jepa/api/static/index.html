@@ -923,16 +923,24 @@
                     <p class="section-subtitle">Review and master your lecture content with spaced repetition flashcards</p>
                 </div>
                 <div id="playground-search" class="playground-search-bar"></div>
-                <div id="library-grid" class="sp-card-grid" role="list" aria-label="Lecture library"></div>
-                <div id="library-empty" class="empty-state hidden">
-                    <div class="empty-state-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-                        </svg>
+                <div id="library-toolbar" class="sp-library-toolbar" role="toolbar" aria-label="Library controls"></div>
+                <div class="sp-library-layout">
+                    <aside id="library-sidebar" class="sp-library-sidebar" role="navigation" aria-label="Course filter">
+                        <!-- Populated by library.js -->
+                    </aside>
+                    <div class="sp-library-main" id="library-main">
+                        <div id="library-grid" class="sp-card-grid" role="list" aria-label="Lecture library"></div>
+                        <div id="library-empty" class="empty-state hidden">
+                            <div class="empty-state-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                                </svg>
+                            </div>
+                            <p class="empty-state-title">No lectures yet</p>
+                            <p class="empty-state-description">Upload a video to get started with flashcards</p>
+                            <a href="#/app-section" class="btn" data-variant="primary" data-size="sm" id="library-upload-link">Upload a Lecture</a>
+                        </div>
                     </div>
-                    <p class="empty-state-title">No lectures yet</p>
-                    <p class="empty-state-description">Upload a video to get started with flashcards</p>
-                    <a href="#/app-section" class="btn" data-variant="primary" data-size="sm" id="library-upload-link">Upload a Lecture</a>
                 </div>
             </div>
         </section>
@@ -944,6 +952,16 @@
                 <div id="study-card-area" class="study-card-area"></div>
                 <div id="study-controls" class="study-controls-area"></div>
                 <div id="study-complete" class="study-complete-area hidden"></div>
+            </div>
+        </section>
+
+        <!-- Lecture Detail View -->
+        <section id="lecture-detail-view" class="app-section hidden" aria-label="Lecture Details" inert>
+            <div class="section-container">
+                <div id="lecture-detail-header"></div>
+                <div id="lecture-detail-stats"></div>
+                <div id="lecture-detail-tabs"></div>
+                <div id="lecture-detail-content"></div>
             </div>
         </section>
 
@@ -999,6 +1017,8 @@
 
     <!-- Scripts -->
     <script src="/static/app.js"></script>
+    <script type="module" src="/static/dom-utils.js"></script>
     <script type="module" src="/static/flashcards.js"></script>
+    <script type="module" src="/static/library.js"></script>
 </body>
 </html>

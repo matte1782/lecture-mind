@@ -521,6 +521,14 @@ export const SegmentRepository = {
   async getByLecture(lectureId) {
     const segments = await queryByIndex('segments', 'lectureId', lectureId);
     return segments.sort((a, b) => a.startTime - b.startTime);
+  },
+
+  /**
+   * Get all segments.
+   * @returns {Promise<Array>} All segments
+   */
+  async getAll() {
+    return getAll('segments');
   }
 };
 
@@ -751,6 +759,14 @@ export const FlashcardRepository = {
       dueDate: sm2Result.dueDate,
       status
     });
+  },
+
+  /**
+   * Get all flashcards.
+   * @returns {Promise<Array>} All flashcards
+   */
+  async getAll() {
+    return getAll('flashcards');
   }
 };
 
@@ -799,6 +815,14 @@ export const BookmarkRepository = {
   async getByLecture(lectureId) {
     const bookmarks = await queryByIndex('bookmarks', 'lectureId', lectureId);
     return bookmarks.sort((a, b) => a.timestamp - b.timestamp);
+  },
+
+  /**
+   * Get all bookmarks.
+   * @returns {Promise<Array>} All bookmarks
+   */
+  async getAll() {
+    return getAll('bookmarks');
   }
 };
 

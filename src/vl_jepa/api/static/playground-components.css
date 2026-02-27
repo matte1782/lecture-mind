@@ -479,3 +479,96 @@
   color: var(--color-primary-400);
   border-bottom-color: var(--color-primary-400);
 }
+
+/* ============================================================================
+   Library Layout (Week 12)
+   ============================================================================ */
+
+.sp-library-layout { display: flex; gap: var(--space-6); }
+.sp-library-sidebar { width: 240px; flex-shrink: 0; }
+.sp-library-main { flex: 1; min-width: 0; }
+.sp-library-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); }
+
+/* Sidebar Items */
+.sp-library-sidebar__item {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-3); border-radius: var(--radius-md);
+  cursor: pointer; font-size: var(--text-sm); color: var(--foreground);
+  transition: background-color var(--duration-fast) var(--ease-out);
+  background: none; border: none; width: 100%; text-align: left;
+}
+.sp-library-sidebar__item:hover { background: var(--background-subtle); }
+.sp-library-sidebar__item--active,
+.sp-library-sidebar__item[aria-current="true"] {
+  background: var(--primary-bg, rgba(34, 211, 238, 0.1));
+  color: var(--color-primary-500); font-weight: var(--font-semibold);
+}
+.sp-library-sidebar__color-dot {
+  width: 10px; height: 10px; border-radius: var(--radius-full); flex-shrink: 0;
+}
+.sp-library-sidebar__count {
+  margin-left: auto; font-size: var(--text-xs); color: var(--foreground-muted);
+}
+
+/* Toolbar */
+.sp-library-toolbar__sort {
+  padding: var(--space-1) var(--space-2); border-radius: var(--radius-md);
+  border: 1px solid var(--border-color, #334155); background: var(--background);
+  color: var(--foreground); font-size: var(--text-sm);
+}
+.sp-library-toolbar__view-toggle { display: flex; gap: var(--space-1); }
+.sp-library-toolbar__btn {
+  padding: var(--space-1) var(--space-2); border-radius: var(--radius-md);
+  border: 1px solid var(--border-color, #334155); background: none;
+  color: var(--foreground); cursor: pointer; font-size: var(--text-sm);
+}
+.sp-library-toolbar__btn[aria-pressed="true"] {
+  background: var(--primary-bg, rgba(34, 211, 238, 0.1));
+  color: var(--color-primary-500);
+}
+
+/* Dialog */
+.sp-dialog-overlay {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5);
+  display: flex; align-items: center; justify-content: center; z-index: 100;
+}
+.sp-dialog {
+  background: var(--background, #0f172a); border-radius: var(--radius-lg);
+  padding: var(--space-6); max-width: 480px; width: 90%;
+  border: 1px solid var(--border-color, #334155);
+}
+.sp-dialog-title { margin: 0 0 var(--space-4); font-size: var(--text-lg); color: var(--foreground); }
+.sp-dialog-label { display: block; margin-bottom: var(--space-1); font-size: var(--text-sm); color: var(--foreground-muted); }
+.sp-dialog-input {
+  width: 100%; padding: var(--space-2); border-radius: var(--radius-md);
+  border: 1px solid var(--border-color, #334155); background: var(--background-subtle, #1e293b);
+  color: var(--foreground); font-size: var(--text-sm); margin-bottom: var(--space-3);
+}
+.sp-dialog-color-row { display: flex; gap: var(--space-2); margin-bottom: var(--space-3); }
+.sp-dialog-color-swatch {
+  width: 32px; height: 32px; border-radius: var(--radius-full); border: 2px solid transparent;
+  cursor: pointer; padding: 0;
+}
+.sp-dialog-color-swatch--active { border-color: var(--foreground); }
+.sp-dialog-error { color: var(--color-error, #ef4444); font-size: var(--text-sm); min-height: 1.2em; margin-bottom: var(--space-2); }
+.sp-dialog-buttons { display: flex; gap: var(--space-2); justify-content: flex-end; }
+.sp-dialog-btn {
+  padding: var(--space-2) var(--space-4); border-radius: var(--radius-md);
+  border: 1px solid var(--border-color, #334155); background: none;
+  color: var(--foreground); cursor: pointer; font-size: var(--text-sm);
+}
+.sp-dialog-btn--primary {
+  background: var(--color-primary-500); color: white; border-color: var(--color-primary-500);
+}
+
+/* Responsive: collapse sidebar below 768px */
+@media (max-width: 768px) {
+  .sp-library-layout { flex-direction: column; }
+  .sp-library-sidebar { width: 100%; display: flex; gap: var(--space-2); overflow-x: auto; }
+}
+
+/* Forced-colors override */
+@media (forced-colors: active) {
+  .sp-library-sidebar__item--active { border: 1px solid Highlight; }
+  .sp-library-sidebar__color-dot { forced-color-adjust: none; }
+}

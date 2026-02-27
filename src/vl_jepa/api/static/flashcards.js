@@ -15,9 +15,22 @@ import {
   FlashcardRepository,
   LectureRepository,
   SegmentRepository,
+  ProgressRepository,
+  BookmarkRepository,
   FLASHCARD_STATUS,
   createFlashcard
 } from './storage/index.js';
+
+import {
+  createElement,
+  clearElement,
+  showElement,
+  hideElement,
+  sanitizeId,
+  registerListener,
+  cleanupListeners,
+  removeListenersForTarget
+} from './dom-utils.js';
 
 // ============================================================================
 // STATE
@@ -30,78 +43,9 @@ const state = {
   searchQuery: ''
 };
 
-// ============================================================================
-// LISTENER REGISTRY (memory leak prevention)
-// ============================================================================
+// Listener registry, DOM utilities, and sanitizeId imported from dom-utils.js
 
-const _listeners = new Map();
-
-function registerListener(target, eventType, handler, options = {}) {
-  target.addEventListener(eventType, handler, options);
-  if (!_listeners.has(eventType)) {
-    _listeners.set(eventType, new Set());
-  }
-  _listeners.get(eventType).add({ target, handler, options });
-}
-
-function cleanupListeners() {
-  _listeners.forEach((listeners, eventType) => {
-    listeners.forEach(({ target, handler, options }) => {
-      target.removeEventListener(eventType, handler, options);
-    });
-  });
-  _listeners.clear();
-}
-
-function removeListenersForTarget(target) {
-  _listeners.forEach((listeners, eventType) => {
-    const toRemove = [];
-    for (const entry of listeners) {
-      if (entry.target === target) {
-        target.removeEventListener(eventType, entry.handler, entry.options);
-        toRemove.push(entry);
-      }
-    }
-    for (const entry of toRemove) {
-      listeners.delete(entry);
-    }
-  });
-}
-
-// ============================================================================
-// DOM UTILITIES (safe, XSS-free)
-// ============================================================================
-
-function createElement(tag, className, attrs = {}) {
-  const el = document.createElement(tag);
-  if (className) el.className = className;
-  for (const [key, value] of Object.entries(attrs)) {
-    if (key === 'textContent') {
-      el.textContent = value;
-    } else if (key === 'disabled') {
-      el.disabled = value;
-    } else {
-      el.setAttribute(key, String(value));
-    }
-  }
-  return el;
-}
-
-function clearElement(el) {
-  while (el.firstChild) {
-    el.removeChild(el.firstChild);
-  }
-}
-
-function showElement(el) {
-  el.classList.remove('hidden');
-  el.removeAttribute('inert');
-}
-
-function hideElement(el) {
-  el.classList.add('hidden');
-  el.setAttribute('inert', '');
-}
+// DOM utilities (createElement, clearElement, showElement, hideElement) imported from dom-utils.js
 
 const prefersReducedMotion = (typeof window !== 'undefined' && typeof window.matchMedia === 'function')
   ? window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -134,15 +78,17 @@ function showToast(variant, title, message) {
   }, 5000);
 }
 
+// sanitizeId imported from dom-utils.js
+
 // ============================================================================
-// SANITIZATION
+// HOOKABLE RENDERERS (callback registration for library.js)
 // ============================================================================
 
-/** Sanitize a string for safe use as an ID lookup (alphanumeric + hyphens only) */
-function sanitizeId(raw) {
-  if (typeof raw !== 'string') return '';
-  return raw.replace(/[^a-zA-Z0-9\-_]/g, '');
-}
+let _libraryRenderer = null;
+let _lectureDetailRenderer = null;
+
+function setLibraryRenderer(fn) { _libraryRenderer = fn; }
+function setLectureDetailRenderer(fn) { _lectureDetailRenderer = fn; }
 
 // ============================================================================
 // ROUTER
@@ -156,7 +102,8 @@ const SCROLL_ANCHORS = new Set([
 const VIEWS = {
   LANDING: 'landing',
   PLAYGROUND: 'playground',
-  STUDY: 'study'
+  STUDY: 'study',
+  LECTURE_DETAIL: 'lecture-detail'
 };
 
 function parseHash(hash) {
@@ -179,6 +126,11 @@ function parseHash(hash) {
     return { view: VIEWS.STUDY, params: { lectureId: sanitizeId(studyMatch[1]) } };
   }
 
+  const lectureMatch = raw.match(/^lecture\/(.+)$/);
+  if (lectureMatch) {
+    return { view: VIEWS.LECTURE_DETAIL, params: { lectureId: sanitizeId(lectureMatch[1]) } };
+  }
+
   return { view: VIEWS.LANDING, params: {} };
 }
 
@@ -198,7 +150,7 @@ function handleRouteChange() {
 
   state.currentView = view;
 
-  if (view === VIEWS.STUDY && params.lectureId) {
+  if ((view === VIEWS.STUDY || view === VIEWS.LECTURE_DETAIL) && params.lectureId) {
     state.currentLectureId = params.lectureId;
   }
 
@@ -211,7 +163,7 @@ function updateNavHighlight(view) {
   navLinks.forEach(link => {
     link.classList.remove('nav-link--active');
     const href = link.getAttribute('href');
-    if (view === VIEWS.PLAYGROUND && href === '#/playground') {
+    if ((view === VIEWS.PLAYGROUND || view === VIEWS.LECTURE_DETAIL) && href === '#/playground') {
       link.classList.add('nav-link--active');
     }
   });
@@ -225,7 +177,8 @@ function getViewSections() {
   return {
     landing: document.getElementById('app-section'),
     playground: document.getElementById('playground-view'),
-    study: document.getElementById('study-view')
+    study: document.getElementById('study-view'),
+    lectureDetail: document.getElementById('lecture-detail-view')
   };
 }
 
@@ -261,7 +214,16 @@ function mountView(view, params = {}) {
     case VIEWS.PLAYGROUND:
       if (sections.playground) {
         showElement(sections.playground);
-        renderLibraryView();
+        if (_libraryRenderer) _libraryRenderer();
+        else renderLibraryView();  // fallback if library.js not loaded
+      }
+      break;
+
+    case VIEWS.LECTURE_DETAIL:
+      if (sections.lectureDetail) {
+        showElement(sections.lectureDetail);
+        state.currentLectureId = params.lectureId;
+        if (_lectureDetailRenderer) _lectureDetailRenderer(params.lectureId);
       }
       break;
 
@@ -277,6 +239,10 @@ function mountView(view, params = {}) {
 function unmountView(view) {
   if (view === VIEWS.STUDY) {
     cleanupStudySession();
+  }
+  if (view === VIEWS.LECTURE_DETAIL) {
+    const section = document.getElementById('lecture-detail-view');
+    if (section) clearElement(section.querySelector('.section-container') || section);
   }
 }
 
@@ -1488,7 +1454,7 @@ export {
   VIEWS,
   SCROLL_ANCHORS,
 
-  // DOM utilities
+  // DOM utilities (re-exported from dom-utils.js for backward compatibility)
   createElement,
   clearElement,
   showElement,
@@ -1522,10 +1488,14 @@ export {
   openEditCardModal,
   deleteCardWithConfirmation,
 
-  // Listeners
+  // Listeners (re-exported from dom-utils.js for backward compatibility)
   registerListener,
   cleanupListeners,
 
   // Toast
-  showToast
+  showToast,
+
+  // Hookable renderers (for library.js registration)
+  setLibraryRenderer,
+  setLectureDetailRenderer
 };

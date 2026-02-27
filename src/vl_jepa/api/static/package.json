@@ -22,7 +22,11 @@
     "verbose": true,
     "collectCoverageFrom": [
       "**/storage/**/*.js",
-      "!**/storage/**/*.test.js"
+      "flashcards.js",
+      "dom-utils.js",
+      "library.js",
+      "!**/*.test.js",
+      "!**/node_modules/**"
     ]
   }
 }

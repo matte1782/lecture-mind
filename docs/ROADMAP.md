@@ -1,8 +1,8 @@
 # Lecture Mind — Product Roadmap v3.1
 
-> **Last Updated**: 2026-01-09
-> **Current Version**: v0.3.0
-> **Status**: ✅ v0.3.0 RELEASED — Ready for v0.4.0 Student Playground
+> **Last Updated**: 2026-02-27
+> **Current Version**: v0.3.0 (v0.4.0 in progress — Week 12)
+> **Status**: ⏳ v0.4.0 IN PROGRESS — Week 12 Days 0-2 complete
 > **Docs Site**: https://matte1782.github.io/lecture-mind/
 > **Cloud Demo**: https://lecture-mind.onrender.com
 > **Architecture**: FastAPI + Premium Vanilla JS (Cloud Demo + Local Full)
@@ -17,7 +17,7 @@
 | Gate 0 | Technical Validation | 12h | Week 1 | ✅ Complete |
 | v0.2.0 | Real Models + Audio | 80h | Weeks 2-5 | ✅ Released |
 | v0.3.0 | Cloud Demo + Security | 60h | Weeks 6-9 | ✅ Released |
-| **v0.4.0** | **🎓 Student Playground** | **120h** | **Weeks 10-15** | ⏳ Next |
+| **v0.4.0** | **🎓 Student Playground** | **120h** | **Weeks 10-15** | ⏳ In Progress (Week 12) |
 | v1.0.0 | Production | 80h | Weeks 16-19 | Blocked by v0.4.0 |
 
 **Assumptions:**
@@ -108,7 +108,7 @@ See `docs/reviews/REVIEW_hostile_final.md` for full verification.
 **Effort**: 120 hours (6 weeks @ 20h/week)
 **Prerequisites**: v0.3.0 complete ✅, security hardened ✅
 **Target Users**: Students, Teaching Assistants, Professors
-**Status**: Ready to start (Week 10)
+**Status**: In Progress — Week 12 Days 0-2 complete (418 tests passing)
 
 ### Vision
 
@@ -216,25 +216,26 @@ Features:
 
 ### Task Breakdown
 
-| Week | Focus | Hours | Agents/Engineers |
-|------|-------|-------|------------------|
-| **Week 10** | **Foundation + Architecture** | 20h | |
-| | Design system enhancement | 4h | frontend-design |
-| | IndexedDB storage layer | 6h | architect |
-| | Multi-lecture data model | 4h | architect |
-| | Animation framework | 4h | frontend-design |
-| | Hostile review: architecture | 2h | hostile-reviewer |
-| **Week 11** | **Flashcard System** | 20h | |
-| | Card data model | 2h | architect |
-| | Auto-generation from transcript | 6h | ml-engineer |
-| | Spaced repetition (SM-2) | 4h | ml-engineer |
-| | Card UI with flip animation | 4h | frontend-design |
-| | Study session flow | 4h | frontend-design |
-| **Week 12** | **Multi-Lecture Library** | 20h | |
-| | Library UI design | 4h | frontend-design |
-| | Import/organization system | 6h | architect |
-| | Cross-lecture search | 6h | ml-engineer |
-| | Progress persistence | 4h | architect |
+| Week | Focus | Hours | Status |
+|------|-------|-------|--------|
+| **Week 10** | **Foundation + Architecture** | 20h | ✅ Complete |
+| | Design system enhancement (CSS variables, tokens) | 4h | ✅ |
+| | IndexedDB storage layer (db.js, migrations.js) | 6h | ✅ |
+| | Multi-lecture data model (models.js, repositories.js) | 4h | ✅ |
+| | Animation framework (playground-components.css) | 4h | ✅ |
+| | Hostile review: architecture | 2h | ✅ |
+| **Week 11** | **Flashcard System** | 20h | ✅ Complete |
+| | Card data model + repositories | 2h | ✅ |
+| | Auto-generation from transcript | 6h | ✅ |
+| | Spaced repetition (SM-2 algorithm) | 4h | ✅ |
+| | Card UI with flip animation | 4h | ✅ |
+| | Study session flow + router | 4h | ✅ |
+| **Week 12** | **Multi-Lecture Library** | 20h | ⏳ Days 0-2 done |
+| | Day 0: Prerequisite refactoring (dom-utils, router) | 4h | ✅ |
+| | Day 1: Course organization + library shell | 4h | ✅ Reviewed (72→fixed) |
+| | Day 2: Import pipeline + organization | 4h | ✅ |
+| | Day 3: Cross-lecture search | 4h | Pending |
+| | Days 4-6: Detail view, progress, dashboard | 4h | Pending |
 | **Week 13** | **Progress & Analytics** | 20h | |
 | | Watch progress tracking | 4h | architect |
 | | Quiz score persistence | 4h | architect |
@@ -289,9 +290,9 @@ Features:
 ### Quality Gates (Per Week)
 
 ```
-Week 10 Gate: Architecture approved by hostile-reviewer
-Week 11 Gate: Flashcard system functional, animations smooth
-Week 12 Gate: Library manages 10+ lectures without slowdown
+Week 10 Gate: Architecture approved by hostile-reviewer ✅ PASSED
+Week 11 Gate: Flashcard system functional, animations smooth ✅ PASSED (91 tests)
+Week 12 Gate: Library manages 10+ lectures without slowdown ⏳ IN PROGRESS
 Week 13 Gate: Analytics accurate, privacy preserved
 Week 14 Gate: Dashboard useful for real professors (user testing)
 Week 15 Gate: FINAL - Full hostile review, all issues resolved
@@ -371,10 +372,10 @@ February 2026
 │       └── ✅ v0.3.0 Released
 
 March 2026
-├── Weeks 10-15 (Mar 5 - Apr 15): v0.4.0 - Student Playground ← NEXT
-│   ├── Week 10: Architecture + Design System ← START HERE
-│   ├── Week 11: Flashcard System
-│   ├── Week 12: Multi-Lecture Library
+├── Weeks 10-15 (Mar 5 - Apr 15): v0.4.0 - Student Playground ← IN PROGRESS
+│   ├── Week 10: Architecture + Design System ✅ COMPLETE
+│   ├── Week 11: Flashcard System ✅ COMPLETE
+│   ├── Week 12: Multi-Lecture Library ⏳ Days 0-2 done, Days 3-6 next
 │   ├── Week 13: Progress + Analytics
 │   ├── Week 14: Professor Dashboard
 │   └── Week 15: Polish + v0.4.0 release
@@ -394,12 +395,20 @@ April-May 2026
 4. ~~Release v0.3.0~~ ✅
 5. ~~Deploy docs to GitHub Pages~~ ✅
 
-### Now: Start v0.4.0 Student Playground (Week 10)
-1. **Design system enhancement** — Define color palette, typography, spacing
-2. **IndexedDB storage layer** — Local persistence for offline-first
-3. **Multi-lecture data model** — Schema for courses, lectures, progress
-4. **Animation framework** — Reusable transition/effect library
-5. **Hostile review: architecture** — Validate design before implementation
+### Completed (v0.4.0 Weeks 10-11) ✅
+1. ~~Week 10: Storage layer + design system~~ ✅ (292 storage tests)
+2. ~~Week 11: Flashcard system~~ ✅ (91 flashcard tests)
+
+### Completed (v0.4.0 Week 12 Days 0-2) ✅
+1. ~~Day 0: dom-utils extraction, router extensions, repo getAll~~ ✅
+2. ~~Day 1: Course sidebar, toolbar, sorting, CRUD dialogs~~ ✅ (hostile review: 72→fixed)
+3. ~~Day 2: Import pipeline, organization, context menu~~ ✅
+
+### Now: Week 12 Days 3-6
+1. **Day 3: Cross-lecture search** — Search across segments, flashcards, bookmarks
+2. **Day 4: Lecture detail view** — Tabbed detail page with stats
+3. **Day 5: Progress persistence** — Favorites, watch progress tracking
+4. **Day 6: Dashboard** — Library stats overview
 
 ---
 
@@ -412,6 +421,10 @@ April-May 2026
 | 2026-01-09 | Multi-agent workflow | Specialized agents for UI, ML, security |
 | 2026-01-09 | Professor dashboard | Expand audience beyond students |
 | 2026-01-09 | Offline-first architecture | Students need to study anywhere |
+| 2026-02-27 | Extract dom-utils.js from flashcards.js | Shared utilities for library.js without circular deps (AD-1) |
+| 2026-02-27 | Favorites via SettingsRepository | Avoids misusing BookmarkRepository (AD-2) |
+| 2026-02-27 | Dedup imports via SettingsRepository | Lecture model has no metadata field (AD-2 pattern) |
+| 2026-02-27 | setLibraryRenderer callback pattern | One-directional dependency: library.js → flashcards.js, never reverse |
 
 ---
 
@@ -419,6 +432,9 @@ April-May 2026
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v3.4 | 2026-02-27 | Week 12 Days 0-2: library.js, import pipeline, context menu (418 tests) |
+| v3.3 | 2026-02-27 | Week 12 plan approved: Rev 2 scored 91/100 (Days 0-3) and 92/100 (Days 4-6) |
+| v3.2 | 2026-02-27 | Week 11 complete: Flashcard system (91 tests), Week 10 complete: Storage layer (292 tests) |
 | v3.1 | 2026-01-09 | **v0.3.0 RELEASED**: Docs complete, GitHub Pages live, all tests passing |
 | v3.0 | 2026-01-09 | Added v0.4.0 Student Playground, multi-agent workflow, security gates |
 | v2.6 | 2026-01-09 | Week 8: Demo mode, bug fixes (NaN%, 404 polling) |
