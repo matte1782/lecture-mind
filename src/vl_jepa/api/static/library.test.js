@@ -5,6 +5,7 @@
  * TDD: tests written before implementation.
  */
 
+import { jest } from '@jest/globals';
 import { closeDatabase, deleteDatabase } from './storage/db.js';
 import {
   CourseRepository,
@@ -12,8 +13,13 @@ import {
   SegmentRepository,
   EventRepository,
   SettingsRepository,
+  FlashcardRepository,
+  BookmarkRepository,
   createCourse,
-  createLecture
+  createLecture,
+  createSegment,
+  createFlashcard,
+  createBookmark
 } from './storage/index.js';
 
 import {
@@ -30,7 +36,15 @@ import {
   batchDeleteLectures,
   renderCardContextMenu,
   libraryState,
-  _resetState
+  _resetState,
+  crossLectureSearch,
+  _resetSearchCache,
+  scoreMatch,
+  highlightTerms,
+  renderSearchInput,
+  renderSearchResults,
+  renderSearchTabs,
+  SEARCH_CONFIG
 } from './library.js';
 
 // ============================================================================
@@ -97,6 +111,7 @@ function setupTestDOM() {
 beforeEach(async () => {
   setupTestDOM();
   _resetState();
+  _resetSearchCache();
 });
 
 afterEach(async () => {
@@ -591,5 +606,280 @@ describe('Context Menu', () => {
     document.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
 
     expect(document.body.contains(menu)).toBe(false);
+  });
+});
+
+// ============================================================================
+// DAY 3: SEARCH ENGINE
+// ============================================================================
+
+/**
+ * Seed helper: creates 2 lectures, 2 segments, 2 flashcards, 2 bookmarks.
+ * Returns { lectures, segments, flashcards, bookmarks }.
+ */
+async function seedSearchData() {
+  const lec1 = await LectureRepository.create(createLecture({ title: 'Machine Learning Basics' }));
+  const lec2 = await LectureRepository.create(createLecture({ title: 'Deep Neural Networks' }));
+
+  const seg1 = await SegmentRepository.create(createSegment({
+    lectureId: lec1.id, startTime: 0, endTime: 10, type: 'transcript',
+    metadata: { text: 'Introduction to supervised learning algorithms' }
+  }));
+  const seg2 = await SegmentRepository.create(createSegment({
+    lectureId: lec2.id, startTime: 0, endTime: 15, type: 'transcript',
+    metadata: { text: 'Backpropagation and gradient descent optimization' }
+  }));
+
+  const fc1 = await FlashcardRepository.create(createFlashcard({
+    lectureId: lec1.id, front: 'What is supervised learning?',
+    back: 'Learning from labeled training data'
+  }));
+  const fc2 = await FlashcardRepository.create(createFlashcard({
+    lectureId: lec2.id, front: 'Define backpropagation',
+    back: 'Algorithm for computing gradients in neural networks'
+  }));
+
+  const bk1 = await BookmarkRepository.create(createBookmark({
+    lectureId: lec1.id, timestamp: 5, label: 'Key concept: supervised learning'
+  }));
+  const bk2 = await BookmarkRepository.create(createBookmark({
+    lectureId: lec2.id, timestamp: 10, label: ''
+  }));
+
+  return {
+    lectures: [lec1, lec2],
+    segments: [seg1, seg2],
+    flashcards: [fc1, fc2],
+    bookmarks: [bk1, bk2]
+  };
+}
+
+describe('Search Engine', () => {
+  test('returns empty for query < MIN_QUERY_LENGTH', async () => {
+    await seedSearchData();
+    const results = await crossLectureSearch('a');
+    expect(results.segments).toEqual([]);
+    expect(results.flashcards).toEqual([]);
+    expect(results.bookmarks).toEqual([]);
+    expect(results.totalCount).toBe(0);
+  });
+
+  test('finds segments by metadata.text', async () => {
+    await seedSearchData();
+    const results = await crossLectureSearch('supervised learning');
+    expect(results.segments.length).toBeGreaterThanOrEqual(1);
+    const texts = results.segments.map(r => r.text);
+    expect(texts.some(t => t.includes('supervised learning'))).toBe(true);
+  });
+
+  test('finds flashcards by front text', async () => {
+    await seedSearchData();
+    const results = await crossLectureSearch('supervised learning');
+    expect(results.flashcards.length).toBeGreaterThanOrEqual(1);
+  });
+
+  test('finds flashcards by back text', async () => {
+    await seedSearchData();
+    const results = await crossLectureSearch('labeled training');
+    expect(results.flashcards.length).toBeGreaterThanOrEqual(1);
+  });
+
+  test('finds bookmarks by label (non-empty only)', async () => {
+    await seedSearchData();
+    const results = await crossLectureSearch('supervised');
+    expect(results.bookmarks.length).toBeGreaterThanOrEqual(1);
+    expect(results.bookmarks[0].text).toMatch(/supervised/i);
+  });
+
+  test('skips bookmarks with empty label', async () => {
+    await seedSearchData();
+    // lec2's bookmark has empty label — searching for anything about lec2
+    // should not return a bookmark result for the empty-label one
+    const results = await crossLectureSearch('backpropagation');
+    const bkLabels = results.bookmarks.map(r => r.text);
+    expect(bkLabels.every(l => l.length > 0)).toBe(true);
+  });
+
+  test('returns results grouped by type with totalCount', async () => {
+    await seedSearchData();
+    const results = await crossLectureSearch('supervised learning');
+    expect(results).toHaveProperty('segments');
+    expect(results).toHaveProperty('flashcards');
+    expect(results).toHaveProperty('bookmarks');
+    expect(results).toHaveProperty('totalCount');
+    expect(results.totalCount).toBe(
+      results.segments.length + results.flashcards.length + results.bookmarks.length
+    );
+  });
+
+  test('limits results to MAX_RESULTS', async () => {
+    // Create more than MAX_RESULTS segments
+    const lec = await LectureRepository.create(createLecture({ title: 'Big Lecture' }));
+    for (let i = 0; i < SEARCH_CONFIG.MAX_RESULTS + 10; i++) {
+      await SegmentRepository.create(createSegment({
+        lectureId: lec.id, startTime: i, endTime: i + 1, type: 'transcript',
+        metadata: { text: `unique searchterm segment number ${i}` }
+      }));
+    }
+    _resetSearchCache();
+    const results = await crossLectureSearch('unique searchterm');
+    expect(results.totalCount).toBeLessThanOrEqual(SEARCH_CONFIG.MAX_RESULTS);
+  });
+
+  test('multi-term requires ALL terms present in text', async () => {
+    await seedSearchData();
+    const results = await crossLectureSearch('supervised gradient');
+    // No single item has BOTH "supervised" AND "gradient"
+    expect(results.segments).toHaveLength(0);
+    expect(results.flashcards).toHaveLength(0);
+  });
+
+  test('regex special chars in query do not crash', async () => {
+    await seedSearchData();
+    const results = await crossLectureSearch('test.*+?^${}()|[]\\');
+    expect(results.totalCount).toBe(0);
+    // No error thrown
+  });
+
+  test('finds text containing regex metacharacters literally', async () => {
+    const lec = await LectureRepository.create(createLecture({ title: 'JS Course' }));
+    await SegmentRepository.create(createSegment({
+      lectureId: lec.id, startTime: 0, endTime: 5, type: 'transcript',
+      metadata: { text: 'Introduction to test.js framework' }
+    }));
+    _resetSearchCache();
+    const results = await crossLectureSearch('test.js');
+    expect(results.segments.length).toBeGreaterThanOrEqual(1);
+    expect(results.segments[0].text).toContain('test.js');
+  });
+});
+
+// ============================================================================
+// DAY 3: SCORING + HIGHLIGHTING
+// ============================================================================
+
+describe('Scoring + Highlighting', () => {
+  test('exact phrase scores highest', () => {
+    const exact = scoreMatch('Introduction to supervised learning algorithms', ['supervised', 'learning'], 'supervised learning');
+    const partial = scoreMatch('supervised techniques and deep learning', ['supervised', 'learning'], 'supervised learning');
+    expect(exact).toBeGreaterThan(partial);
+  });
+
+  test('highlightTerms creates safe DOM spans — no innerHTML', () => {
+    const container = document.createElement('div');
+    highlightTerms(container, 'hello world hello', ['hello']);
+
+    // Should have children (text nodes + spans), no innerHTML usage
+    expect(container.childNodes.length).toBeGreaterThan(0);
+
+    const spans = container.querySelectorAll('.sp-search-highlight');
+    expect(spans.length).toBe(2);
+    expect(spans[0].textContent).toBe('hello');
+    expect(spans[1].textContent).toBe('hello');
+
+    // Verify no innerHTML was used — container should not have raw HTML
+    expect(container.innerHTML).not.toContain('<script');
+  });
+
+  test('highlightTerms handles multiple occurrences', () => {
+    const container = document.createElement('div');
+    highlightTerms(container, 'the cat sat on the mat', ['the']);
+
+    const spans = container.querySelectorAll('.sp-search-highlight');
+    expect(spans.length).toBe(2);
+  });
+});
+
+// ============================================================================
+// DAY 3: SEARCH UI
+// ============================================================================
+
+describe('Search UI', () => {
+  test('renderSearchTabs has role="tablist" with aria-selected', () => {
+    const container = document.createElement('div');
+    renderSearchTabs(container, 'all', { all: 10, segments: 5, flashcards: 3, bookmarks: 2 });
+
+    const tablist = container.querySelector('[role="tablist"]');
+    expect(tablist).not.toBeNull();
+
+    const tabs = tablist.querySelectorAll('[role="tab"]');
+    expect(tabs.length).toBeGreaterThanOrEqual(4);
+
+    const activeTab = tablist.querySelector('[aria-selected="true"]');
+    expect(activeTab).not.toBeNull();
+    expect(activeTab.textContent).toMatch(/all/i);
+  });
+
+  test('renderSearchTabs keyboard: ArrowRight switches tab', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    let lastTab = null;
+    renderSearchTabs(container, 'all', { all: 10, segments: 5, flashcards: 3, bookmarks: 2 }, (tab) => { lastTab = tab; });
+
+    const tablist = container.querySelector('[role="tablist"]');
+    const tabs = tablist.querySelectorAll('[role="tab"]');
+
+    // Focus first tab (must be in document for jsdom focus)
+    tabs[0].focus();
+    tablist.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+
+    expect(lastTab).toBe('segments');
+  });
+
+  test('renderSearchInput debounces input', async () => {
+    jest.useFakeTimers();
+    const container = document.createElement('div');
+    let searchCalled = 0;
+    renderSearchInput(container, (query) => { searchCalled++; });
+
+    const input = container.querySelector('input');
+    expect(input).not.toBeNull();
+
+    // Type multiple times quickly
+    input.value = 'a';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.value = 'ab';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.value = 'abc';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+
+    // Before debounce fires
+    expect(searchCalled).toBe(0);
+
+    // Advance past debounce
+    jest.advanceTimersByTime(SEARCH_CONFIG.DEBOUNCE_MS + 50);
+
+    expect(searchCalled).toBe(1);
+    jest.useRealTimers();
+  });
+
+  test('renderSearchInput clear button resets', () => {
+    const container = document.createElement('div');
+    let lastQuery = 'not-cleared';
+    renderSearchInput(container, (query) => { lastQuery = query; });
+
+    const input = container.querySelector('input');
+    input.value = 'test query';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+
+    const clearBtn = container.querySelector('.sp-search-input-wrapper__clear');
+    expect(clearBtn).not.toBeNull();
+
+    clearBtn.click();
+    expect(input.value).toBe('');
+    expect(lastQuery).toBe('');
+  });
+
+  test('search results show parent lecture title', async () => {
+    const { lectures } = await seedSearchData();
+    const lectureMap = new Map(lectures.map(l => [l.id, l.title]));
+
+    const results = await crossLectureSearch('supervised learning');
+    const container = document.createElement('div');
+    renderSearchResults(container, results, 'supervised learning', lectureMap);
+
+    const lectureLabels = container.querySelectorAll('.sp-search-result__lecture');
+    expect(lectureLabels.length).toBeGreaterThan(0);
+    expect(lectureLabels[0].textContent).toMatch(/Machine Learning Basics/);
   });
 });

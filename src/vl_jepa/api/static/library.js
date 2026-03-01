@@ -24,6 +24,8 @@ import {
   SegmentRepository,
   EventRepository,
   SettingsRepository,
+  FlashcardRepository,
+  BookmarkRepository,
   createCourse,
   createLecture,
   createSegment,
@@ -787,6 +789,426 @@ if (typeof window !== 'undefined') {
 }
 
 // ============================================================================
+// CROSS-LECTURE SEARCH (Day 3)
+// ============================================================================
+
+const SEARCH_CONFIG = {
+  MAX_RESULTS: 50,
+  MIN_QUERY_LENGTH: 2,
+  DEBOUNCE_MS: 300,
+  HIGHLIGHT_CONTEXT_CHARS: 80
+};
+
+/** Search cache — built once on first search, invalidated via _resetSearchCache(). */
+let searchCache = null;
+
+/** Reset search cache (for testing and data changes). */
+function _resetSearchCache() {
+  searchCache = null;
+}
+
+/**
+ * Build search cache from all stored entities.
+ * @returns {Promise<Object>}
+ */
+async function buildSearchCache() {
+  const [segments, flashcards, bookmarks, lectures] = await Promise.all([
+    SegmentRepository.getAll(),
+    FlashcardRepository.getAll(),
+    BookmarkRepository.getAll(),
+    LectureRepository.getAll()
+  ]);
+
+  const lectureMap = new Map(lectures.map(l => [l.id, l.title || 'Untitled']));
+
+  searchCache = {
+    segments: segments.map(seg => ({
+      text: extractSearchableText(seg),
+      ref: seg,
+      lectureId: seg.lectureId
+    })),
+    flashcards: flashcards.map(card => ({
+      text: (card.front || '') + ' ' + (card.back || ''),
+      ref: card,
+      lectureId: card.lectureId
+    })),
+    bookmarks: bookmarks
+      .filter(bk => bk.label && bk.label.trim().length > 0)
+      .map(bk => ({
+        text: bk.label,
+        ref: bk,
+        lectureId: bk.lectureId
+      })),
+    lectures: lectureMap
+  };
+
+  return searchCache;
+}
+
+/**
+ * Extract searchable text from a segment.
+ * @param {Object} segment
+ * @returns {string}
+ */
+function extractSearchableText(segment) {
+  return (segment.metadata && segment.metadata.text) || '';
+}
+
+/**
+ * Score a match for ranking.
+ * @param {string} text - The full text being searched
+ * @param {string[]} terms - Individual search terms
+ * @param {string} fullQuery - The original full query
+ * @returns {number} Score (higher = better match)
+ */
+function scoreMatch(text, terms, fullQuery) {
+  const lowerText = text.toLowerCase();
+  const lowerQuery = fullQuery.toLowerCase();
+
+  // Exact phrase match
+  if (lowerText.includes(lowerQuery)) {
+    let score = 100;
+    if (lowerText.indexOf(lowerQuery) < 100) score += 10;
+    return score;
+  }
+
+  // Partial term matching
+  let matched = 0;
+  for (const term of terms) {
+    if (lowerText.includes(term.toLowerCase())) matched++;
+  }
+  let score = 50 + (matched / terms.length) * 30;
+
+  // Bonus for early match
+  for (const term of terms) {
+    const idx = lowerText.indexOf(term.toLowerCase());
+    if (idx >= 0 && idx < 100) {
+      score += 10;
+      break;
+    }
+  }
+
+  return score;
+}
+
+/**
+ * Extract a snippet around the first matching term.
+ * @param {string} text
+ * @param {string[]} terms
+ * @param {number} contextChars
+ * @returns {{ before: string, match: string, after: string }}
+ */
+function extractSnippet(text, terms, contextChars = SEARCH_CONFIG.HIGHLIGHT_CONTEXT_CHARS) {
+  const lowerText = text.toLowerCase();
+  let firstIdx = -1;
+  let matchedTerm = '';
+
+  for (const term of terms) {
+    const idx = lowerText.indexOf(term.toLowerCase());
+    if (idx >= 0 && (firstIdx < 0 || idx < firstIdx)) {
+      firstIdx = idx;
+      matchedTerm = text.substring(idx, idx + term.length);
+    }
+  }
+
+  if (firstIdx < 0) {
+    return { before: text.substring(0, contextChars), match: '', after: '' };
+  }
+
+  const start = Math.max(0, firstIdx - contextChars);
+  const end = Math.min(text.length, firstIdx + matchedTerm.length + contextChars);
+
+  return {
+    before: (start > 0 ? '...' : '') + text.substring(start, firstIdx),
+    match: matchedTerm,
+    after: text.substring(firstIdx + matchedTerm.length, end) + (end < text.length ? '...' : '')
+  };
+}
+
+/**
+ * Highlight terms in text using safe DOM (createElement + textContent, zero innerHTML).
+ * @param {HTMLElement} container - Container to append highlighted nodes to
+ * @param {string} text - Text to highlight
+ * @param {string[]} terms - Terms to highlight
+ */
+function highlightTerms(container, text, terms) {
+  if (!terms || terms.length === 0 || !text) {
+    container.appendChild(document.createTextNode(text || ''));
+    return;
+  }
+
+  // Escape regex special chars
+  const escaped = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const regex = new RegExp(`(${escaped.join('|')})`, 'gi');
+  const parts = text.split(regex);
+
+  for (const part of parts) {
+    if (regex.test(part)) {
+      const span = document.createElement('span');
+      span.className = 'sp-search-highlight';
+      span.textContent = part;
+      container.appendChild(span);
+    } else if (part.length > 0) {
+      container.appendChild(document.createTextNode(part));
+    }
+    // Reset regex lastIndex after test
+    regex.lastIndex = 0;
+  }
+}
+
+/**
+ * Search across all lectures: segments, flashcards, bookmarks.
+ * @param {string} query - User's search query
+ * @returns {Promise<{ segments: Array, flashcards: Array, bookmarks: Array, totalCount: number }>}
+ */
+async function crossLectureSearch(query) {
+  const empty = { segments: [], flashcards: [], bookmarks: [], totalCount: 0 };
+
+  const trimmed = (query || '').trim();
+  if (trimmed.length < SEARCH_CONFIG.MIN_QUERY_LENGTH) return empty;
+
+  const normalized = trimmed.toLowerCase();
+  const terms = normalized.split(/\s+/).filter(t => t.length > 0);
+
+  if (!searchCache) {
+    await buildSearchCache();
+  }
+
+  // Segments: ALL terms must be present (raw terms for literal .includes())
+  const matchedSegments = searchCache.segments
+    .filter(item => {
+      const lower = item.text.toLowerCase();
+      return terms.every(t => lower.includes(t));
+    })
+    .map(item => ({
+      text: item.text,
+      lectureId: item.lectureId,
+      type: 'segment',
+      ref: item.ref,
+      score: scoreMatch(item.text, terms, trimmed)
+    }));
+
+  // Flashcards: ALL terms must be present
+  const matchedFlashcards = searchCache.flashcards
+    .filter(item => {
+      const lower = item.text.toLowerCase();
+      return terms.every(t => lower.includes(t));
+    })
+    .map(item => ({
+      text: item.text,
+      lectureId: item.lectureId,
+      type: 'flashcard',
+      ref: item.ref,
+      score: scoreMatch(item.text, terms, trimmed)
+    }));
+
+  // Bookmarks: ANY term present
+  const matchedBookmarks = searchCache.bookmarks
+    .filter(item => {
+      const lower = item.text.toLowerCase();
+      return terms.some(t => lower.includes(t));
+    })
+    .map(item => ({
+      text: item.text,
+      lectureId: item.lectureId,
+      type: 'bookmark',
+      ref: item.ref,
+      score: scoreMatch(item.text, terms, trimmed)
+    }));
+
+  // Sort each by score desc
+  matchedSegments.sort((a, b) => b.score - a.score);
+  matchedFlashcards.sort((a, b) => b.score - a.score);
+  matchedBookmarks.sort((a, b) => b.score - a.score);
+
+  // Limit total results
+  let total = matchedSegments.length + matchedFlashcards.length + matchedBookmarks.length;
+  if (total > SEARCH_CONFIG.MAX_RESULTS) {
+    // Proportional trimming
+    const ratio = SEARCH_CONFIG.MAX_RESULTS / total;
+    matchedSegments.length = Math.min(matchedSegments.length, Math.max(1, Math.floor(matchedSegments.length * ratio)));
+    matchedFlashcards.length = Math.min(matchedFlashcards.length, Math.max(1, Math.floor(matchedFlashcards.length * ratio)));
+    matchedBookmarks.length = Math.min(matchedBookmarks.length, Math.max(1, Math.floor(matchedBookmarks.length * ratio)));
+    total = matchedSegments.length + matchedFlashcards.length + matchedBookmarks.length;
+  }
+
+  return {
+    segments: matchedSegments,
+    flashcards: matchedFlashcards,
+    bookmarks: matchedBookmarks,
+    totalCount: total
+  };
+}
+
+// ============================================================================
+// SEARCH UI RENDERERS (Day 3)
+// ============================================================================
+
+/**
+ * Render search input with debounce and clear button.
+ * @param {HTMLElement} container - Container to render into
+ * @param {Function} onSearch - Callback: (query: string) => void
+ */
+function renderSearchInput(container, onSearch) {
+  const wrapper = createElement('div', 'sp-search-input-wrapper');
+
+  const input = createElement('input', '', {
+    type: 'text',
+    'aria-label': 'Search across all lectures'
+  });
+  input.setAttribute('placeholder', 'Search across all lectures...');
+  wrapper.appendChild(input);
+
+  const clearBtn = createElement('button', 'sp-search-input-wrapper__clear', {
+    type: 'button',
+    textContent: '\u00D7',
+    'aria-label': 'Clear search'
+  });
+  wrapper.appendChild(clearBtn);
+
+  let debounceTimer = null;
+
+  input.addEventListener('input', () => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      onSearch(input.value);
+    }, SEARCH_CONFIG.DEBOUNCE_MS);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    input.value = '';
+    if (debounceTimer) clearTimeout(debounceTimer);
+    onSearch('');
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      input.value = '';
+      if (debounceTimer) clearTimeout(debounceTimer);
+      onSearch('');
+    }
+  });
+
+  container.appendChild(wrapper);
+}
+
+/**
+ * Render search results into container.
+ * @param {HTMLElement} container
+ * @param {{ segments: Array, flashcards: Array, bookmarks: Array }} results
+ * @param {string} query
+ * @param {Map<string, string>} lectureMap - Map<lectureId, title>
+ */
+function renderSearchResults(container, results, query, lectureMap) {
+  clearElement(container);
+  const terms = (query || '').toLowerCase().split(/\s+/).filter(t => t.length > 0);
+
+  const allResults = [
+    ...results.segments,
+    ...results.flashcards,
+    ...results.bookmarks
+  ].sort((a, b) => b.score - a.score);
+
+  for (const result of allResults) {
+    const card = createElement('div', 'sp-search-result', {
+      role: 'link',
+      tabindex: '0'
+    });
+
+    // Lecture title
+    const lectureName = lectureMap.get(result.lectureId) || 'Unknown Lecture';
+    const lectureLabel = createElement('div', 'sp-search-result__lecture', { textContent: lectureName });
+    card.appendChild(lectureLabel);
+
+    // Type badge
+    const typeBadge = createElement('span', 'sp-search-result__type', {
+      textContent: result.type.charAt(0).toUpperCase() + result.type.slice(1)
+    });
+    card.appendChild(typeBadge);
+
+    // Highlighted snippet
+    const snippet = createElement('div', 'sp-search-result__snippet');
+    const snippetText = result.text.length > 200
+      ? result.text.substring(0, 200) + '...'
+      : result.text;
+    highlightTerms(snippet, snippetText, terms);
+    card.appendChild(snippet);
+
+    // Click/keyboard to navigate
+    const navigate = () => navigateTo(`#/lecture/${result.lectureId}`);
+    card.addEventListener('click', navigate);
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        navigate();
+      }
+    });
+
+    container.appendChild(card);
+  }
+}
+
+/**
+ * Render tab bar for search results filtering.
+ * @param {HTMLElement} container
+ * @param {string} activeTab - 'all' | 'segments' | 'flashcards' | 'bookmarks'
+ * @param {{ all: number, segments: number, flashcards: number, bookmarks: number }} counts
+ * @param {Function} [onTabChange] - Callback: (tab: string) => void
+ */
+function renderSearchTabs(container, activeTab, counts, onTabChange) {
+  const tablist = createElement('div', 'sp-search-tabs', { role: 'tablist', 'aria-label': 'Search result filters' });
+
+  const tabDefs = [
+    { id: 'all', label: `All (${counts.all || 0})` },
+    { id: 'segments', label: `Segments (${counts.segments || 0})` },
+    { id: 'flashcards', label: `Flashcards (${counts.flashcards || 0})` },
+    { id: 'bookmarks', label: `Bookmarks (${counts.bookmarks || 0})` }
+  ];
+
+  const tabElements = [];
+
+  for (const def of tabDefs) {
+    const isActive = def.id === activeTab;
+    const tab = createElement('button', 'sp-search-tabs__tab' + (isActive ? ' sp-search-tabs__tab--active' : ''), {
+      role: 'tab',
+      type: 'button',
+      'aria-selected': isActive ? 'true' : 'false',
+      tabindex: isActive ? '0' : '-1',
+      textContent: def.label,
+      'data-tab': def.id
+    });
+
+    tab.addEventListener('click', () => {
+      if (onTabChange) onTabChange(def.id);
+    });
+
+    tablist.appendChild(tab);
+    tabElements.push(tab);
+  }
+
+  // Keyboard navigation
+  tablist.addEventListener('keydown', (e) => {
+    const currentIdx = tabElements.findIndex(t => t === document.activeElement);
+    if (currentIdx < 0) return;
+
+    let nextIdx = -1;
+    if (e.key === 'ArrowRight') {
+      nextIdx = (currentIdx + 1) % tabElements.length;
+    } else if (e.key === 'ArrowLeft') {
+      nextIdx = (currentIdx - 1 + tabElements.length) % tabElements.length;
+    }
+
+    if (nextIdx >= 0) {
+      e.preventDefault();
+      tabElements[nextIdx].focus();
+      if (onTabChange) onTabChange(tabDefs[nextIdx].id);
+    }
+  });
+
+  container.appendChild(tablist);
+}
+
+// ============================================================================
 // ENHANCED LIBRARY RENDERER (registered via setLibraryRenderer)
 // ============================================================================
 
@@ -874,6 +1296,16 @@ export {
 
   // Context menu (Day 2)
   renderCardContextMenu,
+
+  // Cross-lecture search (Day 3)
+  SEARCH_CONFIG,
+  crossLectureSearch,
+  _resetSearchCache,
+  scoreMatch,
+  highlightTerms,
+  renderSearchInput,
+  renderSearchResults,
+  renderSearchTabs,
 
   // Renderers
   enhancedRenderLibraryView,
