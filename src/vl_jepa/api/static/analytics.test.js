@@ -24,7 +24,15 @@ import {
   pruneOldRecords,
   STORAGE_KEYS,
   WatchTimeTracker,
-  registerAnalyticsHooks
+  registerAnalyticsHooks,
+  aggregateStudyTimeByDay,
+  aggregateAccuracyTrend,
+  aggregateMasteryDistribution,
+  aggregateOverallStats,
+  calculateStreak,
+  renderBarChart,
+  renderLineChart,
+  renderDonutChart
 } from './analytics.js';
 
 import {
@@ -680,6 +688,240 @@ describe('Analytics — Day 1: Hooks + WatchTimeTracker', () => {
     expect(captured.correct).toBe(4);
     expect(captured.accuracy).toBe(0.8);
     expect(captured.duration).toBe(120);
+  });
+
+});
+
+// ============================================================================
+// DAY 2: Aggregation Functions + SVG Chart Primitives
+// ============================================================================
+
+describe('Analytics — Day 2: Aggregation + Charts', () => {
+
+  afterEach(async () => {
+    await closeDatabase();
+    await deleteDatabase();
+  });
+
+  // --------------------------------------------------------------------------
+  // aggregateStudyTimeByDay
+  // --------------------------------------------------------------------------
+
+  it('aggregateStudyTimeByDay groups sessions by date', () => {
+    const now = Date.now();
+    const oneDay = 86400000;
+    const sessions = [
+      { type: 'quiz', duration: 600, startTime: now - oneDay, endTime: now - oneDay + 600000 },
+      { type: 'quiz', duration: 300, startTime: now - oneDay + 1000, endTime: now - oneDay + 301000 },
+      { type: 'watch', duration: 900, startTime: now, endTime: now + 900000 }
+    ];
+
+    const result = aggregateStudyTimeByDay(sessions, 7);
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(7);
+
+    // Find the day with quiz sessions (yesterday)
+    const yesterdayEntry = result.find(d => d.quizMinutes > 0);
+    expect(yesterdayEntry).toBeDefined();
+    expect(yesterdayEntry.quizMinutes).toBe(15); // 900s = 15min
+
+    // Find today with watch session
+    const todayEntry = result[result.length - 1];
+    expect(todayEntry.watchMinutes).toBe(15); // 900s = 15min
+  });
+
+  it('aggregateStudyTimeByDay fills missing days with zero', () => {
+    const result = aggregateStudyTimeByDay([], 7);
+
+    expect(result.length).toBe(7);
+    result.forEach(day => {
+      expect(day.totalMinutes).toBe(0);
+      expect(day.quizMinutes).toBe(0);
+      expect(day.watchMinutes).toBe(0);
+      expect(day.date).toBeDefined();
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  // aggregateAccuracyTrend
+  // --------------------------------------------------------------------------
+
+  it('aggregateAccuracyTrend caps at limit', () => {
+    const sessions = [];
+    for (let i = 0; i < 30; i++) {
+      sessions.push({ accuracy: (i + 1) * 3, startTime: Date.now() - (30 - i) * 1000 });
+    }
+
+    const result = aggregateAccuracyTrend(sessions, 10);
+
+    expect(result.length).toBe(10);
+    // Should keep the most recent 10
+    expect(result[result.length - 1].accuracy).toBe(90); // last session: 30*3=90
+  });
+
+  it('aggregateAccuracyTrend handles empty input', () => {
+    const result = aggregateAccuracyTrend([], 20);
+    expect(result).toEqual([]);
+  });
+
+  // --------------------------------------------------------------------------
+  // aggregateMasteryDistribution
+  // --------------------------------------------------------------------------
+
+  it('aggregateMasteryDistribution counts each status', () => {
+    const flashcards = [
+      { status: 'new' },
+      { status: 'new' },
+      { status: 'learning' },
+      { status: 'review' },
+      { status: 'review' },
+      { status: 'review' },
+      { status: 'mastered' }
+    ];
+
+    const result = aggregateMasteryDistribution(flashcards);
+
+    expect(result.new).toBe(2);
+    expect(result.learning).toBe(1);
+    expect(result.review).toBe(3);
+    expect(result.mastered).toBe(1);
+  });
+
+  // --------------------------------------------------------------------------
+  // aggregateOverallStats
+  // --------------------------------------------------------------------------
+
+  it('aggregateOverallStats computes totals', () => {
+    const now = Date.now();
+    const oneDay = 86400000;
+    const studySessions = [
+      { type: 'quiz', duration: 600, accuracy: 80, cardsReviewed: 10, startTime: now - oneDay },
+      { type: 'quiz', duration: 300, accuracy: 90, cardsReviewed: 5, startTime: now }
+    ];
+    const quizResults = [
+      { timestamp: now - oneDay },
+      { timestamp: now - oneDay },
+      { timestamp: now }
+    ];
+    const watchSessions = [
+      { duration: 1200, timestamp: now }
+    ];
+
+    const result = aggregateOverallStats(studySessions, quizResults, watchSessions);
+
+    expect(result.totalStudyTime).toBe(900); // 600 + 300
+    expect(result.totalCards).toBe(15); // 10 + 5
+    expect(result.avgAccuracy).toBe(85); // (80+90)/2
+    expect(result.totalWatchTime).toBe(1200);
+    expect(typeof result.streak).toBe('number');
+  });
+
+  // --------------------------------------------------------------------------
+  // calculateStreak
+  // --------------------------------------------------------------------------
+
+  it('calculateStreak returns consecutive active days', () => {
+    const now = Date.now();
+    const oneDay = 86400000;
+    const sessions = [
+      { startTime: now },                // today
+      { startTime: now - oneDay },        // yesterday
+      { startTime: now - 2 * oneDay },    // 2 days ago
+      // gap at 3 days ago
+      { startTime: now - 4 * oneDay }     // 4 days ago
+    ];
+
+    const streak = calculateStreak(sessions);
+    expect(streak).toBe(3); // today + yesterday + 2 days ago
+  });
+
+  it('calculateStreak returns 0 for no sessions', () => {
+    expect(calculateStreak([])).toBe(0);
+  });
+
+  // --------------------------------------------------------------------------
+  // SVG Chart Renderers
+  // --------------------------------------------------------------------------
+
+  it('renderBarChart creates SVG with correct rect count and ARIA', () => {
+    const container = document.createElement('div');
+    const data = [
+      { label: 'Mon', value: 10 },
+      { label: 'Tue', value: 20 },
+      { label: 'Wed', value: 15 }
+    ];
+
+    renderBarChart(container, data, {
+      width: 300, height: 200,
+      barColor: '#4a90d9',
+      labelKey: 'label', valueKey: 'value'
+    });
+
+    const svg = container.querySelector('svg');
+    expect(svg).not.toBeNull();
+    expect(svg.getAttribute('role')).toBe('img');
+    // ARIA: title and desc elements exist
+    const title = svg.querySelector('title');
+    const desc = svg.querySelector('desc');
+    expect(title).not.toBeNull();
+    expect(desc).not.toBeNull();
+    expect(svg.getAttribute('aria-labelledby')).toBe(title.getAttribute('id'));
+    const rects = svg.querySelectorAll('rect');
+    expect(rects.length).toBe(3);
+  });
+
+  it('renderLineChart creates SVG with polyline and circles', () => {
+    const container = document.createElement('div');
+    const data = [
+      { value: 80 },
+      { value: 85 },
+      { value: 90 },
+      { value: 75 }
+    ];
+
+    renderLineChart(container, data, {
+      width: 300, height: 200,
+      lineColor: '#4a90d9', fillColor: 'rgba(74,144,217,0.1)'
+    });
+
+    const svg = container.querySelector('svg');
+    expect(svg).not.toBeNull();
+    expect(svg.getAttribute('role')).toBe('img');
+    // ARIA: title and desc elements exist
+    const title = svg.querySelector('title');
+    const desc = svg.querySelector('desc');
+    expect(title).not.toBeNull();
+    expect(desc).not.toBeNull();
+    expect(svg.getAttribute('aria-labelledby')).toBe(title.getAttribute('id'));
+    // Data elements
+    const polyline = svg.querySelector('polyline');
+    expect(polyline).not.toBeNull();
+    const circles = svg.querySelectorAll('circle');
+    expect(circles.length).toBe(4);
+  });
+
+  it('renderDonutChart creates circle elements with stroke-dasharray and ARIA', () => {
+    const container = document.createElement('div');
+    const segments = [
+      { value: 25, color: '#4CAF50', label: 'Mastered' },
+      { value: 50, color: '#2196F3', label: 'Review' },
+      { value: 25, color: '#FF9800', label: 'Learning' }
+    ];
+
+    renderDonutChart(container, segments, { width: 200, height: 200 });
+
+    const svg = container.querySelector('svg');
+    expect(svg).not.toBeNull();
+    expect(svg.getAttribute('role')).toBe('img');
+    // ARIA: title and desc elements exist
+    const title = svg.querySelector('title');
+    const desc = svg.querySelector('desc');
+    expect(title).not.toBeNull();
+    expect(desc).not.toBeNull();
+    expect(svg.getAttribute('aria-labelledby')).toBe(title.getAttribute('id'));
+    const circles = svg.querySelectorAll('circle[stroke-dasharray]');
+    expect(circles.length).toBe(3);
   });
 
 });
