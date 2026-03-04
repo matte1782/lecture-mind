@@ -16,7 +16,7 @@
 
 import { SettingsRepository } from './storage/index.js';
 import { setOnQuizResult, setOnSessionComplete } from './flashcards.js';
-import { createSVGElement } from './dom-utils.js';
+import { createSVGElement, createElement, clearElement } from './dom-utils.js';
 
 // ============================================================================
 // CONSTANTS
@@ -756,6 +756,228 @@ function aggregateOverallStats(studySessions, quizResults, watchSessions) {
 }
 
 // ============================================================================
+// PER-LECTURE ANALYTICS UI
+// ============================================================================
+
+/**
+ * Render the empty state for the analytics tab.
+ * @param {HTMLElement} container - DOM element to render into
+ */
+function renderAnalyticsTabEmptyState(container) {
+  const empty = createElement('div', 'sp-analytics-empty', {
+    textContent: 'No study data yet. Start a quiz or watch a lecture to see your analytics here.'
+  });
+  container.appendChild(empty);
+}
+
+/**
+ * Render a mastery donut chart from flashcard data.
+ * @param {HTMLElement} container - DOM element to render into
+ * @param {Array<Object>} flashcards - Flashcard objects with status field
+ */
+function renderMasteryDonut(container, flashcards) {
+  const dist = aggregateMasteryDistribution(flashcards);
+  const segments = [
+    { value: dist.new, color: '#9E9E9E', label: 'new' },
+    { value: dist.learning, color: '#FF9800', label: 'learning' },
+    { value: dist.review, color: '#2196F3', label: 'review' },
+    { value: dist.mastered, color: '#4CAF50', label: 'mastered' }
+  ];
+  renderDonutChart(container, segments, { width: 200, height: 200 });
+}
+
+/**
+ * Render an accuracy trend line chart from study sessions.
+ * @param {HTMLElement} container - DOM element to append section into
+ * @param {Array<Object>} sessions - Study sessions with accuracy and startTime
+ */
+function renderAccuracyTrendChart(container, sessions) {
+  const section = createElement('div', 'sp-analytics-section');
+  const title = createElement('h3', '', { textContent: 'Accuracy Trend' });
+  section.appendChild(title);
+
+  const trendData = aggregateAccuracyTrend(sessions);
+  const mappedData = trendData.map(item => ({ value: item.accuracy }));
+  renderLineChart(section, mappedData, { width: 300, height: 200 });
+
+  container.appendChild(section);
+}
+
+/**
+ * Render a table of recent quiz results.
+ * @param {HTMLElement} container - DOM element to append section into
+ * @param {Array<Object>} results - Quiz result records
+ * @param {number} [limit=10] - Maximum results to show
+ */
+function renderRecentQuizResults(container, results, limit = 10) {
+  const section = createElement('div', 'sp-analytics-section');
+  const title = createElement('h3', '', { textContent: 'Recent Quiz Results' });
+  section.appendChild(title);
+
+  const sorted = [...results].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+  const limited = sorted.slice(0, limit);
+
+  const table = createElement('table', 'sp-results-table');
+
+  // Header row
+  const thead = createElement('thead');
+  const headerRow = createElement('tr');
+  const headers = ['Flashcard', 'Quality', 'From', 'To', 'Time'];
+  for (const h of headers) {
+    headerRow.appendChild(createElement('th', '', { textContent: h }));
+  }
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  // Data rows
+  const tbody = createElement('tbody');
+  for (const result of limited) {
+    const tr = createElement('tr');
+    tr.appendChild(createElement('td', '', { textContent: String(result.flashcardId || '').slice(0, 8) }));
+    tr.appendChild(createElement('td', '', { textContent: String(result.quality) }));
+    tr.appendChild(createElement('td', '', { textContent: String(result.oldStatus || '') }));
+    tr.appendChild(createElement('td', '', { textContent: String(result.newStatus || '') }));
+    tr.appendChild(createElement('td', '', {
+      textContent: result.timestamp ? new Date(result.timestamp).toLocaleString() : ''
+    }));
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+  section.appendChild(table);
+
+  container.appendChild(section);
+}
+
+/**
+ * Render watch time statistics.
+ * @param {HTMLElement} container - DOM element to append section into
+ * @param {Array<Object>} watchSessions - Watch session records with duration
+ */
+function renderWatchTimeStats(container, watchSessions) {
+  const section = createElement('div', 'sp-analytics-section');
+  const title = createElement('h3', '', { textContent: 'Watch Time' });
+  section.appendChild(title);
+
+  const totalSeconds = watchSessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+  const avgSeconds = watchSessions.length > 0 ? totalSeconds / watchSessions.length : 0;
+
+  const grid = createElement('div', 'sp-stat-grid');
+
+  const totalCard = createElement('div', 'sp-stat-card');
+  const totalValue = createElement('span', 'sp-stat-card__value', {
+    textContent: String(Math.round(totalSeconds / 60))
+  });
+  const totalLabel = createElement('span', 'sp-stat-card__label', {
+    textContent: 'Total Watch Time (min)'
+  });
+  totalCard.appendChild(totalValue);
+  totalCard.appendChild(totalLabel);
+  grid.appendChild(totalCard);
+
+  const avgCard = createElement('div', 'sp-stat-card');
+  const avgValue = createElement('span', 'sp-stat-card__value', {
+    textContent: String(Math.round(avgSeconds / 60))
+  });
+  const avgLabel = createElement('span', 'sp-stat-card__label', {
+    textContent: 'Avg Session (min)'
+  });
+  avgCard.appendChild(avgValue);
+  avgCard.appendChild(avgLabel);
+  grid.appendChild(avgCard);
+
+  section.appendChild(grid);
+  container.appendChild(section);
+}
+
+/**
+ * Main entry point for the per-lecture analytics tab.
+ * Fetches study data and renders summary stats, charts, and tables.
+ * @param {HTMLElement} container - DOM element to render into
+ * @param {string} lectureId - Lecture ID to show analytics for
+ * @returns {Promise<void>}
+ */
+async function renderLectureAnalyticsTab(container, lectureId) {
+  const sessions = await getStudySessions(lectureId);
+  const quizResults = await getQuizResults(lectureId);
+  const watchSessions = await getWatchSessions(lectureId);
+
+  if (sessions.length === 0 && quizResults.length === 0 && watchSessions.length === 0) {
+    renderAnalyticsTabEmptyState(container);
+    return;
+  }
+
+  const wrapper = createElement('div', 'sp-analytics-tab');
+
+  // Summary stat grid
+  const statsSection = createElement('div', 'sp-analytics-section');
+  const statsTitle = createElement('h3', '', { textContent: 'Summary' });
+  statsSection.appendChild(statsTitle);
+
+  const stats = aggregateOverallStats(sessions, quizResults, watchSessions);
+
+  const statGrid = createElement('div', 'sp-stat-grid');
+
+  const studyTimeCard = createElement('div', 'sp-stat-card');
+  studyTimeCard.appendChild(createElement('span', 'sp-stat-card__value', {
+    textContent: String(Math.round(stats.totalStudyTime / 60))
+  }));
+  studyTimeCard.appendChild(createElement('span', 'sp-stat-card__label', {
+    textContent: 'Study Time (min)'
+  }));
+  statGrid.appendChild(studyTimeCard);
+
+  const cardsCard = createElement('div', 'sp-stat-card');
+  cardsCard.appendChild(createElement('span', 'sp-stat-card__value', {
+    textContent: String(stats.totalCards)
+  }));
+  cardsCard.appendChild(createElement('span', 'sp-stat-card__label', {
+    textContent: 'Cards Reviewed'
+  }));
+  statGrid.appendChild(cardsCard);
+
+  const accuracyCard = createElement('div', 'sp-stat-card');
+  accuracyCard.appendChild(createElement('span', 'sp-stat-card__value', {
+    textContent: String(Math.round(stats.avgAccuracy)) + '%'
+  }));
+  accuracyCard.appendChild(createElement('span', 'sp-stat-card__label', {
+    textContent: 'Avg Accuracy'
+  }));
+  statGrid.appendChild(accuracyCard);
+
+  const watchTimeCard = createElement('div', 'sp-stat-card');
+  watchTimeCard.appendChild(createElement('span', 'sp-stat-card__value', {
+    textContent: String(Math.round(stats.totalWatchTime / 60))
+  }));
+  watchTimeCard.appendChild(createElement('span', 'sp-stat-card__label', {
+    textContent: 'Watch Time (min)'
+  }));
+  statGrid.appendChild(watchTimeCard);
+
+  statsSection.appendChild(statGrid);
+  wrapper.appendChild(statsSection);
+
+  // Accuracy trend chart (if sessions with accuracy exist)
+  const sessionsWithAccuracy = sessions.filter(
+    s => s.accuracy !== undefined && s.accuracy !== null
+  );
+  if (sessionsWithAccuracy.length > 0) {
+    renderAccuracyTrendChart(wrapper, sessions);
+  }
+
+  // Recent quiz results (if any)
+  if (quizResults.length > 0) {
+    renderRecentQuizResults(wrapper, quizResults);
+  }
+
+  // Watch time stats (if any)
+  if (watchSessions.length > 0) {
+    renderWatchTimeStats(wrapper, watchSessions);
+  }
+
+  container.appendChild(wrapper);
+}
+
+// ============================================================================
 // EXPORTS
 // ============================================================================
 
@@ -794,5 +1016,13 @@ export {
   // SVG Chart Renderers
   renderBarChart,
   renderLineChart,
-  renderDonutChart
+  renderDonutChart,
+
+  // Per-Lecture Analytics UI
+  renderLectureAnalyticsTab,
+  renderMasteryDonut,
+  renderAccuracyTrendChart,
+  renderRecentQuizResults,
+  renderWatchTimeStats,
+  renderAnalyticsTabEmptyState
 };

@@ -32,7 +32,13 @@ import {
   calculateStreak,
   renderBarChart,
   renderLineChart,
-  renderDonutChart
+  renderDonutChart,
+  renderLectureAnalyticsTab,
+  renderMasteryDonut,
+  renderAccuracyTrendChart,
+  renderRecentQuizResults,
+  renderWatchTimeStats,
+  renderAnalyticsTabEmptyState
 } from './analytics.js';
 
 import {
@@ -44,6 +50,7 @@ import {
 import { LectureRepository, FlashcardRepository } from './storage/index.js';
 
 import { createSVGElement } from './dom-utils.js';
+import { renderDetailTabs } from './library.js';
 
 // ============================================================================
 // TEST SETUP
@@ -922,6 +929,242 @@ describe('Analytics — Day 2: Aggregation + Charts', () => {
     expect(svg.getAttribute('aria-labelledby')).toBe(title.getAttribute('id'));
     const circles = svg.querySelectorAll('circle[stroke-dasharray]');
     expect(circles.length).toBe(3);
+  });
+
+});
+
+// ============================================================================
+// DAY 3: Per-Lecture Analytics Tab
+// ============================================================================
+
+describe('Analytics — Day 3: Per-Lecture Analytics Tab', () => {
+
+  afterEach(async () => {
+    await closeDatabase();
+    await deleteDatabase();
+  });
+
+  // --------------------------------------------------------------------------
+  // renderLectureAnalyticsTab
+  // --------------------------------------------------------------------------
+
+  /**
+   * Test 1: renderLectureAnalyticsTab renders stat cards when data exists.
+   * Save 2 study sessions and 1 watch session for a lecture, then render the
+   * analytics tab and verify stat cards and section elements are present.
+   */
+  it('renderLectureAnalyticsTab renders stat cards when data exists', async () => {
+    const lectureId = 'lec-analytics-tab-1';
+
+    const s1 = createStudySessionRecord({
+      lectureId,
+      type: 'flashcards',
+      duration: 300,
+      cardsReviewed: 10,
+      correct: 8,
+      accuracy: 0.8
+    });
+    const s2 = createStudySessionRecord({
+      lectureId,
+      type: 'flashcards',
+      duration: 600,
+      cardsReviewed: 20,
+      correct: 15,
+      accuracy: 0.75
+    });
+    await saveStudySession(s1);
+    await saveStudySession(s2);
+
+    await saveWatchSession(createWatchSessionRecord({
+      lectureId,
+      startPosition: 0,
+      endPosition: 120,
+      duration: 120
+    }));
+
+    const container = document.createElement('div');
+    await renderLectureAnalyticsTab(container, lectureId);
+
+    const statCards = container.querySelectorAll('.sp-stat-card');
+    expect(statCards.length).toBeGreaterThanOrEqual(1);
+
+    const sections = container.querySelectorAll('.sp-analytics-section');
+    expect(sections.length).toBeGreaterThanOrEqual(1);
+  });
+
+  /**
+   * Test 2: renderLectureAnalyticsTab shows empty state when no data exists.
+   * Render the analytics tab for a nonexistent lecture and verify the empty
+   * state element is present with appropriate text.
+   */
+  it('renderLectureAnalyticsTab shows empty state when no data', async () => {
+    const container = document.createElement('div');
+    await renderLectureAnalyticsTab(container, 'nonexistent-lecture');
+
+    const emptyState = container.querySelector('.sp-analytics-empty');
+    expect(emptyState).not.toBeNull();
+    expect(emptyState.textContent.toLowerCase()).toContain('no study data');
+  });
+
+  // --------------------------------------------------------------------------
+  // renderMasteryDonut
+  // --------------------------------------------------------------------------
+
+  /**
+   * Test 3: renderMasteryDonut renders SVG with 4 segments.
+   * Pass flashcards with all 4 statuses and verify the SVG has role="img"
+   * and exactly 4 circle elements with stroke-dasharray.
+   */
+  it('renderMasteryDonut renders SVG with 4 segments', () => {
+    const flashcards = [
+      { status: 'new' },
+      { status: 'learning' },
+      { status: 'review' },
+      { status: 'mastered' }
+    ];
+
+    const container = document.createElement('div');
+    renderMasteryDonut(container, flashcards);
+
+    const svg = container.querySelector('svg');
+    expect(svg).not.toBeNull();
+    expect(svg.getAttribute('role')).toBe('img');
+
+    const circles = svg.querySelectorAll('circle[stroke-dasharray]');
+    expect(circles.length).toBe(4);
+  });
+
+  // --------------------------------------------------------------------------
+  // renderAccuracyTrendChart
+  // --------------------------------------------------------------------------
+
+  /**
+   * Test 4: renderAccuracyTrendChart renders line with data points.
+   * Create 5 sessions with accuracy and startTime, render the chart, and
+   * verify SVG, polyline, and circle data points exist.
+   */
+  it('renderAccuracyTrendChart renders line + data points', () => {
+    const now = Date.now();
+    const sessions = [
+      { accuracy: 60, startTime: now - 5000 },
+      { accuracy: 70, startTime: now - 4000 },
+      { accuracy: 75, startTime: now - 3000 },
+      { accuracy: 80, startTime: now - 2000 },
+      { accuracy: 85, startTime: now - 1000 }
+    ];
+
+    const container = document.createElement('div');
+    renderAccuracyTrendChart(container, sessions);
+
+    const svg = container.querySelector('svg');
+    expect(svg).not.toBeNull();
+
+    const polyline = svg.querySelector('polyline');
+    expect(polyline).not.toBeNull();
+
+    const circles = svg.querySelectorAll('circle');
+    expect(circles.length).toBeGreaterThanOrEqual(5);
+  });
+
+  // --------------------------------------------------------------------------
+  // renderRecentQuizResults
+  // --------------------------------------------------------------------------
+
+  /**
+   * Test 5: renderRecentQuizResults renders table rows.
+   * Create 3 quiz results and verify a table with 3 rows is rendered.
+   */
+  it('renderRecentQuizResults renders table rows', () => {
+    const now = Date.now();
+    const results = [
+      { flashcardId: 'fc-1', quality: 4, oldStatus: 'new', newStatus: 'learning', timestamp: now - 3000 },
+      { flashcardId: 'fc-2', quality: 5, oldStatus: 'learning', newStatus: 'review', timestamp: now - 2000 },
+      { flashcardId: 'fc-3', quality: 3, oldStatus: 'review', newStatus: 'mastered', timestamp: now - 1000 }
+    ];
+
+    const container = document.createElement('div');
+    renderRecentQuizResults(container, results);
+
+    const table = container.querySelector('.sp-results-table') || container.querySelector('table');
+    expect(table).not.toBeNull();
+
+    const rows = container.querySelectorAll('tr');
+    // Subtract 1 for header row if present, or just check >= 3
+    const dataRows = Array.from(rows).filter(r => !r.querySelector('th'));
+    expect(dataRows.length).toBe(3);
+  });
+
+  /**
+   * Test 6: renderRecentQuizResults limits to 10 recent results.
+   * Create 15 quiz results and verify only 10 rows are rendered.
+   */
+  it('renderRecentQuizResults limits to 10 recent', () => {
+    const now = Date.now();
+    const results = [];
+    for (let i = 0; i < 15; i++) {
+      results.push({
+        flashcardId: `fc-${i}`,
+        quality: 3 + (i % 3),
+        oldStatus: 'new',
+        newStatus: 'learning',
+        timestamp: now - (15 - i) * 1000
+      });
+    }
+
+    const container = document.createElement('div');
+    renderRecentQuizResults(container, results, 10);
+
+    const rows = container.querySelectorAll('tr');
+    const dataRows = Array.from(rows).filter(r => !r.querySelector('th'));
+    expect(dataRows.length).toBe(10);
+  });
+
+  // --------------------------------------------------------------------------
+  // renderWatchTimeStats
+  // --------------------------------------------------------------------------
+
+  /**
+   * Test 7: renderWatchTimeStats shows total and average.
+   * Create 3 watch sessions with durations 600, 900, 1200 (total 2700s = 45min)
+   * and verify stat card elements and total time text.
+   */
+  it('renderWatchTimeStats shows total and average', () => {
+    const now = Date.now();
+    const watchSessions = [
+      { duration: 600, timestamp: now - 3000 },
+      { duration: 900, timestamp: now - 2000 },
+      { duration: 1200, timestamp: now - 1000 }
+    ];
+
+    const container = document.createElement('div');
+    renderWatchTimeStats(container, watchSessions);
+
+    const statCards = container.querySelectorAll('.sp-stat-card');
+    expect(statCards.length).toBeGreaterThanOrEqual(1);
+
+    // Total time is 2700s = 45 minutes; verify "45" appears somewhere
+    expect(container.textContent).toContain('45');
+  });
+
+  // --------------------------------------------------------------------------
+  // Integration: analytics tab in lecture detail view
+  // --------------------------------------------------------------------------
+
+  /**
+   * Test 8: renderDetailTabs includes analytics tab.
+   * This test will FAIL until library.js is modified to include the analytics
+   * tab (TDD — red phase). Expects 5 tabs total with an "Analytics" tab.
+   */
+  it('renderDetailTabs includes analytics tab', () => {
+    const container = document.createElement('div');
+    renderDetailTabs(container, 'analytics', () => {});
+
+    const analyticsTab = container.querySelector('[data-tab="analytics"]');
+    expect(analyticsTab).not.toBeNull();
+    expect(analyticsTab.textContent.toLowerCase()).toContain('analytics');
+
+    const allTabs = container.querySelectorAll('[role="tab"]');
+    expect(allTabs.length).toBe(5);
   });
 
 });

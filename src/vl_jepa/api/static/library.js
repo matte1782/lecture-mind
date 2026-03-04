@@ -42,6 +42,8 @@ import {
   VIEWS
 } from './flashcards.js';
 
+import { renderLectureAnalyticsTab } from './analytics.js';
+
 // ============================================================================
 // STATE
 // ============================================================================
@@ -1625,8 +1627,8 @@ function renderDetailStats(container, stats) {
  * @returns {HTMLElement} The tablist element
  */
 function renderDetailTabs(container, activeTab, onTabChange) {
-  const tabNames = ['Segments', 'Flashcards', 'Bookmarks', 'Info'];
-  const tabIds = ['segments', 'flashcards', 'bookmarks', 'info'];
+  const tabNames = ['Segments', 'Flashcards', 'Bookmarks', 'Info', 'Analytics'];
+  const tabIds = ['segments', 'flashcards', 'bookmarks', 'info', 'analytics'];
 
   const tablist = createElement('div', 'sp-detail-tabs');
   tablist.setAttribute('role', 'tablist');
@@ -1916,6 +1918,7 @@ async function renderLectureDetailView(lectureId) {
       else if (tabId === 'flashcards') await renderFlashcardsList(tabPanel, lectureId);
       else if (tabId === 'bookmarks') await renderBookmarksList(tabPanel, lectureId);
       else if (tabId === 'info') renderLectureInfo(tabPanel, lecture, stats);
+      else if (tabId === 'analytics') await renderLectureAnalyticsTab(tabPanel, lectureId);
     });
 
     content.appendChild(tabPanel);
