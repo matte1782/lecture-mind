@@ -38,13 +38,21 @@ import {
   renderAccuracyTrendChart,
   renderRecentQuizResults,
   renderWatchTimeStats,
-  renderAnalyticsTabEmptyState
+  renderAnalyticsTabEmptyState,
+  renderStudyDashboard,
+  renderStreakCard,
+  renderWeeklyStudyChart,
+  renderGlobalMasteryBreakdown,
+  renderTopLecturesTable,
+  renderDashboardEmptyState
 } from './analytics.js';
 
 import {
   setOnQuizResult,
   setOnSessionComplete,
-  StudySession
+  StudySession,
+  parseHash,
+  VIEWS
 } from './flashcards.js';
 
 import { LectureRepository, FlashcardRepository } from './storage/index.js';
@@ -1165,6 +1173,147 @@ describe('Analytics — Day 3: Per-Lecture Analytics Tab', () => {
 
     const allTabs = container.querySelectorAll('[role="tab"]');
     expect(allTabs.length).toBe(5);
+  });
+
+});
+
+// ============================================================================
+// DAY 4: Aggregate Study Dashboard
+// ============================================================================
+
+describe('Analytics — Day 4: Study Dashboard', () => {
+
+  afterEach(async () => {
+    await closeDatabase();
+    await deleteDatabase();
+  });
+
+  // --------------------------------------------------------------------------
+  // renderStudyDashboard
+  // --------------------------------------------------------------------------
+
+  it('renderStudyDashboard renders all sections when data exists', async () => {
+    // Seed data
+    await saveStudySession(createStudySessionRecord({
+      lectureId: 'lec-dash-1', type: 'quiz', duration: 600,
+      cardsReviewed: 10, correct: 8, accuracy: 80
+    }));
+    await saveWatchSession(createWatchSessionRecord({
+      lectureId: 'lec-dash-1', startPosition: 0, endPosition: 120, duration: 120
+    }));
+
+    const container = document.createElement('div');
+    await renderStudyDashboard(container);
+
+    // Dashboard should have all key sections
+    expect(container.querySelector('.sp-dashboard')).not.toBeNull();
+    expect(container.querySelector('.sp-streak-card')).not.toBeNull();
+    expect(container.querySelector('svg')).not.toBeNull();
+    expect(container.querySelector('.sp-results-table')).not.toBeNull();
+    expect(container.querySelectorAll('.sp-analytics-section').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('renderStudyDashboard shows empty state when no data', async () => {
+    const container = document.createElement('div');
+    await renderStudyDashboard(container);
+
+    const emptyState = container.querySelector('.sp-analytics-empty');
+    expect(emptyState).not.toBeNull();
+    expect(emptyState.textContent.toLowerCase()).toContain('start studying');
+  });
+
+  // --------------------------------------------------------------------------
+  // renderStreakCard
+  // --------------------------------------------------------------------------
+
+  it('renderStreakCard displays count', () => {
+    const container = document.createElement('div');
+    renderStreakCard(container, 5);
+
+    const card = container.querySelector('.sp-streak-card');
+    expect(card).not.toBeNull();
+    expect(container.textContent).toContain('5');
+  });
+
+  it('renderStreakCard shows 0 for no activity', () => {
+    const container = document.createElement('div');
+    renderStreakCard(container, 0);
+
+    const card = container.querySelector('.sp-streak-card');
+    expect(card).not.toBeNull();
+    expect(container.textContent).toContain('0');
+  });
+
+  // --------------------------------------------------------------------------
+  // renderWeeklyStudyChart
+  // --------------------------------------------------------------------------
+
+  it('renderWeeklyStudyChart renders 7 bars', () => {
+    const dailyData = [];
+    for (let i = 0; i < 7; i++) {
+      dailyData.push({ date: `2026-03-0${i + 1}`, totalMinutes: i * 10, quizMinutes: i * 5, watchMinutes: i * 5 });
+    }
+
+    const container = document.createElement('div');
+    renderWeeklyStudyChart(container, dailyData);
+
+    const svg = container.querySelector('svg');
+    expect(svg).not.toBeNull();
+    const rects = svg.querySelectorAll('rect');
+    expect(rects.length).toBe(7);
+  });
+
+  // --------------------------------------------------------------------------
+  // renderGlobalMasteryBreakdown
+  // --------------------------------------------------------------------------
+
+  it('renderGlobalMasteryBreakdown aggregates all statuses', () => {
+    const flashcards = [
+      { status: 'new' }, { status: 'new' },
+      { status: 'learning' },
+      { status: 'review' }, { status: 'review' },
+      { status: 'mastered' }, { status: 'mastered' }, { status: 'mastered' }
+    ];
+
+    const container = document.createElement('div');
+    renderGlobalMasteryBreakdown(container, flashcards);
+
+    const svg = container.querySelector('svg');
+    expect(svg).not.toBeNull();
+    const circles = svg.querySelectorAll('circle[stroke-dasharray]');
+    expect(circles.length).toBe(4); // new, learning, review, mastered
+  });
+
+  // --------------------------------------------------------------------------
+  // renderTopLecturesTable
+  // --------------------------------------------------------------------------
+
+  it('renderTopLecturesTable sorts by study time desc', () => {
+    const sessions = [
+      { lectureId: 'lec-A', duration: 300 },
+      { lectureId: 'lec-A', duration: 200 },
+      { lectureId: 'lec-B', duration: 1000 },
+      { lectureId: 'lec-C', duration: 100 }
+    ];
+
+    const container = document.createElement('div');
+    renderTopLecturesTable(container, sessions);
+
+    const rows = container.querySelectorAll('tr');
+    const dataRows = Array.from(rows).filter(r => !r.querySelector('th'));
+    expect(dataRows.length).toBe(3); // 3 unique lectures
+
+    // First row should be lec-B (1000s = most time)
+    expect(dataRows[0].textContent).toContain('lec-B');
+  });
+
+  // --------------------------------------------------------------------------
+  // #/dashboard route
+  // --------------------------------------------------------------------------
+
+  it('parseHash recognizes #/dashboard route', () => {
+    const result = parseHash('#/dashboard');
+    expect(result.view).toBe(VIEWS.DASHBOARD);
   });
 
 });

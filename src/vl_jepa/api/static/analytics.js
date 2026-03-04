@@ -14,7 +14,7 @@
  * @version 1.0.0
  */
 
-import { SettingsRepository } from './storage/index.js';
+import { SettingsRepository, FlashcardRepository } from './storage/index.js';
 import { setOnQuizResult, setOnSessionComplete } from './flashcards.js';
 import { createSVGElement, createElement, clearElement } from './dom-utils.js';
 
@@ -978,6 +978,204 @@ async function renderLectureAnalyticsTab(container, lectureId) {
 }
 
 // ============================================================================
+// GLOBAL DASHBOARD UI
+// ============================================================================
+
+/**
+ * Render the empty state for the global study dashboard.
+ * @param {HTMLElement} container - DOM element to render into
+ */
+function renderDashboardEmptyState(container) {
+  const empty = createElement('div', 'sp-analytics-empty', {
+    textContent: 'Start studying to see your progress! Complete a quiz or watch a lecture.'
+  });
+  container.appendChild(empty);
+}
+
+/**
+ * Render a streak card showing consecutive study days.
+ * @param {HTMLElement} container - DOM element to append into
+ * @param {number} streak - Number of consecutive days
+ */
+function renderStreakCard(container, streak) {
+  const card = createElement('div', 'sp-streak-card');
+  const flame = createElement('span', 'sp-streak-card__flame', { textContent: '\uD83D\uDD25' });
+  const count = createElement('span', 'sp-streak-card__count', { textContent: String(streak) });
+  const label = createElement('span', '', { textContent: 'day streak' });
+  card.appendChild(flame);
+  card.appendChild(count);
+  card.appendChild(label);
+  container.appendChild(card);
+}
+
+/**
+ * Render a weekly study time bar chart.
+ * @param {HTMLElement} container - DOM element to append into
+ * @param {Array<{date: string, totalMinutes: number}>} dailyData - Daily study data
+ */
+function renderWeeklyStudyChart(container, dailyData) {
+  const section = createElement('div', 'sp-analytics-section');
+  const title = createElement('h3', '', { textContent: 'Weekly Study Time' });
+  section.appendChild(title);
+
+  const mappedData = dailyData.map(item => ({
+    label: item.date.slice(5),
+    value: item.totalMinutes
+  }));
+
+  renderBarChart(section, mappedData, {
+    width: 400,
+    height: 200,
+    barColor: '#4a90d9',
+    labelKey: 'label',
+    valueKey: 'value'
+  });
+
+  container.appendChild(section);
+}
+
+/**
+ * Render a global accuracy trend line chart from study sessions.
+ * @param {HTMLElement} container - DOM element to append into
+ * @param {Array<Object>} sessions - Study sessions with accuracy and startTime
+ */
+function renderGlobalAccuracyTrend(container, sessions) {
+  const section = createElement('div', 'sp-analytics-section');
+  const title = createElement('h3', '', { textContent: 'Accuracy Over Time' });
+  section.appendChild(title);
+
+  const trendData = aggregateAccuracyTrend(sessions);
+  const mapped = trendData.map(item => ({ value: item.accuracy }));
+  renderLineChart(section, mapped, { width: 400, height: 200 });
+
+  container.appendChild(section);
+}
+
+/**
+ * Render a global mastery breakdown donut chart from flashcard data.
+ * @param {HTMLElement} container - DOM element to append into
+ * @param {Array<Object>} flashcards - Flashcard objects with status field
+ */
+function renderGlobalMasteryBreakdown(container, flashcards) {
+  const section = createElement('div', 'sp-analytics-section');
+  const title = createElement('h3', '', { textContent: 'Mastery Breakdown' });
+  section.appendChild(title);
+
+  renderMasteryDonut(section, flashcards);
+
+  container.appendChild(section);
+}
+
+/**
+ * Render a table of top lectures ranked by total study time.
+ * @param {HTMLElement} container - DOM element to append into
+ * @param {Array<Object>} sessions - Study sessions with lectureId and duration
+ */
+function renderTopLecturesTable(container, sessions) {
+  const section = createElement('div', 'sp-analytics-section');
+  const title = createElement('h3', '', { textContent: 'Top Lectures by Study Time' });
+  section.appendChild(title);
+
+  // Group sessions by lectureId
+  const lectureMap = new Map();
+  for (const s of sessions) {
+    if (!lectureMap.has(s.lectureId)) {
+      lectureMap.set(s.lectureId, { totalDuration: 0, count: 0 });
+    }
+    const entry = lectureMap.get(s.lectureId);
+    entry.totalDuration += (s.duration || 0);
+    entry.count += 1;
+  }
+
+  // Sort by total duration descending
+  const sorted = [...lectureMap.entries()].sort((a, b) => b[1].totalDuration - a[1].totalDuration);
+
+  const table = createElement('table', 'sp-results-table');
+
+  // Header
+  const thead = createElement('thead');
+  const headerRow = createElement('tr');
+  const headers = ['Lecture', 'Total Time (min)', 'Sessions'];
+  for (const h of headers) {
+    headerRow.appendChild(createElement('th', '', { textContent: h }));
+  }
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  // Data rows
+  const tbody = createElement('tbody');
+  for (const [lectureId, data] of sorted) {
+    const tr = createElement('tr');
+    tr.appendChild(createElement('td', '', { textContent: String(lectureId) }));
+    tr.appendChild(createElement('td', '', { textContent: String(Math.round(data.totalDuration / 60)) }));
+    tr.appendChild(createElement('td', '', { textContent: String(data.count) }));
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+  section.appendChild(table);
+
+  container.appendChild(section);
+}
+
+/**
+ * Main entry point for the global study dashboard.
+ * Fetches all study data (no lectureId filter) and renders dashboard components.
+ * @param {HTMLElement} container - DOM element to render into
+ * @returns {Promise<void>}
+ */
+async function renderStudyDashboard(container) {
+  try {
+    const sessions = await getStudySessions();
+    const quizResults = await getQuizResults();
+    const watchSessions = await getWatchSessions();
+
+    if (sessions.length === 0 && quizResults.length === 0 && watchSessions.length === 0) {
+      renderDashboardEmptyState(container);
+      return;
+    }
+
+    const wrapper = createElement('div', 'sp-dashboard');
+
+    // Header
+    const header = createElement('div', 'sp-dashboard__header');
+    const heading = createElement('h2', '', { textContent: 'Study Dashboard' });
+    header.appendChild(heading);
+    wrapper.appendChild(header);
+
+    // Streak card
+    const streak = calculateStreak(sessions);
+    renderStreakCard(wrapper, streak);
+
+    // Weekly study chart
+    const dailyData = aggregateStudyTimeByDay(sessions);
+    renderWeeklyStudyChart(wrapper, dailyData);
+
+    // Accuracy trend (only if sessions with accuracy exist)
+    const sessionsWithAccuracy = sessions.filter(
+      s => s.accuracy !== undefined && s.accuracy !== null
+    );
+    if (sessionsWithAccuracy.length > 0) {
+      renderGlobalAccuracyTrend(wrapper, sessions);
+    }
+
+    // Global mastery breakdown
+    const allFlashcards = await FlashcardRepository.getAll();
+    if (allFlashcards.length > 0) {
+      renderGlobalMasteryBreakdown(wrapper, allFlashcards);
+    }
+
+    // Top lectures table
+    renderTopLecturesTable(wrapper, sessions);
+
+    container.appendChild(wrapper);
+  } catch (_err) {
+    container.appendChild(createElement('div', 'sp-analytics-error', {
+      textContent: 'Failed to load dashboard. Please try again.'
+    }));
+  }
+}
+
+// ============================================================================
 // EXPORTS
 // ============================================================================
 
@@ -1024,5 +1222,14 @@ export {
   renderAccuracyTrendChart,
   renderRecentQuizResults,
   renderWatchTimeStats,
-  renderAnalyticsTabEmptyState
+  renderAnalyticsTabEmptyState,
+
+  // Global Dashboard UI
+  renderDashboardEmptyState,
+  renderStreakCard,
+  renderWeeklyStudyChart,
+  renderGlobalAccuracyTrend,
+  renderGlobalMasteryBreakdown,
+  renderTopLecturesTable,
+  renderStudyDashboard
 };

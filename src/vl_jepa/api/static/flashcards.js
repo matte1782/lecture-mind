@@ -86,11 +86,13 @@ function showToast(variant, title, message) {
 
 let _libraryRenderer = null;
 let _lectureDetailRenderer = null;
+let _dashboardRenderer = null;
 let _onQuizResult = null;
 let _onSessionComplete = null;
 
 function setLibraryRenderer(fn) { _libraryRenderer = fn; }
 function setLectureDetailRenderer(fn) { _lectureDetailRenderer = fn; }
+function setDashboardRenderer(fn) { _dashboardRenderer = fn; }
 function setOnQuizResult(fn) { _onQuizResult = fn; }
 function setOnSessionComplete(fn) { _onSessionComplete = fn; }
 
@@ -107,7 +109,8 @@ const VIEWS = {
   LANDING: 'landing',
   PLAYGROUND: 'playground',
   STUDY: 'study',
-  LECTURE_DETAIL: 'lecture-detail'
+  LECTURE_DETAIL: 'lecture-detail',
+  DASHBOARD: 'dashboard'
 };
 
 function parseHash(hash) {
@@ -133,6 +136,10 @@ function parseHash(hash) {
   const lectureMatch = raw.match(/^lecture\/(.+)$/);
   if (lectureMatch) {
     return { view: VIEWS.LECTURE_DETAIL, params: { lectureId: sanitizeId(lectureMatch[1]) } };
+  }
+
+  if (raw === 'dashboard') {
+    return { view: VIEWS.DASHBOARD, params: {} };
   }
 
   return { view: VIEWS.LANDING, params: {} };
@@ -182,7 +189,8 @@ function getViewSections() {
     landing: document.getElementById('app-section'),
     playground: document.getElementById('playground-view'),
     study: document.getElementById('study-view'),
-    lectureDetail: document.getElementById('lecture-detail-view')
+    lectureDetail: document.getElementById('lecture-detail-view'),
+    dashboard: document.getElementById('dashboard-view')
   };
 }
 
@@ -235,6 +243,15 @@ function mountView(view, params = {}) {
       if (sections.study) {
         showElement(sections.study);
         startStudyView(params.lectureId);
+      }
+      break;
+
+    case VIEWS.DASHBOARD:
+      if (sections.dashboard) {
+        showElement(sections.dashboard);
+        const dashContainer = sections.dashboard.querySelector('.section-container') || sections.dashboard;
+        clearElement(dashContainer);
+        if (_dashboardRenderer) _dashboardRenderer(dashContainer);
       }
       break;
   }
@@ -1526,6 +1543,7 @@ export {
   // Hookable renderers (for library.js registration)
   setLibraryRenderer,
   setLectureDetailRenderer,
+  setDashboardRenderer,
 
   // Analytics hooks (for analytics.js registration — AD-9)
   setOnQuizResult,

@@ -37,12 +37,13 @@ import {
 import {
   setLibraryRenderer,
   setLectureDetailRenderer,
+  setDashboardRenderer,
   navigateTo,
   showToast,
   VIEWS
 } from './flashcards.js';
 
-import { renderLectureAnalyticsTab } from './analytics.js';
+import { renderLectureAnalyticsTab, renderStudyDashboard } from './analytics.js';
 
 // ============================================================================
 // STATE
@@ -547,6 +548,15 @@ function renderLibraryToolbar(sortBy, viewMode) {
   toggleContainer.appendChild(gridBtn);
   toggleContainer.appendChild(listBtn);
   toolbar.appendChild(toggleContainer);
+
+  // Dashboard button
+  const dashBtn = createElement('button', 'sp-library-toolbar__btn sp-library-toolbar__dash', {
+    type: 'button',
+    'aria-label': 'Study Dashboard',
+    textContent: 'Dashboard'
+  });
+  dashBtn.addEventListener('click', () => navigateTo('#/dashboard'));
+  toolbar.appendChild(dashBtn);
 }
 
 // ============================================================================
@@ -2165,6 +2175,7 @@ function renderFavoriteButton(container, lectureId, isFav) {
 // Register renderers with flashcards.js router (AD-1 pattern)
 setLibraryRenderer(enhancedRenderLibraryView);
 setLectureDetailRenderer(renderLectureDetailView);
+setDashboardRenderer((container) => renderStudyDashboard(container));
 
 // ============================================================================
 // EXPORTS

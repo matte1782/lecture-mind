@@ -1,37 +1,40 @@
-## HOSTILE REVIEW: Week 12 Day 4 — Lecture Detail View
+## Summary (Week 13 Day 4 — Aggregate Study Dashboard)
+- Issues: 0 critical, 0 major, 2 minor
+- Score: 90/100
+- Recommendation: GO
 
-**Date:** 2026-03-04
-**Score:** 82/100 → **90/100 after fixes**
-**Verdict:** APPROVED (all major issues fixed)
+## Round 1: 72/100 BLOCK (1 critical, 3 major)
+
+### C1: setDashboardRenderer never called — dashboard route dead
+### M2: renderStudyDashboard never called renderGlobalMasteryBreakdown
+### M3: No error handling in async renderStudyDashboard
+### M4: Weak test assertions on dashboard integration test
 
 ---
 
-## Summary
-- Issues found: 0 critical, 3 major, 5 minor
-- Major issues: ALL 3 FIXED
-- Recommendation: READY
+## Re-Review (Round 2) — After Fixes
 
-## Major Issues Fixed
+- Score: **90/100**
+- Recommendation: **GO**
 
-### M1. `aria-controls` references nonexistent `id` [FIXED]
-**Location:** `library.js` tabpanel element
-**Fix:** Added `tabPanel.id = 'tabpanel-segments'` default + dynamic update on tab switch
+### C1 FIXED: Dashboard route wired
+library.js:2178 registers renderStudyDashboard via setDashboardRenderer.
+Full chain: flashcards.js setter → library.js registers → router invokes.
 
-### M2. `createProgressRing` + `createMasteryBadge` imported but unused [FIXED]
-**Location:** `library.js` imports
-**Fix:** Removed unused imports from flashcards.js
+### M2 FIXED: Global mastery breakdown added
+analytics.js fetches FlashcardRepository.getAll() and calls renderGlobalMasteryBreakdown.
 
-### M3. Entity lists have no empty state handling [FIXED]
-**Location:** `renderSegmentsList`, `renderFlashcardsList`, `renderBookmarksList`
-**Fix:** Added "No segments/flashcards/bookmarks yet" empty state messages
+### M3 FIXED: Error handling added
+Entire renderStudyDashboard wrapped in try/catch with sp-analytics-error element.
 
-## Minor Issues (accepted)
-- m1: Function signatures take container param (deviation from plan, but superior pattern)
-- m2: Home/End key missing from tabs (consistent with existing search tabs)
-- m3: Inline style for course badge color (low impact)
-- m4: No forced-colors media query for Day 4 CSS (low impact)
-- m5: `flashcardsDue` filter untested (non-critical)
+### M4 FIXED: Structural test assertions
+Integration test asserts .sp-streak-card, svg, .sp-results-table, .sp-analytics-section.
 
-## Test Results
-- 453 tests passing (437 pre-existing + 16 new)
-- 0 failures, 8 suites
+### Remaining Minor Issues (non-blocking)
+- m1: Dashboard integration test doesn't seed flashcards (mastery donut untested in integration, covered by isolated test) — 75%
+- m2: Catch block discards error without logging — 60%
+
+### No Regressions Detected
+535 tests, 0 failures.
+
+**VERDICT: GO — 90/100**
