@@ -265,3 +265,54 @@
     break-inside: avoid;
   }
 }
+
+/* Skeleton dimensions for analytics sections */
+.sp-skeleton__title {
+  height: 1.25rem;
+  width: 60%;
+  border-radius: 4px;
+  background: var(--sp-border, #e0e0e0);
+  margin-bottom: 0.5rem;
+}
+
+.sp-skeleton__course {
+  height: 0.875rem;
+  width: 40%;
+  border-radius: 4px;
+  background: var(--sp-border, #e0e0e0);
+  margin-bottom: 0.5rem;
+}
+
+.sp-skeleton__progress {
+  height: 0.75rem;
+  width: 25%;
+  border-radius: 4px;
+  background: var(--sp-border, #e0e0e0);
+}
+
+.sp-skeleton__header {
+  height: 2rem;
+  width: 70%;
+  border-radius: 4px;
+  background: var(--sp-border, #e0e0e0);
+  margin-bottom: 1rem;
+}
+
+.sp-skeleton__stats {
+  height: 4rem;
+  width: 100%;
+  border-radius: 8px;
+  background: var(--sp-border, #e0e0e0);
+  margin-bottom: 1rem;
+}
+
+.sp-skeleton__tabs {
+  height: 2.5rem;
+  width: 100%;
+  border-radius: 4px;
+  background: var(--sp-border, #e0e0e0);
+}
+
+.sp-detail-skeleton {
+  padding: 1.5rem;
+}

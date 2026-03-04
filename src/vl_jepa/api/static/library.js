@@ -1292,7 +1292,10 @@ function renderLibraryViewPaginated(container, lectures, courseMap, pageSize = 1
     for (let i = rendered; i < end; i++) {
       const lecture = lectures[i];
       const course = courseMap.get(lecture.courseId) || null;
-      container.appendChild(renderLibraryCard(lecture, course));
+      const card = renderLibraryCard(lecture, course);
+      card.style.setProperty('--stagger-index', String(i));
+      card.classList.add('animate-card-entrance');
+      container.appendChild(card);
     }
     rendered = end;
 

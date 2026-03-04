@@ -180,6 +180,49 @@ function timeAgo(date) {
 }
 
 // ============================================================================
+// SKELETON LOADING UTILITIES
+// ============================================================================
+
+/**
+ * Create a skeleton placeholder card matching sp-library-card layout.
+ * Uses sp-skeleton class from animations-v2.css for shimmer effect.
+ * @returns {HTMLElement}
+ */
+function createSkeletonCard() {
+  const card = createElement('div', 'sp-skeleton sp-library-card', {
+    'aria-hidden': 'true'
+  });
+  card.appendChild(createElement('div', 'sp-skeleton__title'));
+  card.appendChild(createElement('div', 'sp-skeleton__course'));
+  card.appendChild(createElement('div', 'sp-skeleton__progress'));
+  return card;
+}
+
+/**
+ * Create a skeleton placeholder for the lecture detail view.
+ * @returns {HTMLElement}
+ */
+function createSkeletonDetail() {
+  const detail = createElement('div', 'sp-skeleton sp-detail-skeleton');
+  detail.appendChild(createElement('div', 'sp-skeleton__header'));
+  detail.appendChild(createElement('div', 'sp-skeleton__stats'));
+  detail.appendChild(createElement('div', 'sp-skeleton__tabs'));
+  return detail;
+}
+
+/**
+ * Render N skeleton cards into a container, clearing existing content.
+ * @param {HTMLElement} container
+ * @param {number} [count=6]
+ */
+function renderSkeletonGrid(container, count = 6) {
+  clearElement(container);
+  for (let i = 0; i < count; i++) {
+    container.appendChild(createSkeletonCard());
+  }
+}
+
+// ============================================================================
 // SVG UTILITIES
 // ============================================================================
 
@@ -219,6 +262,11 @@ export {
   showElement,
   hideElement,
   sanitizeId,
+
+  // Skeleton loading
+  createSkeletonCard,
+  createSkeletonDetail,
+  renderSkeletonGrid,
 
   // SVG utilities
   createSVGElement,

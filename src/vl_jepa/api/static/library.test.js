@@ -25,6 +25,12 @@ import {
 } from './storage/index.js';
 
 import {
+  createSkeletonCard,
+  createSkeletonDetail,
+  renderSkeletonGrid
+} from './dom-utils.js';
+
+import {
   loadCourses,
   createCourseDialog,
   editCourseDialog,
@@ -1717,5 +1723,139 @@ describe('Keyboard Shortcuts', () => {
     card.dispatchEvent(event);
     // Navigation triggered — hash should change
     expect(window.location.hash).toContain('kb-lec-1');
+  });
+});
+
+// ============================================================================
+// WEEK 14 DAY 1: SKELETON LOADING + ANIMATION
+// ============================================================================
+
+describe('Library — Week 14 Day 1: Skeleton Loading', () => {
+
+  // --------------------------------------------------------------------------
+  // createSkeletonCard
+  // --------------------------------------------------------------------------
+
+  describe('createSkeletonCard', () => {
+    test('returns div with sp-skeleton sp-library-card', () => {
+      const card = createSkeletonCard();
+      expect(card.tagName).toBe('DIV');
+      expect(card.classList.contains('sp-skeleton')).toBe(true);
+      expect(card.classList.contains('sp-library-card')).toBe(true);
+    });
+
+    test('has 3 placeholder children', () => {
+      const card = createSkeletonCard();
+      expect(card.children.length).toBe(3);
+    });
+
+    test('sets aria-hidden="true"', () => {
+      const card = createSkeletonCard();
+      expect(card.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    test('placeholders have correct classes', () => {
+      const card = createSkeletonCard();
+      const classes = Array.from(card.children).map(c => c.className);
+      expect(classes).toContain('sp-skeleton__title');
+      expect(classes).toContain('sp-skeleton__course');
+      expect(classes).toContain('sp-skeleton__progress');
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  // createSkeletonDetail
+  // --------------------------------------------------------------------------
+
+  describe('createSkeletonDetail', () => {
+    test('returns div with sp-skeleton sp-detail-skeleton', () => {
+      const detail = createSkeletonDetail();
+      expect(detail.tagName).toBe('DIV');
+      expect(detail.classList.contains('sp-skeleton')).toBe(true);
+      expect(detail.classList.contains('sp-detail-skeleton')).toBe(true);
+    });
+
+    test('has header + stats + tabs placeholders', () => {
+      const detail = createSkeletonDetail();
+      expect(detail.querySelector('.sp-skeleton__header')).not.toBeNull();
+      expect(detail.querySelector('.sp-skeleton__stats')).not.toBeNull();
+      expect(detail.querySelector('.sp-skeleton__tabs')).not.toBeNull();
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  // renderSkeletonGrid
+  // --------------------------------------------------------------------------
+
+  describe('renderSkeletonGrid', () => {
+    test('renders N skeleton cards', () => {
+      const container = document.createElement('div');
+      renderSkeletonGrid(container, 4);
+      expect(container.children.length).toBe(4);
+      for (const child of container.children) {
+        expect(child.classList.contains('sp-skeleton')).toBe(true);
+      }
+    });
+
+    test('defaults to 6 cards', () => {
+      const container = document.createElement('div');
+      renderSkeletonGrid(container);
+      expect(container.children.length).toBe(6);
+    });
+
+    test('clears existing content', () => {
+      const container = document.createElement('div');
+      container.appendChild(document.createElement('p'));
+      container.appendChild(document.createElement('p'));
+      renderSkeletonGrid(container, 3);
+      expect(container.children.length).toBe(3);
+      expect(container.querySelector('p')).toBeNull();
+    });
+
+    test('with count=0 renders nothing', () => {
+      const container = document.createElement('div');
+      container.appendChild(document.createElement('p'));
+      renderSkeletonGrid(container, 0);
+      expect(container.children.length).toBe(0);
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  // Card stagger index
+  // --------------------------------------------------------------------------
+
+  describe('Card stagger animation', () => {
+    test('Library card has --stagger-index CSS variable', () => {
+      const lecture = createLecture({ title: 'Stagger Test' });
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+
+      renderLibraryViewPaginated(container, [lecture], new Map(), 12);
+
+      const card = container.querySelector('.sp-library-card');
+      expect(card).not.toBeNull();
+      expect(card.style.getPropertyValue('--stagger-index')).toBe('0');
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  // Skeleton replaced by real content
+  // --------------------------------------------------------------------------
+
+  describe('Skeleton replacement', () => {
+    test('skeleton replaced by real content after async load', () => {
+      const container = document.createElement('div');
+      // First show skeletons
+      renderSkeletonGrid(container, 3);
+      expect(container.querySelector('.sp-skeleton')).not.toBeNull();
+
+      // Then replace with real content (simulating async load completion)
+      const lecture = createLecture({ title: 'Real Content' });
+      renderLibraryViewPaginated(container, [lecture], new Map(), 12);
+
+      // Skeletons should be gone, real card should be present
+      expect(container.querySelector('.sp-skeleton')).toBeNull();
+      expect(container.querySelector('.sp-library-card')).not.toBeNull();
+    });
   });
 });
