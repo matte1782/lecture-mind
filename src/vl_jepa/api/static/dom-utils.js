@@ -180,6 +180,30 @@ function timeAgo(date) {
 }
 
 // ============================================================================
+// SVG UTILITIES
+// ============================================================================
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+/**
+ * Create an SVG element with attributes using the SVG namespace.
+ * @param {string} tag - SVG tag name (e.g. 'svg', 'rect', 'circle')
+ * @param {Object} [attrs={}] - Attributes to set
+ * @returns {SVGElement}
+ */
+function createSVGElement(tag, attrs = {}) {
+  const el = document.createElementNS(SVG_NS, tag);
+  for (const [key, value] of Object.entries(attrs)) {
+    if (key === 'textContent') {
+      el.textContent = value;
+    } else {
+      el.setAttribute(key, String(value));
+    }
+  }
+  return el;
+}
+
+// ============================================================================
 // EXPORTS
 // ============================================================================
 
@@ -195,6 +219,9 @@ export {
   showElement,
   hideElement,
   sanitizeId,
+
+  // SVG utilities
+  createSVGElement,
 
   // Formatting
   formatDuration,
