@@ -660,3 +660,158 @@
 @media (forced-colors: active) {
   .sp-search-highlight { background: Highlight; color: HighlightText; }
 }
+
+/* ============================================================================
+   Day 4: Detail View
+   ============================================================================ */
+
+.sp-detail-back {
+  background: none;
+  border: none;
+  color: var(--color-primary-500);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  padding: var(--space-2) 0;
+  margin-bottom: var(--space-2);
+}
+
+.sp-detail-back:hover { text-decoration: underline; }
+
+.sp-detail-title {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.sp-detail-stats {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin: var(--space-4) 0;
+}
+
+.sp-detail-stat {
+  flex: 1;
+  min-width: 120px;
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.sp-detail-stat__value {
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+}
+
+.sp-detail-stat__label {
+  font-size: var(--text-xs);
+  color: var(--foreground-muted);
+}
+
+.sp-detail-tabs {
+  display: flex;
+  border-bottom: 2px solid var(--border);
+  margin: var(--space-4) 0 var(--space-2);
+}
+
+.sp-detail-tabs__tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+  color: var(--foreground-muted);
+  font-size: var(--text-sm);
+  margin-bottom: -2px;
+}
+
+.sp-detail-tabs__tab[aria-selected="true"] {
+  color: var(--color-primary-500);
+  border-bottom-color: var(--color-primary-500);
+  font-weight: var(--font-semibold);
+}
+
+.sp-detail-tabs__tab:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: -2px;
+}
+
+.sp-segment-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sp-segment-item--completed { opacity: 0.6; }
+
+.sp-segment-item__check { width: 1.5em; text-align: center; }
+.sp-segment-item__time { font-size: var(--text-sm); color: var(--foreground-muted); white-space: nowrap; }
+.sp-segment-item__type { font-size: var(--text-xs); background: var(--surface); padding: 2px 6px; border-radius: var(--radius-sm); }
+.sp-segment-item__text { font-size: var(--text-sm); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.sp-flashcard-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sp-flashcard-item__front { flex: 1; }
+.sp-flashcard-item__status { font-size: var(--text-xs); background: var(--surface); padding: 2px 6px; border-radius: var(--radius-sm); }
+.sp-flashcard-item__actions { display: flex; gap: var(--space-2); }
+
+.sp-bookmark-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sp-bookmark-item__time { font-size: var(--text-sm); color: var(--foreground-muted); white-space: nowrap; }
+.sp-bookmark-item__label { flex: 1; }
+
+.sp-lecture-info { padding: var(--space-4); }
+.sp-lecture-info__item { margin: var(--space-2) 0; color: var(--foreground-muted); }
+
+.sp-course-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  color: white;
+}
+
+.sp-empty-state {
+  text-align: center;
+  color: var(--foreground-muted);
+  padding: var(--space-8) var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.sp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  background: var(--surface);
+}
+
+.sp-btn--primary {
+  background: var(--color-primary-500);
+  color: white;
+  border-color: var(--color-primary-500);
+}
+
+.sp-btn--primary:hover {
+  opacity: 0.9;
+}

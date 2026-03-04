@@ -26,6 +26,8 @@ import {
   SettingsRepository,
   FlashcardRepository,
   BookmarkRepository,
+  ProgressRepository,
+  FLASHCARD_STATUS,
   createCourse,
   createLecture,
   createSegment,
@@ -36,7 +38,6 @@ import {
   setLibraryRenderer,
   setLectureDetailRenderer,
   navigateTo,
-  createMasteryBadge,
   showToast,
   VIEWS
 } from './flashcards.js';
@@ -1230,27 +1231,474 @@ async function enhancedRenderLibraryView() {
   }
 }
 
+// ============================================================================
+// DAY 4: PROGRESS TRACKING
+// ============================================================================
+
 /**
- * Lecture detail view renderer placeholder.
+ * Update lecture progress when a segment is completed.
+ * @param {string} lectureId
+ * @param {string} segmentId
+ * @param {number} position - Current playback position in seconds
+ */
+async function updateLectureProgress(lectureId, segmentId, position) {
+  await ProgressRepository.updatePosition(lectureId, position);
+  await ProgressRepository.markSegmentCompleted(lectureId, segmentId);
+
+  const segments = await SegmentRepository.getByLecture(lectureId);
+  const totalSegments = segments.length;
+  if (totalSegments === 0) {
+    await LectureRepository.update(lectureId, { watchProgress: 0 });
+    return;
+  }
+
+  const progress = await ProgressRepository.getOrCreate(lectureId);
+  const percentage = Math.round((progress.completedSegments.length / totalSegments) * 100);
+  await LectureRepository.update(lectureId, { watchProgress: percentage });
+}
+
+/**
+ * Get aggregate stats for a lecture.
+ * @param {string} lectureId
+ * @returns {Promise<Object>} Stats object
+ */
+async function getLectureStats(lectureId) {
+  const segments = await SegmentRepository.getByLecture(lectureId);
+  const flashcards = await FlashcardRepository.getByLecture(lectureId);
+  const bookmarks = await BookmarkRepository.getByLecture(lectureId);
+  const progress = await ProgressRepository.getOrCreate(lectureId);
+
+  const segmentCount = segments.length;
+  const completedSegmentCount = progress.completedSegments.length;
+  const progressPercent = segmentCount === 0 ? 0 :
+    Math.round((completedSegmentCount / segmentCount) * 100);
+
+  const flashcardsDue = flashcards.filter(f => f.dueDate <= Date.now()).length;
+  const masteredCount = flashcards.filter(f => f.status === FLASHCARD_STATUS.MASTERED).length;
+
+  return {
+    segmentCount,
+    completedSegmentCount,
+    progressPercent,
+    flashcardCount: flashcards.length,
+    flashcardsDue,
+    masteredCount,
+    bookmarkCount: bookmarks.length,
+    lastPosition: progress.lastPosition,
+    lastStudied: progress.updatedAt
+  };
+}
+
+// ============================================================================
+// DAY 4: DETAIL VIEW RENDERING
+// ============================================================================
+
+/**
+ * Format seconds to mm:ss string.
+ * @param {number} seconds
+ * @returns {string}
+ */
+function formatTime(seconds) {
+  if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Render the lecture detail header.
+ * @param {HTMLElement} container
+ * @param {Object} lecture
+ * @param {Object|null} course
+ */
+function renderDetailHeader(container, lecture, course) {
+  clearElement(container);
+
+  const backBtn = createElement('button', 'sp-detail-back', {
+    textContent: '\u2190 Library'
+  });
+  backBtn.addEventListener('click', () => navigateTo('#/playground'));
+  container.appendChild(backBtn);
+
+  const title = createElement('h2', 'sp-detail-title', {
+    textContent: lecture.title
+  });
+  container.appendChild(title);
+
+  if (course) {
+    const badge = createElement('span', 'sp-course-badge', {
+      textContent: course.name
+    });
+    badge.style.backgroundColor = course.color || 'var(--color-primary-500)';
+    container.appendChild(badge);
+  }
+}
+
+/**
+ * Render stat cards for the lecture detail view.
+ * @param {HTMLElement} container
+ * @param {Object} stats
+ */
+function renderDetailStats(container, stats) {
+  const statsBar = createElement('div', 'sp-detail-stats');
+
+  // Progress card
+  const progressCard = createElement('div', 'sp-detail-stat');
+  const progressValue = createElement('div', 'sp-detail-stat__value', {
+    textContent: `${stats.progressPercent}%`
+  });
+  const progressLabel = createElement('div', 'sp-detail-stat__label', {
+    textContent: 'Progress'
+  });
+  progressCard.appendChild(progressValue);
+  progressCard.appendChild(progressLabel);
+  statsBar.appendChild(progressCard);
+
+  // Flashcards card
+  const fcCard = createElement('div', 'sp-detail-stat');
+  const fcValue = createElement('div', 'sp-detail-stat__value', {
+    textContent: `${stats.flashcardCount}`
+  });
+  const fcLabel = createElement('div', 'sp-detail-stat__label', {
+    textContent: 'Flashcards'
+  });
+  fcCard.appendChild(fcValue);
+  fcCard.appendChild(fcLabel);
+  statsBar.appendChild(fcCard);
+
+  // Bookmarks card
+  const bmCard = createElement('div', 'sp-detail-stat');
+  const bmValue = createElement('div', 'sp-detail-stat__value', {
+    textContent: `${stats.bookmarkCount}`
+  });
+  const bmLabel = createElement('div', 'sp-detail-stat__label', {
+    textContent: 'Bookmarks'
+  });
+  bmCard.appendChild(bmValue);
+  bmCard.appendChild(bmLabel);
+  statsBar.appendChild(bmCard);
+
+  // Last studied card
+  const lastCard = createElement('div', 'sp-detail-stat');
+  const lastValue = createElement('div', 'sp-detail-stat__value', {
+    textContent: stats.lastStudied ? new Date(stats.lastStudied).toLocaleDateString() : 'Never'
+  });
+  const lastLabel = createElement('div', 'sp-detail-stat__label', {
+    textContent: 'Last Studied'
+  });
+  lastCard.appendChild(lastValue);
+  lastCard.appendChild(lastLabel);
+  statsBar.appendChild(lastCard);
+
+  container.appendChild(statsBar);
+}
+
+/**
+ * Render ARIA-compliant tab bar for lecture detail view.
+ * @param {HTMLElement} container
+ * @param {string} activeTab - 'segments'|'flashcards'|'bookmarks'|'info'
+ * @param {Function} [onTabChange] - Callback when tab changes
+ * @returns {HTMLElement} The tablist element
+ */
+function renderDetailTabs(container, activeTab, onTabChange) {
+  const tabNames = ['Segments', 'Flashcards', 'Bookmarks', 'Info'];
+  const tabIds = ['segments', 'flashcards', 'bookmarks', 'info'];
+
+  const tablist = createElement('div', 'sp-detail-tabs');
+  tablist.setAttribute('role', 'tablist');
+
+  tabIds.forEach((tabId, index) => {
+    const isActive = tabId === activeTab;
+    const tab = createElement('button', 'sp-detail-tabs__tab', {
+      textContent: tabNames[index]
+    });
+    tab.setAttribute('role', 'tab');
+    tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    tab.setAttribute('tabindex', isActive ? '0' : '-1');
+    tab.setAttribute('aria-controls', `tabpanel-${tabId}`);
+    tab.dataset.tab = tabId;
+
+    tab.addEventListener('click', () => {
+      // Update all tabs
+      const allTabs = tablist.querySelectorAll('[role="tab"]');
+      allTabs.forEach(t => {
+        t.setAttribute('aria-selected', 'false');
+        t.setAttribute('tabindex', '-1');
+      });
+      tab.setAttribute('aria-selected', 'true');
+      tab.setAttribute('tabindex', '0');
+      if (onTabChange) onTabChange(tabId);
+    });
+
+    tablist.appendChild(tab);
+  });
+
+  // Keyboard navigation
+  tablist.addEventListener('keydown', (e) => {
+    const tabs = Array.from(tablist.querySelectorAll('[role="tab"]'));
+    const currentIndex = tabs.indexOf(document.activeElement);
+    if (currentIndex === -1) return;
+
+    let nextIndex = -1;
+    if (e.key === 'ArrowRight') {
+      nextIndex = (currentIndex + 1) % tabs.length;
+    } else if (e.key === 'ArrowLeft') {
+      nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      tabs[currentIndex].click();
+      e.preventDefault();
+      return;
+    }
+
+    if (nextIndex >= 0) {
+      e.preventDefault();
+      tabs[nextIndex].focus();
+    }
+  });
+
+  container.appendChild(tablist);
+  return tablist;
+}
+
+// ============================================================================
+// DAY 4: ENTITY LISTS
+// ============================================================================
+
+/**
+ * Render segments list for a lecture.
+ * @param {HTMLElement} container
+ * @param {string} lectureId
+ */
+async function renderSegmentsList(container, lectureId) {
+  const segments = await SegmentRepository.getByLecture(lectureId);
+  const progress = await ProgressRepository.getOrCreate(lectureId);
+  const completedSet = new Set(progress.completedSegments);
+
+  clearElement(container);
+
+  segments.forEach(segment => {
+    const isCompleted = completedSet.has(segment.id);
+    const item = createElement('div', `sp-segment-item${isCompleted ? ' sp-segment-item--completed' : ''}`);
+
+    const checkbox = createElement('span', 'sp-segment-item__check', {
+      textContent: isCompleted ? '\u2713' : '\u25CB'
+    });
+    item.appendChild(checkbox);
+
+    const timeRange = createElement('span', 'sp-segment-item__time', {
+      textContent: `${formatTime(segment.startTime)} \u2013 ${formatTime(segment.endTime)}`
+    });
+    item.appendChild(timeRange);
+
+    const typeBadge = createElement('span', 'sp-segment-item__type', {
+      textContent: segment.type
+    });
+    item.appendChild(typeBadge);
+
+    if (segment.metadata && segment.metadata.text) {
+      const text = createElement('span', 'sp-segment-item__text', {
+        textContent: segment.metadata.text
+      });
+      item.appendChild(text);
+    }
+
+    container.appendChild(item);
+  });
+
+  if (segments.length === 0) {
+    container.appendChild(createElement('p', 'sp-empty-state', { textContent: 'No segments yet' }));
+  }
+}
+
+/**
+ * Render flashcards list for a lecture.
+ * @param {HTMLElement} container
+ * @param {string} lectureId
+ */
+async function renderFlashcardsList(container, lectureId) {
+  const flashcards = await FlashcardRepository.getByLecture(lectureId);
+
+  clearElement(container);
+
+  flashcards.forEach(card => {
+    const item = createElement('div', 'sp-flashcard-item');
+
+    const frontText = createElement('span', 'sp-flashcard-item__front', {
+      textContent: card.front.length > 60 ? card.front.slice(0, 60) + '\u2026' : card.front
+    });
+    item.appendChild(frontText);
+
+    const statusBadge = createElement('span', 'sp-flashcard-item__status', {
+      textContent: card.status || 'new'
+    });
+    item.appendChild(statusBadge);
+
+    const actions = createElement('div', 'sp-flashcard-item__actions');
+
+    const editBtn = createElement('button', 'sp-flashcard-item__edit', {
+      textContent: 'Edit'
+    });
+    editBtn.setAttribute('aria-label', `Edit flashcard: ${card.front.slice(0, 30)}`);
+    actions.appendChild(editBtn);
+
+    const deleteBtn = createElement('button', 'sp-flashcard-item__delete', {
+      textContent: 'Delete'
+    });
+    deleteBtn.setAttribute('aria-label', `Delete flashcard: ${card.front.slice(0, 30)}`);
+    actions.appendChild(deleteBtn);
+
+    item.appendChild(actions);
+    container.appendChild(item);
+  });
+
+  if (flashcards.length === 0) {
+    container.appendChild(createElement('p', 'sp-empty-state', { textContent: 'No flashcards yet' }));
+  }
+}
+
+/**
+ * Render bookmarks list for a lecture.
+ * @param {HTMLElement} container
+ * @param {string} lectureId
+ */
+async function renderBookmarksList(container, lectureId) {
+  const bookmarks = await BookmarkRepository.getByLecture(lectureId);
+
+  clearElement(container);
+
+  bookmarks.forEach(bookmark => {
+    const item = createElement('div', 'sp-bookmark-item');
+
+    const timestamp = createElement('span', 'sp-bookmark-item__time', {
+      textContent: formatTime(bookmark.timestamp)
+    });
+    item.appendChild(timestamp);
+
+    const label = createElement('span', 'sp-bookmark-item__label', {
+      textContent: bookmark.label || 'Bookmark'
+    });
+    item.appendChild(label);
+
+    const deleteBtn = createElement('button', 'sp-bookmark-item__delete', {
+      textContent: 'Delete'
+    });
+    deleteBtn.setAttribute('aria-label', `Delete bookmark at ${formatTime(bookmark.timestamp)}`);
+    item.appendChild(deleteBtn);
+
+    container.appendChild(item);
+  });
+
+  if (bookmarks.length === 0) {
+    container.appendChild(createElement('p', 'sp-empty-state', { textContent: 'No bookmarks yet' }));
+  }
+}
+
+/**
+ * Render lecture info panel.
+ * @param {HTMLElement} container
+ * @param {Object} lecture
+ * @param {Object} stats
+ */
+function renderLectureInfo(container, lecture, stats) {
+  clearElement(container);
+
+  const info = createElement('div', 'sp-lecture-info');
+
+  const created = createElement('p', 'sp-lecture-info__item', {
+    textContent: `Created: ${new Date(lecture.createdAt).toLocaleDateString()}`
+  });
+  info.appendChild(created);
+
+  if (lecture.duration) {
+    const duration = createElement('p', 'sp-lecture-info__item', {
+      textContent: `Duration: ${formatTime(lecture.duration)}`
+    });
+    info.appendChild(duration);
+  }
+
+  const status = createElement('p', 'sp-lecture-info__item', {
+    textContent: `Status: ${lecture.status || 'draft'}`
+  });
+  info.appendChild(status);
+
+  const progress = createElement('p', 'sp-lecture-info__item', {
+    textContent: `Progress: ${stats.progressPercent}%`
+  });
+  info.appendChild(progress);
+
+  const studyBtn = createElement('button', 'sp-btn sp-btn--primary', {
+    textContent: 'Study Flashcards'
+  });
+  studyBtn.addEventListener('click', () => navigateTo(`#/study/${lecture.id}`));
+  info.appendChild(studyBtn);
+
+  container.appendChild(info);
+}
+
+/**
+ * Full lecture detail view renderer.
  * @param {string} lectureId
  */
 async function renderLectureDetailView(lectureId) {
   const header = document.getElementById('lecture-detail-header');
-  if (!header) return;
+  const content = document.getElementById('lecture-detail-content');
+  if (!header || !content) return;
 
   clearElement(header);
-  const title = createElement('h2', 'sp-detail-title', { textContent: 'Loading...' });
-  header.appendChild(title);
+  clearElement(content);
+
+  const loadingTitle = createElement('h2', 'sp-detail-title', { textContent: 'Loading...' });
+  header.appendChild(loadingTitle);
 
   try {
     const lecture = await LectureRepository.getById(lectureId);
-    if (lecture) {
-      title.textContent = lecture.title;
-    } else {
-      title.textContent = 'Lecture not found';
+    if (!lecture) {
+      loadingTitle.textContent = 'Lecture not found';
+      return;
     }
+
+    // Get course info
+    let course = null;
+    if (lecture.courseId) {
+      course = await CourseRepository.getById(lecture.courseId);
+    }
+
+    // Render header (replaces loadingTitle)
+    renderDetailHeader(header, lecture, course);
+
+    // Render stats
+    const stats = await getLectureStats(lectureId);
+    const statsContainer = createElement('div', '');
+    renderDetailStats(statsContainer, stats);
+    content.appendChild(statsContainer);
+
+    // Tab content area
+    const tabPanel = createElement('div', 'sp-detail-tabpanel');
+    tabPanel.setAttribute('role', 'tabpanel');
+    tabPanel.id = 'tabpanel-segments';
+
+    // Render tabs with switching
+    const activeTab = 'segments';
+    renderDetailTabs(content, activeTab, async (tabId) => {
+      tabPanel.id = `tabpanel-${tabId}`;
+      clearElement(tabPanel);
+      if (tabId === 'segments') await renderSegmentsList(tabPanel, lectureId);
+      else if (tabId === 'flashcards') await renderFlashcardsList(tabPanel, lectureId);
+      else if (tabId === 'bookmarks') await renderBookmarksList(tabPanel, lectureId);
+      else if (tabId === 'info') renderLectureInfo(tabPanel, lecture, stats);
+    });
+
+    content.appendChild(tabPanel);
+
+    // Default: show segments
+    await renderSegmentsList(tabPanel, lectureId);
+
   } catch (_err) {
-    title.textContent = 'Error loading lecture';
+    clearElement(header);
+    clearElement(content);
+    header.appendChild(createElement('h2', 'sp-detail-title', {
+      textContent: 'Error loading lecture'
+    }));
   }
 }
 
@@ -1309,5 +1757,18 @@ export {
 
   // Renderers
   enhancedRenderLibraryView,
-  renderLectureDetailView
+  renderLectureDetailView,
+
+  // Day 4: Progress tracking
+  updateLectureProgress,
+  getLectureStats,
+
+  // Day 4: Detail view
+  renderDetailHeader,
+  renderDetailStats,
+  renderDetailTabs,
+  renderSegmentsList,
+  renderFlashcardsList,
+  renderBookmarksList,
+  renderLectureInfo
 };

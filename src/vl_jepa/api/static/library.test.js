@@ -15,11 +15,13 @@ import {
   SettingsRepository,
   FlashcardRepository,
   BookmarkRepository,
+  ProgressRepository,
   createCourse,
   createLecture,
   createSegment,
   createFlashcard,
-  createBookmark
+  createBookmark,
+  FLASHCARD_STATUS
 } from './storage/index.js';
 
 import {
@@ -44,7 +46,18 @@ import {
   renderSearchInput,
   renderSearchResults,
   renderSearchTabs,
-  SEARCH_CONFIG
+  SEARCH_CONFIG,
+  // Day 4: Progress + Detail View
+  updateLectureProgress,
+  getLectureStats,
+  renderLectureDetailView,
+  renderDetailHeader,
+  renderDetailStats,
+  renderDetailTabs,
+  renderSegmentsList,
+  renderFlashcardsList,
+  renderBookmarksList,
+  renderLectureInfo
 } from './library.js';
 
 // ============================================================================
@@ -104,6 +117,20 @@ function setupTestDOM() {
   sectionContainer.appendChild(layout);
   playgroundView.appendChild(sectionContainer);
   app.appendChild(playgroundView);
+
+  // Lecture detail view structure (Day 4)
+  const detailView = document.createElement('section');
+  detailView.id = 'lecture-detail-view';
+  const detailContainer = document.createElement('div');
+  detailContainer.className = 'section-container';
+  const detailHeader = document.createElement('div');
+  detailHeader.id = 'lecture-detail-header';
+  detailContainer.appendChild(detailHeader);
+  const detailContent = document.createElement('div');
+  detailContent.id = 'lecture-detail-content';
+  detailContainer.appendChild(detailContent);
+  detailView.appendChild(detailContainer);
+  app.appendChild(detailView);
 
   document.body.appendChild(app);
 }
@@ -881,5 +908,306 @@ describe('Search UI', () => {
     const lectureLabels = container.querySelectorAll('.sp-search-result__lecture');
     expect(lectureLabels.length).toBeGreaterThan(0);
     expect(lectureLabels[0].textContent).toMatch(/Machine Learning Basics/);
+  });
+});
+
+// ============================================================================
+// DAY 4: PROGRESS TRACKING
+// ============================================================================
+
+describe('Progress Tracking', () => {
+  test('updateLectureProgress calls updatePosition + markSegmentCompleted', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'Progress Test' }));
+    const seg1 = await SegmentRepository.create(createSegment({
+      lectureId: lecture.id, startTime: 0, endTime: 60, type: 'topic'
+    }));
+    const seg2 = await SegmentRepository.create(createSegment({
+      lectureId: lecture.id, startTime: 60, endTime: 120, type: 'topic'
+    }));
+
+    await updateLectureProgress(lecture.id, seg1.id, 30);
+
+    const progress = await ProgressRepository.getOrCreate(lecture.id);
+    expect(progress.lastPosition).toBe(30);
+    expect(progress.completedSegments).toContain(seg1.id);
+    expect(progress.completedSegments).not.toContain(seg2.id);
+  });
+
+  test('updateLectureProgress calculates percentage correctly', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'Percent Test' }));
+    const seg1 = await SegmentRepository.create(createSegment({
+      lectureId: lecture.id, startTime: 0, endTime: 60, type: 'topic'
+    }));
+    const seg2 = await SegmentRepository.create(createSegment({
+      lectureId: lecture.id, startTime: 60, endTime: 120, type: 'topic'
+    }));
+
+    await updateLectureProgress(lecture.id, seg1.id, 55);
+    let updated = await LectureRepository.getById(lecture.id);
+    expect(updated.watchProgress).toBe(50); // 1/2 segments = 50%
+
+    await updateLectureProgress(lecture.id, seg2.id, 115);
+    updated = await LectureRepository.getById(lecture.id);
+    expect(updated.watchProgress).toBe(100); // 2/2 segments = 100%
+  });
+
+  test('updateLectureProgress handles 0 segments (no division by zero)', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'Empty Segments' }));
+    // No segments created — should not throw and should set 0%
+    await updateLectureProgress(lecture.id, 'nonexistent-seg', 10);
+
+    const updated = await LectureRepository.getById(lecture.id);
+    expect(updated.watchProgress).toBe(0);
+  });
+
+  test('getLectureStats returns complete aggregate', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'Stats Lecture' }));
+    await SegmentRepository.create(createSegment({
+      lectureId: lecture.id, startTime: 0, endTime: 60, type: 'topic'
+    }));
+    await SegmentRepository.create(createSegment({
+      lectureId: lecture.id, startTime: 60, endTime: 120, type: 'topic'
+    }));
+    await FlashcardRepository.create(createFlashcard({
+      lectureId: lecture.id, front: 'Q1', back: 'A1'
+    }));
+    await FlashcardRepository.create(createFlashcard({
+      lectureId: lecture.id, front: 'Q2', back: 'A2',
+      status: FLASHCARD_STATUS.MASTERED
+    }));
+    await BookmarkRepository.create(createBookmark({
+      lectureId: lecture.id, timestamp: 30, label: 'Important'
+    }));
+
+    const stats = await getLectureStats(lecture.id);
+    expect(stats.segmentCount).toBe(2);
+    expect(stats.completedSegmentCount).toBe(0);
+    expect(stats.progressPercent).toBe(0);
+    expect(stats.flashcardCount).toBe(2);
+    expect(stats.masteredCount).toBe(1);
+    expect(stats.bookmarkCount).toBe(1);
+    expect(stats.lastPosition).toBe(0);
+    expect(stats.lastStudied).toBeDefined();
+  });
+
+  test('getLectureStats uses getOrCreate (not getByLecture) for progress', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'Fresh Lecture' }));
+    // No progress record exists yet — getOrCreate should create one
+    const stats = await getLectureStats(lecture.id);
+
+    expect(stats.progressPercent).toBe(0);
+    expect(stats.lastPosition).toBe(0);
+    // Verify progress record was created
+    const progress = await ProgressRepository.getOrCreate(lecture.id);
+    expect(progress).toBeDefined();
+    expect(progress.lectureId).toBe(lecture.id);
+  });
+});
+
+// ============================================================================
+// DAY 4: DETAIL VIEW
+// ============================================================================
+
+describe('Detail View', () => {
+  test('renderLectureDetailView shows lecture title', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'Detail Title Test' }));
+    await renderLectureDetailView(lecture.id);
+
+    const header = document.getElementById('lecture-detail-header');
+    expect(header.textContent).toContain('Detail Title Test');
+  });
+
+  test('renderLectureDetailView shows back button', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'Back Button Test' }));
+    await renderLectureDetailView(lecture.id);
+
+    const detailView = document.getElementById('lecture-detail-view');
+    const backBtn = detailView.querySelector('[class*="back"]') ||
+                    detailView.querySelector('button');
+    expect(backBtn).not.toBeNull();
+    expect(backBtn.textContent).toMatch(/library|back/i);
+  });
+
+  test('renderDetailStats shows 4 stat cards', () => {
+    const stats = {
+      segmentCount: 10, completedSegmentCount: 5, progressPercent: 50,
+      flashcardCount: 8, flashcardsDue: 3, masteredCount: 2,
+      bookmarkCount: 4, lastPosition: 120, lastStudied: Date.now()
+    };
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    renderDetailStats(container, stats);
+
+    const cards = container.querySelectorAll('.sp-detail-stat');
+    expect(cards.length).toBe(4);
+  });
+
+  test('renderDetailStats shows 0% for empty lecture', () => {
+    const stats = {
+      segmentCount: 0, completedSegmentCount: 0, progressPercent: 0,
+      flashcardCount: 0, flashcardsDue: 0, masteredCount: 0,
+      bookmarkCount: 0, lastPosition: 0, lastStudied: null
+    };
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    renderDetailStats(container, stats);
+
+    const values = container.querySelectorAll('.sp-detail-stat__value');
+    const progressValue = Array.from(values).find(v => v.textContent.includes('%'));
+    expect(progressValue).toBeDefined();
+    expect(progressValue.textContent).toContain('0%');
+  });
+
+  test('tab switching renders correct content', async () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+
+    let activeTab = 'segments';
+    const tabs = renderDetailTabs(container, activeTab);
+    const tabElements = container.querySelectorAll('[role="tab"]');
+
+    // Find flashcards tab and click it
+    const flashcardsTab = Array.from(tabElements).find(t =>
+      t.textContent.toLowerCase().includes('flashcard')
+    );
+    expect(flashcardsTab).toBeDefined();
+
+    // Clicking should invoke a callback or update active state
+    flashcardsTab.click();
+    const selectedTab = container.querySelector('[aria-selected="true"]');
+    expect(selectedTab.textContent.toLowerCase()).toContain('flashcard');
+  });
+
+  test('tab bar has ARIA tablist/tab roles', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    renderDetailTabs(container, 'segments');
+
+    const tablist = container.querySelector('[role="tablist"]');
+    expect(tablist).not.toBeNull();
+
+    const tabs = container.querySelectorAll('[role="tab"]');
+    expect(tabs.length).toBeGreaterThanOrEqual(4);
+
+    // Active tab has tabindex 0, others -1
+    const activeTab = container.querySelector('[aria-selected="true"]');
+    expect(activeTab).not.toBeNull();
+    expect(activeTab.getAttribute('tabindex')).toBe('0');
+
+    const inactiveTabs = Array.from(tabs).filter(t => t.getAttribute('aria-selected') !== 'true');
+    inactiveTabs.forEach(tab => {
+      expect(tab.getAttribute('tabindex')).toBe('-1');
+    });
+  });
+});
+
+// ============================================================================
+// DAY 4: ENTITY LISTS
+// ============================================================================
+
+describe('Entity Lists', () => {
+  test('renderSegmentsList shows all segments with time ranges', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'Segments Lecture' }));
+    await SegmentRepository.create(createSegment({
+      lectureId: lecture.id, startTime: 0, endTime: 60, type: 'intro',
+      metadata: { text: 'Introduction segment' }
+    }));
+    await SegmentRepository.create(createSegment({
+      lectureId: lecture.id, startTime: 60, endTime: 180, type: 'topic',
+      metadata: { text: 'Main topic' }
+    }));
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    await renderSegmentsList(container, lecture.id);
+
+    const items = container.querySelectorAll('.sp-segment-item');
+    expect(items.length).toBe(2);
+
+    // Check time range text is present (e.g. "0:00" or "1:00")
+    expect(container.textContent).toMatch(/0:00/);
+    expect(container.textContent).toMatch(/1:00/);
+  });
+
+  test('renderSegmentsList marks completed with checkmark', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'Completed Seg' }));
+    const seg1 = await SegmentRepository.create(createSegment({
+      lectureId: lecture.id, startTime: 0, endTime: 60, type: 'topic'
+    }));
+    await SegmentRepository.create(createSegment({
+      lectureId: lecture.id, startTime: 60, endTime: 120, type: 'topic'
+    }));
+
+    // Mark first segment as completed
+    await ProgressRepository.markSegmentCompleted(lecture.id, seg1.id);
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    await renderSegmentsList(container, lecture.id);
+
+    const completedItems = container.querySelectorAll('.sp-segment-item--completed');
+    expect(completedItems.length).toBe(1);
+  });
+
+  test('renderFlashcardsList shows edit/delete per card', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'FC List Lecture' }));
+    await FlashcardRepository.create(createFlashcard({
+      lectureId: lecture.id, front: 'What is ML?', back: 'Machine Learning'
+    }));
+    await FlashcardRepository.create(createFlashcard({
+      lectureId: lecture.id, front: 'What is DL?', back: 'Deep Learning'
+    }));
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    await renderFlashcardsList(container, lecture.id);
+
+    // Each flashcard should have edit and delete buttons
+    const items = container.children;
+    expect(items.length).toBeGreaterThanOrEqual(2);
+
+    const editBtns = container.querySelectorAll('[class*="edit"], [aria-label*="Edit"], [aria-label*="edit"]');
+    const deleteBtns = container.querySelectorAll('[class*="delete"], [aria-label*="Delete"], [aria-label*="delete"]');
+    expect(editBtns.length).toBeGreaterThanOrEqual(2);
+    expect(deleteBtns.length).toBeGreaterThanOrEqual(2);
+  });
+
+  test('renderBookmarksList shows timestamps and labels', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'BM List Lecture' }));
+    await BookmarkRepository.create(createBookmark({
+      lectureId: lecture.id, timestamp: 90, label: 'Key concept'
+    }));
+    await BookmarkRepository.create(createBookmark({
+      lectureId: lecture.id, timestamp: 300, label: 'Summary'
+    }));
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    await renderBookmarksList(container, lecture.id);
+
+    // Should show timestamps and labels
+    expect(container.textContent).toMatch(/1:30/); // 90 seconds
+    expect(container.textContent).toMatch(/5:00/); // 300 seconds
+    expect(container.textContent).toContain('Key concept');
+    expect(container.textContent).toContain('Summary');
+  });
+
+  test('renderLectureInfo has "Study Flashcards" button', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'Info Lecture' }));
+    const stats = {
+      segmentCount: 2, completedSegmentCount: 1, progressPercent: 50,
+      flashcardCount: 5, flashcardsDue: 2, masteredCount: 1,
+      bookmarkCount: 3, lastPosition: 60, lastStudied: Date.now()
+    };
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    renderLectureInfo(container, lecture, stats);
+
+    const studyBtn = Array.from(container.querySelectorAll('button')).find(
+      btn => btn.textContent.toLowerCase().includes('study')
+    );
+    expect(studyBtn).toBeDefined();
+    expect(studyBtn.textContent.toLowerCase()).toContain('flashcard');
   });
 });
