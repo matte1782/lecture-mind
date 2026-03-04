@@ -7,10 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-03-04
+
+### Added
+- **Student Playground** — full client-side learning environment
+- Multi-lecture library with course organization, sorting, and filtering
+- Cross-lecture full-text search with relevance scoring
+- Auto-generated flashcards with SM-2 spaced repetition algorithm
+- Study session tracking with quiz results and watch time
+- Per-lecture analytics tab (accuracy trends, mastery distribution, watch stats)
+- Aggregate study dashboard (streaks, weekly charts, global mastery)
+- Favorites and playlist navigation
+- Bookmarks with segment-level annotation
+- Import pipeline for processing results (JSON drag-and-drop)
+- Batch operations (assign course, delete lectures)
+- Service Worker for offline caching (cache-first static, network-first API)
+- Loading skeletons with staggered card entrance animations
+- IndexedDB storage layer with repositories for lectures, segments, flashcards, bookmarks, progress, courses, events, and settings
+- Offline sync queue with exponential backoff retry
+- Keyboard shortcuts for library navigation and flashcard study
+- Student Playground user guide in documentation
+
 ### Changed
-- Marked WEEK10_PLAN.md, WEEK10_STORAGE_PLAN.md, WEEK10_DESIGN_PLAN.md as SUPERSEDED
-- Updated WEEK10_UNIFIED_PLAN.md to v1.1 with Safari deferral statements (N6)
-- All hostile-reviewer pre-execution conditions now addressed
+- Design system expanded with tokens-v2, animations-v2, and playground-components CSS
+- Documentation site updated with Student Playground guide
+- GitHub Pages workflow now deploys playground alongside docs
+
+### Security
+- Safe DOM throughout — createElement + textContent only, zero innerHTML
+- All user input sanitized before DOM insertion
+- Service Worker validates cache integrity on activate
+- ARIA roles, keyboard handlers, and tabindex on all interactive elements
+- Reduced-motion support via prefers-reduced-motion media query
+
+### Technical
+- 557 tests across 10 test suites (100% pass rate)
+- IndexedDB with fake-indexeddb for test isolation
+- ES modules with Jest --experimental-vm-modules
+- One-directional dependency chain: dom-utils <- flashcards <- library
+- Paginated rendering with IntersectionObserver for large libraries
 
 ## [0.3.0] - 2026-01-09
 
@@ -72,7 +107,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Event detection framework
 - Test infrastructure with pytest
 
-[Unreleased]: https://github.com/matte1782/lecture-mind/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/matte1782/lecture-mind/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/matte1782/lecture-mind/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/matte1782/lecture-mind/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/matte1782/lecture-mind/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/matte1782/lecture-mind/releases/tag/v0.1.0

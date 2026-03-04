@@ -129,10 +129,17 @@ function createWatchSessionRecord({ lectureId, startPosition, endPosition, durat
  * @param {Object} record - Record to append
  * @returns {Promise<void>}
  */
+const _writeLocks = new Map();
+
 async function _appendRecord(key, record) {
-  const existing = await SettingsRepository.get(key, []);
-  existing.push(record);
-  await SettingsRepository.set(key, existing);
+  const prev = _writeLocks.get(key) || Promise.resolve();
+  const next = prev.then(async () => {
+    const existing = await SettingsRepository.get(key, []);
+    existing.push(record);
+    await SettingsRepository.set(key, existing);
+  });
+  _writeLocks.set(key, next.catch(() => {}));
+  return next;
 }
 
 /**
@@ -287,7 +294,9 @@ class WatchTimeTracker {
       duration: Math.round(this._totalDuration)
     });
 
-    await saveWatchSession(record);
+    try {
+      await saveWatchSession(record);
+    } catch (_e) { /* best-effort on detach */ }
     this._videoEl = null;
     this._totalDuration = 0;
     return record;
@@ -1237,3 +1246,6 @@ export {
   renderTopLecturesTable,
   renderStudyDashboard
 };
+
+// Auto-initialize analytics hooks when module loads
+registerAnalyticsHooks();

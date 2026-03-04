@@ -29,7 +29,13 @@ const STATIC_ASSETS = [
   '/static/flashcards.js',
   '/static/library.js',
   '/static/analytics.js',
-  '/static/sw-utils.js'
+  '/static/sw-utils.js',
+  '/static/storage/index.js',
+  '/static/storage/db.js',
+  '/static/storage/models.js',
+  '/static/storage/repositories.js',
+  '/static/storage/migrations.js',
+  '/static/storage/sync.js'
 ];
 
 // ---------------------------------------------------------------------------
@@ -64,22 +70,31 @@ self.addEventListener('activate', (event) => {
 // FETCH — cache-first for static, network-first for API
 // ---------------------------------------------------------------------------
 
+const STATIC_ASSET_SET = new Set(STATIC_ASSETS);
+
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+
+  // Only handle same-origin requests
+  if (url.origin !== self.location.origin) return;
 
   // Cache-first for static assets
   if (url.pathname.startsWith('/static/')) {
     event.respondWith(
       caches.match(event.request)
         .then((cached) => cached || fetch(event.request).then((response) => {
-          // Cache new static assets on the fly
-          if (response.ok) {
+          // Only cache known static assets (prevents unbounded cache growth)
+          if (response.ok && STATIC_ASSET_SET.has(url.pathname)) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }
           return response;
         }))
-        .catch(() => caches.match('/static/index.html'))
+        .catch(() => {
+          if (event.request.mode === 'navigate') {
+            return caches.match('/static/index.html');
+          }
+        })
     );
     return;
   }

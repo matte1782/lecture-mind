@@ -52,6 +52,7 @@ nav:
     - Cloud Demo: cloud-demo.md
   - User Guide:
     - Web Interface: guide/web-ui.md
+    - Student Playground: guide/student-playground.md
     - API Reference: guide/api.md
   - Development:
     - Architecture: ARCHITECTURE.md

@@ -33,7 +33,13 @@ function getStaticAssetList() {
     '/static/flashcards.js',
     '/static/library.js',
     '/static/analytics.js',
-    '/static/sw-utils.js'
+    '/static/sw-utils.js',
+    '/static/storage/index.js',
+    '/static/storage/db.js',
+    '/static/storage/models.js',
+    '/static/storage/repositories.js',
+    '/static/storage/migrations.js',
+    '/static/storage/sync.js'
   ];
 }
 
