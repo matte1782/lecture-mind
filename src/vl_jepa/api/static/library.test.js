@@ -65,7 +65,14 @@ import {
   getFavoriteLectures,
   getPlaylistForLecture,
   renderPlaylistNav,
-  renderFavoriteButton
+  renderFavoriteButton,
+  // Day 6: Integration + Performance
+  renderLibraryViewPaginated,
+  initLibraryKeyboardShortcuts,
+  renderCourseEmptyState,
+  renderSearchEmptyState,
+  renderFavoritesEmptyState,
+  enhancedRenderLibraryView
 } from './library.js';
 
 // ============================================================================
@@ -1452,5 +1459,263 @@ describe('Favorite Button', () => {
     renderFavoriteButton(container, 'lec-nonfav', false);
     btn = container.querySelector('.sp-favorite-btn');
     expect(btn.getAttribute('aria-label')).toMatch(/add.*favorite/i);
+  });
+});
+
+// ============================================================================
+// DAY 6: ENHANCED LIBRARY VIEW
+// ============================================================================
+
+describe('Enhanced Library View', () => {
+  test('enhancedRenderLibraryView renders sidebar, toolbar, and grid', async () => {
+    const course = await CourseRepository.create(createCourse({ name: 'Test Course' }));
+    await LectureRepository.create(createLecture({ title: 'Lecture A', courseId: course.id }));
+    await LectureRepository.create(createLecture({ title: 'Lecture B', courseId: course.id }));
+
+    await enhancedRenderLibraryView();
+
+    const sidebar = document.getElementById('library-sidebar');
+    expect(sidebar.children.length).toBeGreaterThan(0);
+
+    const toolbar = document.getElementById('library-toolbar');
+    expect(toolbar.children.length).toBeGreaterThan(0);
+
+    const grid = document.getElementById('library-grid');
+    expect(grid.children.length).toBeGreaterThanOrEqual(2);
+  });
+
+  test('course filter + sort work together', async () => {
+    const course = await CourseRepository.create(createCourse({ name: 'Filtered Course' }));
+    await LectureRepository.create(createLecture({ title: 'Z Lecture', courseId: course.id }));
+    await LectureRepository.create(createLecture({ title: 'A Lecture', courseId: course.id }));
+    await LectureRepository.create(createLecture({ title: 'Unrelated' })); // no course
+
+    libraryState.selectedCourseId = course.id;
+    libraryState.sortBy = 'title';
+    await enhancedRenderLibraryView();
+
+    const grid = document.getElementById('library-grid');
+    const cards = grid.querySelectorAll('[role="listitem"]');
+    expect(cards.length).toBe(2); // only course lectures
+    // First card should be A Lecture (sorted by title)
+    expect(cards[0].textContent).toContain('A Lecture');
+  });
+
+  test('favorites filter shows only favorited lectures', async () => {
+    const lec1 = await LectureRepository.create(createLecture({ title: 'Fav Lecture' }));
+    await LectureRepository.create(createLecture({ title: 'Not Fav' }));
+    await toggleFavorite(lec1.id);
+
+    libraryState.selectedCourseId = 'favorites';
+    await enhancedRenderLibraryView();
+
+    const grid = document.getElementById('library-grid');
+    const cards = grid.querySelectorAll('[role="listitem"]');
+    expect(cards.length).toBe(1);
+    expect(cards[0].textContent).toContain('Fav Lecture');
+  });
+
+  test('empty course shows course empty state', async () => {
+    const course = await CourseRepository.create(createCourse({ name: 'Empty Course' }));
+    libraryState.selectedCourseId = course.id;
+    await enhancedRenderLibraryView();
+
+    const grid = document.getElementById('library-grid');
+    const emptyEl = document.getElementById('library-empty');
+    expect(grid.children.length).toBe(0);
+    expect(emptyEl.classList.contains('hidden')).toBe(false);
+    expect(emptyEl.textContent.toLowerCase()).toMatch(/no lecture/i);
+  });
+
+  test('empty search shows search empty state', async () => {
+    await LectureRepository.create(createLecture({ title: 'Some Lecture' }));
+
+    // Simulate search with no results by using a non-matching query
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    renderSearchEmptyState(container, 'xyznonexistent');
+    expect(container.textContent.toLowerCase()).toContain('no result');
+    expect(container.textContent).toContain('xyznonexistent');
+  });
+
+  test('empty favorites shows favorites empty state', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    renderFavoritesEmptyState(container);
+    expect(container.textContent.toLowerCase()).toMatch(/no favorite/i);
+  });
+});
+
+// ============================================================================
+// DAY 6: PERFORMANCE
+// ============================================================================
+
+describe('Performance', () => {
+  test('renders 20 lectures without error', async () => {
+    for (let i = 0; i < 20; i++) {
+      await LectureRepository.create(createLecture({ title: `Perf Lecture ${i}` }));
+    }
+
+    await enhancedRenderLibraryView();
+
+    const grid = document.getElementById('library-grid');
+    expect(grid.children.length).toBeGreaterThanOrEqual(12); // at least first page
+  });
+
+  test('search 100 segments completes in under 500ms', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'Perf Search' }));
+    for (let i = 0; i < 100; i++) {
+      await SegmentRepository.create(createSegment({
+        lectureId: lecture.id,
+        startTime: i * 60,
+        endTime: (i + 1) * 60,
+        type: 'topic',
+        metadata: { text: `Topic number ${i} about machine learning algorithms` }
+      }));
+    }
+
+    _resetSearchCache();
+    const start = Date.now();
+    const results = await crossLectureSearch('machine learning');
+    const elapsed = Date.now() - start;
+    expect(elapsed).toBeLessThan(500);
+    expect(results.totalCount).toBeGreaterThan(0);
+  });
+
+  test('paginated rendering loads first 12, sentinel present for more', () => {
+    // Create mock lectures
+    const lectures = Array.from({ length: 20 }, (_, i) => ({
+      id: `lec-${i}`, title: `Lecture ${i}`, status: 'completed',
+      watchProgress: 0, createdAt: Date.now(), courseId: null
+    }));
+
+    const container = document.createElement('div');
+    container.setAttribute('role', 'list');
+    document.body.appendChild(container);
+
+    renderLibraryViewPaginated(container, lectures, new Map(), 12);
+
+    const cards = container.querySelectorAll('[role="listitem"]');
+    expect(cards.length).toBe(12);
+
+    // Sentinel should be present
+    const sentinel = container.querySelector('[data-sentinel]');
+    expect(sentinel).not.toBeNull();
+  });
+
+  test('IntersectionObserver sentinel triggers next batch via mock._trigger()', () => {
+    const lectures = Array.from({ length: 20 }, (_, i) => ({
+      id: `lec-${i}`, title: `Lecture ${i}`, status: 'completed',
+      watchProgress: 0, createdAt: Date.now(), courseId: null
+    }));
+
+    const container = document.createElement('div');
+    container.setAttribute('role', 'list');
+    document.body.appendChild(container);
+
+    const observer = renderLibraryViewPaginated(container, lectures, new Map(), 12);
+
+    // Trigger the observer to load next batch
+    if (observer && observer._trigger) {
+      observer._trigger([{ isIntersecting: true }]);
+    }
+
+    const cards = container.querySelectorAll('[role="listitem"]');
+    expect(cards.length).toBe(20); // All loaded now
+
+    // Sentinel should be removed since all items rendered
+    const sentinel = container.querySelector('[data-sentinel]');
+    expect(sentinel).toBeNull();
+  });
+});
+
+// ============================================================================
+// DAY 6: KEYBOARD SHORTCUTS
+// ============================================================================
+
+describe('Keyboard Shortcuts', () => {
+  test('"/" focuses search input when no input focused', () => {
+    // Create a search input in the toolbar
+    const toolbar = document.getElementById('library-toolbar');
+    const searchInput = document.createElement('input');
+    searchInput.className = 'sp-search-input';
+    searchInput.type = 'text';
+    toolbar.appendChild(searchInput);
+
+    const cleanup = initLibraryKeyboardShortcuts();
+
+    // Focus body first (no input focused)
+    document.body.focus();
+
+    const event = new KeyboardEvent('keydown', { key: '/', bubbles: true });
+    document.dispatchEvent(event);
+
+    expect(document.activeElement).toBe(searchInput);
+
+    if (cleanup) cleanup();
+  });
+
+  test('"/" does NOT focus search when input already focused', () => {
+    const toolbar = document.getElementById('library-toolbar');
+    const searchInput = document.createElement('input');
+    searchInput.className = 'sp-search-input';
+    searchInput.type = 'text';
+    toolbar.appendChild(searchInput);
+
+    // Create another input that is focused
+    const otherInput = document.createElement('input');
+    otherInput.type = 'text';
+    document.body.appendChild(otherInput);
+    otherInput.focus();
+
+    const cleanup = initLibraryKeyboardShortcuts();
+
+    const event = new KeyboardEvent('keydown', { key: '/', bubbles: true });
+    document.dispatchEvent(event);
+
+    // Should still be on otherInput, not search
+    expect(document.activeElement).toBe(otherInput);
+
+    if (cleanup) cleanup();
+  });
+
+  test('Escape clears and blurs focused input', () => {
+    const toolbar = document.getElementById('library-toolbar');
+    const searchInput = document.createElement('input');
+    searchInput.className = 'sp-search-input';
+    searchInput.type = 'text';
+    toolbar.appendChild(searchInput);
+
+    const cleanup = initLibraryKeyboardShortcuts();
+
+    // Focus the search input and type something
+    searchInput.focus();
+    searchInput.value = 'some query';
+
+    const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+    document.dispatchEvent(event);
+
+    expect(searchInput.value).toBe('');
+    expect(document.activeElement).not.toBe(searchInput);
+
+    if (cleanup) cleanup();
+  });
+
+  test('library card has tabindex and responds to Enter key', () => {
+    const container = document.createElement('div');
+    container.setAttribute('role', 'list');
+    document.body.appendChild(container);
+
+    const lectures = [{ id: 'kb-lec-1', title: 'KB Test', status: 'completed', watchProgress: 50, createdAt: Date.now(), courseId: null }];
+    renderLibraryViewPaginated(container, lectures, new Map(), 12);
+
+    const card = container.querySelector('[role="listitem"]');
+    expect(card.getAttribute('tabindex')).toBe('0');
+
+    // Simulate Enter key
+    const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+    card.dispatchEvent(event);
+    // Navigation triggered — hash should change
+    expect(window.location.hash).toContain('kb-lec-1');
   });
 });

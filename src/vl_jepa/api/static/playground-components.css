@@ -224,6 +224,25 @@
   background: var(--color-primary-400);
 }
 
+.sp-library-card__course {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  background: var(--color-primary-100, #e0e7ff);
+  color: var(--color-primary-700, #4338ca);
+}
+
+.dark .sp-library-card__course {
+  background: var(--color-primary-900, #312e81);
+  color: var(--color-primary-200, #c7d2fe);
+}
+
+.sp-sentinel {
+  height: 1px;
+  width: 100%;
+}
+
 /* ============================================
    STUDY CONTROLS (Quality buttons for SM-2)
    ============================================ */

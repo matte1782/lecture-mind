@@ -1221,18 +1221,235 @@ function renderSearchTabs(container, activeTab, counts, onTabChange) {
 // ============================================================================
 
 /**
+ * Render a lecture card for the library grid.
+ * @param {Object} lecture
+ * @param {Object|null} course
+ * @returns {HTMLElement}
+ */
+function renderLibraryCard(lecture, course) {
+  const card = createElement('div', 'sp-library-card');
+  card.setAttribute('role', 'listitem');
+  card.dataset.lectureId = lecture.id;
+
+  const title = createElement('h3', 'sp-library-card__title', {
+    textContent: lecture.title
+  });
+  card.appendChild(title);
+
+  if (course) {
+    const badge = createElement('span', 'sp-library-card__course', {
+      textContent: course.name
+    });
+    card.appendChild(badge);
+  }
+
+  const progress = createElement('span', 'sp-library-card__progress', {
+    textContent: `${lecture.watchProgress || 0}%`
+  });
+  card.appendChild(progress);
+
+  card.setAttribute('tabindex', '0');
+  card.addEventListener('click', () => navigateTo(`#/lecture/${lecture.id}`));
+  card.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      navigateTo(`#/lecture/${lecture.id}`);
+    }
+  });
+
+  return card;
+}
+
+/**
+ * Render lectures into a grid with pagination via IntersectionObserver.
+ * @param {HTMLElement} container - The grid container
+ * @param {Object[]} lectures - All lectures to render
+ * @param {Map} courseMap - Map<courseId, course>
+ * @param {number} [pageSize=12] - Items per page
+ * @returns {IntersectionObserver|null} Observer for test access
+ */
+function renderLibraryViewPaginated(container, lectures, courseMap, pageSize = 12) {
+  clearElement(container);
+
+  let rendered = 0;
+  let sentinel = null;
+  let observer = null;
+
+  function renderBatch() {
+    const end = Math.min(rendered + pageSize, lectures.length);
+    for (let i = rendered; i < end; i++) {
+      const lecture = lectures[i];
+      const course = courseMap.get(lecture.courseId) || null;
+      container.appendChild(renderLibraryCard(lecture, course));
+    }
+    rendered = end;
+
+    // Remove old sentinel
+    if (sentinel && sentinel.parentNode) {
+      sentinel.parentNode.removeChild(sentinel);
+      sentinel = null;
+    }
+
+    // Add sentinel if more to load
+    if (rendered < lectures.length) {
+      sentinel = createElement('div', 'sp-sentinel');
+      sentinel.dataset.sentinel = 'true';
+      container.appendChild(sentinel);
+      if (observer) observer.observe(sentinel);
+    } else {
+      // All rendered, disconnect observer
+      if (observer) observer.disconnect();
+    }
+  }
+
+  if (lectures.length > pageSize) {
+    observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          renderBatch();
+        }
+      }
+    });
+  }
+
+  renderBatch();
+  return observer;
+}
+
+/**
+ * Render empty state for a course with no lectures.
+ * @param {HTMLElement} container
+ * @param {string} courseName
+ */
+function renderCourseEmptyState(container, courseName) {
+  clearElement(container);
+  const msg = createElement('p', 'sp-empty-state', {
+    textContent: `No lectures in ${courseName} yet`
+  });
+  container.appendChild(msg);
+}
+
+/**
+ * Render empty state for search with no results.
+ * @param {HTMLElement} container
+ * @param {string} query
+ */
+function renderSearchEmptyState(container, query) {
+  clearElement(container);
+  const msg = createElement('p', 'sp-empty-state', {
+    textContent: `No results for "${query}"`
+  });
+  container.appendChild(msg);
+}
+
+/**
+ * Render empty state for favorites with no starred lectures.
+ * @param {HTMLElement} container
+ */
+function renderFavoritesEmptyState(container) {
+  clearElement(container);
+  const msg = createElement('p', 'sp-empty-state', {
+    textContent: 'No favorites yet. Star lectures to add them here.'
+  });
+  container.appendChild(msg);
+}
+
+/**
+ * Initialize keyboard shortcuts for the library view.
+ * "/" or Ctrl+K: focus search input
+ * Returns cleanup function.
+ * @returns {Function} Cleanup function to remove listener
+ */
+function initLibraryKeyboardShortcuts() {
+  function handler(e) {
+    const active = document.activeElement;
+    const isInputFocused = active && (
+      active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT'
+    );
+
+    if ((e.key === '/' || (e.ctrlKey && e.key === 'k')) && !isInputFocused) {
+      e.preventDefault();
+      const searchInput = document.querySelector('.sp-search-input');
+      if (searchInput) searchInput.focus();
+    }
+
+    if (e.key === 'Escape' && isInputFocused) {
+      active.value = '';
+      active.blur();
+    }
+  }
+
+  document.addEventListener('keydown', handler);
+  return () => document.removeEventListener('keydown', handler);
+}
+
+/**
  * Enhanced library view renderer that adds sidebar + toolbar to the playground view.
  * Registered via setLibraryRenderer() on module load.
  */
 async function enhancedRenderLibraryView() {
   try {
     const coursesWithCounts = await loadCourses();
+
+    // Favorites count for sidebar
+    const favIds = await getFavoriteIds();
+    libraryState.favoritesCount = favIds.length;
+
     renderCourseSidebar(coursesWithCounts, libraryState.selectedCourseId, {
       totalLectures: libraryState.totalLectures,
       uncategorizedCount: libraryState.uncategorizedCount,
       favoritesCount: libraryState.favoritesCount
     });
     renderLibraryToolbar(libraryState.sortBy, libraryState.viewMode);
+
+    // Load all lectures
+    let lectures = await LectureRepository.getAll();
+
+    // Filter by selected course
+    const selectedId = libraryState.selectedCourseId;
+    if (selectedId === 'favorites') {
+      const favSet = new Set(favIds);
+      lectures = lectures.filter(l => favSet.has(l.id));
+    } else if (selectedId === 'uncategorized') {
+      lectures = lectures.filter(l => !l.courseId);
+    } else if (selectedId) {
+      lectures = lectures.filter(l => l.courseId === selectedId);
+    }
+
+    // Sort
+    lectures = sortLectures(lectures, libraryState.sortBy);
+
+    // Batch-load courses (single getAll, Map) — avoids N+1
+    const allCourses = await CourseRepository.getAll();
+    const courseMap = new Map(allCourses.map(c => [c.id, c]));
+
+    // Render into grid
+    const grid = document.getElementById('library-grid');
+    const emptyState = document.getElementById('library-empty');
+
+    if (grid) {
+      if (lectures.length === 0) {
+        clearElement(grid);
+        // Show appropriate empty state
+        if (emptyState) {
+          emptyState.classList.remove('hidden');
+          if (selectedId === 'favorites') {
+            renderFavoritesEmptyState(emptyState);
+          } else if (selectedId && selectedId !== 'uncategorized') {
+            const course = courseMap.get(selectedId);
+            renderCourseEmptyState(emptyState, course ? course.name : 'this course');
+          } else {
+            clearElement(emptyState);
+            emptyState.appendChild(createElement('p', 'sp-empty-state', {
+              textContent: 'No lectures yet'
+            }));
+          }
+        }
+      } else {
+        if (emptyState) emptyState.classList.add('hidden');
+        renderLibraryViewPaginated(grid, lectures, courseMap, 12);
+      }
+    }
   } catch (err) {
     showToast('error', 'Error', 'Failed to load library');
   }
@@ -2018,5 +2235,12 @@ export {
   getPlaylistForLecture,
   renderPlaylistNav,
   renderPlaylistMinimap,
-  renderFavoriteButton
+  renderFavoriteButton,
+
+  // Day 6: Integration + Performance + Polish
+  renderLibraryViewPaginated,
+  initLibraryKeyboardShortcuts,
+  renderCourseEmptyState,
+  renderSearchEmptyState,
+  renderFavoritesEmptyState
 };
