@@ -57,7 +57,15 @@ import {
   renderSegmentsList,
   renderFlashcardsList,
   renderBookmarksList,
-  renderLectureInfo
+  renderLectureInfo,
+  // Day 5: Favorites + Playlist
+  getFavoriteIds,
+  toggleFavorite,
+  isFavorite,
+  getFavoriteLectures,
+  getPlaylistForLecture,
+  renderPlaylistNav,
+  renderFavoriteButton
 } from './library.js';
 
 // ============================================================================
@@ -1209,5 +1217,240 @@ describe('Entity Lists', () => {
     );
     expect(studyBtn).toBeDefined();
     expect(studyBtn.textContent.toLowerCase()).toContain('flashcard');
+  });
+});
+
+// ============================================================================
+// DAY 5: FAVORITES (SettingsRepository)
+// ============================================================================
+
+describe('Favorites (SettingsRepository)', () => {
+  test('toggleFavorite adds lectureId on first call', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'Fav Test' }));
+    const result = await toggleFavorite(lecture.id);
+
+    expect(result).toBe(true);
+    const ids = await getFavoriteIds();
+    expect(ids).toContain(lecture.id);
+  });
+
+  test('toggleFavorite removes lectureId on second call', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'Unfav Test' }));
+    await toggleFavorite(lecture.id); // add
+    const result = await toggleFavorite(lecture.id); // remove
+
+    expect(result).toBe(false);
+    const ids = await getFavoriteIds();
+    expect(ids).not.toContain(lecture.id);
+  });
+
+  test('isFavorite returns true when favorited', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'IsFav True' }));
+    await toggleFavorite(lecture.id);
+
+    expect(await isFavorite(lecture.id)).toBe(true);
+  });
+
+  test('isFavorite returns false when not', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'IsFav False' }));
+    expect(await isFavorite(lecture.id)).toBe(false);
+  });
+
+  test('getFavoriteLectures returns only existing lectures', async () => {
+    const lec1 = await LectureRepository.create(createLecture({ title: 'Fav Lecture 1' }));
+    const lec2 = await LectureRepository.create(createLecture({ title: 'Fav Lecture 2' }));
+    await toggleFavorite(lec1.id);
+    await toggleFavorite(lec2.id);
+
+    const favorites = await getFavoriteLectures();
+    expect(favorites.length).toBe(2);
+    const titles = favorites.map(l => l.title);
+    expect(titles).toContain('Fav Lecture 1');
+    expect(titles).toContain('Fav Lecture 2');
+  });
+
+  test('batchDeleteLectures cleans stale favorite IDs', async () => {
+    const lec1 = await LectureRepository.create(createLecture({ title: 'Keep' }));
+    const lec2 = await LectureRepository.create(createLecture({ title: 'Delete' }));
+    await toggleFavorite(lec1.id);
+    await toggleFavorite(lec2.id);
+
+    await batchDeleteLectures([lec2.id]);
+
+    // lec2 should be removed from favorites
+    const ids = await getFavoriteIds();
+    expect(ids).toContain(lec1.id);
+    expect(ids).not.toContain(lec2.id);
+  });
+
+  test('getFavoriteLectures handles deleted lectures gracefully', async () => {
+    const lec1 = await LectureRepository.create(createLecture({ title: 'Existing' }));
+    const lec2 = await LectureRepository.create(createLecture({ title: 'To Delete' }));
+    await toggleFavorite(lec1.id);
+    await toggleFavorite(lec2.id);
+
+    // Delete lec2
+    await LectureRepository.deleteWithCascade(lec2.id);
+
+    const favorites = await getFavoriteLectures();
+    expect(favorites.length).toBe(1);
+    expect(favorites[0].title).toBe('Existing');
+  });
+});
+
+// ============================================================================
+// DAY 5: PLAYLIST
+// ============================================================================
+
+describe('Playlist', () => {
+  test('getPlaylistForLecture returns previous/current/next', async () => {
+    const course = await CourseRepository.create(createCourse({ name: 'Playlist Course' }));
+    await LectureRepository.create(createLecture({ title: 'L1', courseId: course.id }));
+    await LectureRepository.create(createLecture({ title: 'L2', courseId: course.id }));
+    await LectureRepository.create(createLecture({ title: 'L3', courseId: course.id }));
+
+    // Get all lectures in course to find the middle one
+    const allInCourse = await LectureRepository.getByCourse(course.id);
+    expect(allInCourse.length).toBe(3);
+
+    // Pick any lecture that is NOT first or last in sorted order
+    // Sort by createdAt + id tiebreak (same as implementation)
+    allInCourse.sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id));
+    const middleLec = allInCourse[1];
+
+    const playlist = await getPlaylistForLecture(middleLec.id);
+    expect(playlist.current.id).toBe(middleLec.id);
+    expect(playlist.previous).not.toBeNull();
+    expect(playlist.next).not.toBeNull();
+    expect(playlist.total).toBe(3);
+  });
+
+  test('getPlaylistForLecture returns null previous for first', async () => {
+    const course = await CourseRepository.create(createCourse({ name: 'First Course' }));
+    await LectureRepository.create(createLecture({ title: 'First', courseId: course.id }));
+    await LectureRepository.create(createLecture({ title: 'Second', courseId: course.id }));
+
+    // Find the first lecture in sorted order
+    const allInCourse = await LectureRepository.getByCourse(course.id);
+    allInCourse.sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id));
+    const firstLec = allInCourse[0];
+
+    const playlist = await getPlaylistForLecture(firstLec.id);
+    expect(playlist.previous).toBeNull();
+    expect(playlist.next).not.toBeNull();
+    expect(playlist.currentIndex).toBe(0);
+  });
+
+  test('getPlaylistForLecture returns null next for last', async () => {
+    const course = await CourseRepository.create(createCourse({ name: 'Last Course' }));
+    await LectureRepository.create(createLecture({ title: 'First', courseId: course.id }));
+    await LectureRepository.create(createLecture({ title: 'Last', courseId: course.id }));
+
+    // Find the last lecture in sorted order
+    const allInCourse = await LectureRepository.getByCourse(course.id);
+    allInCourse.sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id));
+    const lastLec = allInCourse[allInCourse.length - 1];
+
+    const playlist = await getPlaylistForLecture(lastLec.id);
+    expect(playlist.previous).not.toBeNull();
+    expect(playlist.next).toBeNull();
+    expect(playlist.currentIndex).toBe(1);
+  });
+
+  test('getPlaylistForLecture sorts by createdAt ascending', async () => {
+    const course = await CourseRepository.create(createCourse({ name: 'Sort Course' }));
+    // Create 3 lectures — all get same createdAt, but sorted by id tiebreak
+    await LectureRepository.create(createLecture({ title: 'Alpha', courseId: course.id }));
+    await LectureRepository.create(createLecture({ title: 'Beta', courseId: course.id }));
+    await LectureRepository.create(createLecture({ title: 'Gamma', courseId: course.id }));
+
+    const allInCourse = await LectureRepository.getByCourse(course.id);
+    allInCourse.sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id));
+
+    // The first in sorted order should have previous=null
+    const firstPlaylist = await getPlaylistForLecture(allInCourse[0].id);
+    expect(firstPlaylist.currentIndex).toBe(0);
+    expect(firstPlaylist.previous).toBeNull();
+    expect(firstPlaylist.next).not.toBeNull();
+    // Next should match second in sorted order
+    expect(firstPlaylist.next.id).toBe(allInCourse[1].id);
+  });
+
+  test('getPlaylistForLecture returns empty result for non-existent lecture', async () => {
+    const playlist = await getPlaylistForLecture('non-existent-id');
+    expect(playlist.current).toBeNull();
+    expect(playlist.previous).toBeNull();
+    expect(playlist.next).toBeNull();
+    expect(playlist.total).toBe(0);
+    expect(playlist.currentIndex).toBe(-1);
+  });
+
+  test('renderPlaylistNav disables previous button for first', () => {
+    const playlist = {
+      previous: null,
+      current: { id: 'lec1', title: 'First' },
+      next: { id: 'lec2', title: 'Second' },
+      total: 2,
+      currentIndex: 0
+    };
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    renderPlaylistNav(container, playlist);
+
+    const prevBtn = container.querySelector('.sp-playlist-nav__btn--prev') ||
+                    container.querySelector('[aria-label*="Previous"], [aria-label*="previous"]');
+    expect(prevBtn).not.toBeNull();
+    expect(prevBtn.disabled).toBe(true);
+  });
+
+  test('renderPlaylistNav disables next button for last', () => {
+    const playlist = {
+      previous: { id: 'lec1', title: 'First' },
+      current: { id: 'lec2', title: 'Last' },
+      next: null,
+      total: 2,
+      currentIndex: 1
+    };
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    renderPlaylistNav(container, playlist);
+
+    const nextBtn = container.querySelector('.sp-playlist-nav__btn--next') ||
+                    container.querySelector('[aria-label*="Next"], [aria-label*="next"]');
+    expect(nextBtn).not.toBeNull();
+    expect(nextBtn.disabled).toBe(true);
+  });
+});
+
+// ============================================================================
+// DAY 5: FAVORITE BUTTON
+// ============================================================================
+
+describe('Favorite Button', () => {
+  test('renderFavoriteButton shows filled star when favorite', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    renderFavoriteButton(container, 'lec-123', true);
+
+    const btn = container.querySelector('.sp-favorite-btn');
+    expect(btn).not.toBeNull();
+    expect(btn.classList.contains('sp-favorite-btn--active')).toBe(true);
+    expect(btn.textContent).toContain('\u2605'); // filled star ★
+  });
+
+  test('renderFavoriteButton has correct aria-label', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+
+    renderFavoriteButton(container, 'lec-fav', true);
+    let btn = container.querySelector('.sp-favorite-btn');
+    expect(btn.getAttribute('aria-label')).toMatch(/remove.*favorite/i);
+
+    // Re-render as non-favorite
+    renderFavoriteButton(container, 'lec-nonfav', false);
+    btn = container.querySelector('.sp-favorite-btn');
+    expect(btn.getAttribute('aria-label')).toMatch(/add.*favorite/i);
   });
 });

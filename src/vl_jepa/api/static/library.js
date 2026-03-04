@@ -685,7 +685,14 @@ async function batchDeleteLectures(lectureIds) {
     }
   }
 
+  // Clean stale IDs from favorites
   if (succeeded.length > 0) {
+    const favIds = await getFavoriteIds();
+    const cleaned = favIds.filter(id => !succeeded.includes(id));
+    if (cleaned.length !== favIds.length) {
+      await SettingsRepository.set('favorite_lectures', cleaned);
+    }
+
     const msg = failed.length > 0
       ? `Deleted ${succeeded.length} lectures. ${failed.length} failed.`
       : `Deleted ${succeeded.length} lecture${succeeded.length !== 1 ? 's' : ''}`;
@@ -1666,6 +1673,12 @@ async function renderLectureDetailView(lectureId) {
     // Render header (replaces loadingTitle)
     renderDetailHeader(header, lecture, course);
 
+    // Favorite button in header
+    const favContainer = createElement('span', '');
+    const isFav = await isFavorite(lectureId);
+    renderFavoriteButton(favContainer, lectureId, isFav);
+    header.appendChild(favContainer);
+
     // Render stats
     const stats = await getLectureStats(lectureId);
     const statsContainer = createElement('div', '');
@@ -1693,6 +1706,10 @@ async function renderLectureDetailView(lectureId) {
     // Default: show segments
     await renderSegmentsList(tabPanel, lectureId);
 
+    // Playlist navigation
+    const playlist = await getPlaylistForLecture(lectureId);
+    renderPlaylistNav(content, playlist);
+
   } catch (_err) {
     clearElement(header);
     clearElement(content);
@@ -1700,6 +1717,225 @@ async function renderLectureDetailView(lectureId) {
       textContent: 'Error loading lecture'
     }));
   }
+}
+
+// ============================================================================
+// DAY 5: FAVORITES (AD-2 — via SettingsRepository)
+// ============================================================================
+
+/**
+ * Get favorite lecture IDs from settings.
+ * @returns {Promise<string[]>}
+ */
+async function getFavoriteIds() {
+  const favorites = await SettingsRepository.get('favorite_lectures');
+  return Array.isArray(favorites) ? favorites : [];
+}
+
+/**
+ * Toggle favorite status for a lecture.
+ * @param {string} lectureId
+ * @returns {Promise<boolean>} New isFavorite state
+ */
+async function toggleFavorite(lectureId) {
+  const ids = await getFavoriteIds();
+  const index = ids.indexOf(lectureId);
+  if (index >= 0) {
+    ids.splice(index, 1);
+    await SettingsRepository.set('favorite_lectures', ids);
+    return false;
+  } else {
+    ids.push(lectureId);
+    await SettingsRepository.set('favorite_lectures', ids);
+    return true;
+  }
+}
+
+/**
+ * Check if a lecture is favorited.
+ * @param {string} lectureId
+ * @returns {Promise<boolean>}
+ */
+async function isFavorite(lectureId) {
+  const ids = await getFavoriteIds();
+  return ids.includes(lectureId);
+}
+
+/**
+ * Get lecture objects for all favorite IDs, filtering out deleted lectures.
+ * @returns {Promise<Object[]>}
+ */
+async function getFavoriteLectures() {
+  const ids = await getFavoriteIds();
+  const results = await Promise.all(ids.map(id => LectureRepository.getById(id)));
+  return results.filter(lecture => lecture != null);
+}
+
+// ============================================================================
+// DAY 5: PLAYLIST NAVIGATION
+// ============================================================================
+
+/**
+ * Get playlist context for a lecture (prev/current/next within course).
+ * @param {string} lectureId
+ * @returns {Promise<Object>} { previous, current, next, total, currentIndex }
+ */
+async function getPlaylistForLecture(lectureId) {
+  const lecture = await LectureRepository.getById(lectureId);
+  if (!lecture) return { previous: null, current: null, next: null, total: 0, currentIndex: -1 };
+
+  let lectures;
+  if (lecture.courseId) {
+    lectures = await LectureRepository.getByCourse(lecture.courseId);
+  } else {
+    const all = await LectureRepository.getAll();
+    lectures = all.filter(l => !l.courseId);
+  }
+
+  // Sort by createdAt ascending (chronological), tiebreak by id for stability
+  lectures.sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id));
+
+  const currentIndex = lectures.findIndex(l => l.id === lectureId);
+  return {
+    previous: currentIndex > 0 ? lectures[currentIndex - 1] : null,
+    current: lectures[currentIndex] || lecture,
+    next: currentIndex < lectures.length - 1 ? lectures[currentIndex + 1] : null,
+    total: lectures.length,
+    currentIndex
+  };
+}
+
+// Module-level reference for playlist keyboard handler cleanup
+let _playlistKeyHandler = null;
+
+/**
+ * Render playlist navigation bar.
+ * @param {HTMLElement} container
+ * @param {Object} playlist - From getPlaylistForLecture
+ */
+function renderPlaylistNav(container, playlist) {
+  const nav = createElement('nav', 'sp-playlist-nav');
+  nav.setAttribute('aria-label', 'Lecture playlist');
+
+  // Previous button
+  const prevBtn = createElement('button', 'sp-playlist-nav__btn sp-playlist-nav__btn--prev', {
+    textContent: playlist.previous ? `\u2190 ${playlist.previous.title}` : '\u2190 Previous'
+  });
+  prevBtn.setAttribute('aria-label', playlist.previous ? `Previous: ${playlist.previous.title}` : 'Previous lecture');
+  if (!playlist.previous) {
+    prevBtn.disabled = true;
+    prevBtn.setAttribute('aria-disabled', 'true');
+  } else {
+    prevBtn.addEventListener('click', () => navigateTo(`#/lecture/${playlist.previous.id}`));
+  }
+  nav.appendChild(prevBtn);
+
+  // Position indicator
+  const position = createElement('span', 'sp-playlist-nav__position', {
+    textContent: `Lecture ${playlist.currentIndex + 1} of ${playlist.total}`
+  });
+  nav.appendChild(position);
+
+  // Next button
+  const nextBtn = createElement('button', 'sp-playlist-nav__btn sp-playlist-nav__btn--next', {
+    textContent: playlist.next ? `${playlist.next.title} \u2192` : 'Next \u2192'
+  });
+  nextBtn.setAttribute('aria-label', playlist.next ? `Next: ${playlist.next.title}` : 'Next lecture');
+  if (!playlist.next) {
+    nextBtn.disabled = true;
+    nextBtn.setAttribute('aria-disabled', 'true');
+  } else {
+    nextBtn.addEventListener('click', () => navigateTo(`#/lecture/${playlist.next.id}`));
+  }
+  nav.appendChild(nextBtn);
+
+  // Keyboard navigation: ArrowLeft = previous, ArrowRight = next
+  // Cleanup previous listener to prevent leaks on re-render
+  if (_playlistKeyHandler) {
+    document.removeEventListener('keydown', _playlistKeyHandler);
+  }
+  _playlistKeyHandler = (e) => {
+    // Guard: skip if activeElement is input/textarea/select
+    const active = document.activeElement;
+    if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) {
+      return;
+    }
+    if (e.key === 'ArrowLeft' && playlist.previous) {
+      e.preventDefault();
+      navigateTo(`#/lecture/${playlist.previous.id}`);
+    } else if (e.key === 'ArrowRight' && playlist.next) {
+      e.preventDefault();
+      navigateTo(`#/lecture/${playlist.next.id}`);
+    }
+  };
+  document.addEventListener('keydown', _playlistKeyHandler);
+
+  container.appendChild(nav);
+}
+
+/**
+ * Render playlist minimap (dot navigation).
+ * @param {HTMLElement} container
+ * @param {Object} playlist
+ * @param {Object[]} allLectures - All lectures in the course with watchProgress
+ */
+function renderPlaylistMinimap(container, playlist, allLectures) {
+  const minimap = createElement('div', 'sp-playlist-minimap');
+  minimap.setAttribute('role', 'group');
+  minimap.setAttribute('aria-label', 'Lecture progress overview');
+
+  const currentId = playlist.current ? playlist.current.id : null;
+
+  allLectures.forEach((lecture, index) => {
+    let dotClass = 'sp-playlist-minimap__dot';
+    if (lecture.id === currentId) {
+      dotClass += ' sp-playlist-minimap__dot--current';
+    } else if ((lecture.watchProgress || 0) > 80) {
+      dotClass += ' sp-playlist-minimap__dot--completed';
+    }
+
+    const dot = createElement('button', dotClass);
+    dot.setAttribute('aria-label', `${lecture.title} (${index + 1} of ${playlist.total})`);
+    dot.addEventListener('click', () => navigateTo(`#/lecture/${lecture.id}`));
+    minimap.appendChild(dot);
+  });
+
+  container.appendChild(minimap);
+}
+
+/**
+ * Render favorite toggle button.
+ * @param {HTMLElement} container
+ * @param {string} lectureId
+ * @param {boolean} isFav - Current favorite state
+ */
+function renderFavoriteButton(container, lectureId, isFav) {
+  clearElement(container);
+
+  let debouncing = false;
+  const btn = createElement('button', `sp-favorite-btn${isFav ? ' sp-favorite-btn--active' : ''}`, {
+    textContent: isFav ? '\u2605' : '\u2606' // ★ or ☆
+  });
+  btn.setAttribute('aria-label', isFav ? 'Remove from favorites' : 'Add to favorites');
+  btn.setAttribute('aria-pressed', isFav ? 'true' : 'false');
+
+  btn.addEventListener('click', async () => {
+    if (debouncing) return;
+    debouncing = true;
+
+    try {
+      const newState = await toggleFavorite(lectureId);
+      btn.textContent = newState ? '\u2605' : '\u2606';
+      btn.classList.toggle('sp-favorite-btn--active', newState);
+      btn.setAttribute('aria-label', newState ? 'Remove from favorites' : 'Add to favorites');
+      btn.setAttribute('aria-pressed', newState ? 'true' : 'false');
+    } finally {
+      // 200ms cooldown after async completes
+      setTimeout(() => { debouncing = false; }, 200);
+    }
+  });
+
+  container.appendChild(btn);
 }
 
 // ============================================================================
@@ -1770,5 +2006,17 @@ export {
   renderSegmentsList,
   renderFlashcardsList,
   renderBookmarksList,
-  renderLectureInfo
+  renderLectureInfo,
+
+  // Day 5: Favorites
+  getFavoriteIds,
+  toggleFavorite,
+  isFavorite,
+  getFavoriteLectures,
+
+  // Day 5: Playlist
+  getPlaylistForLecture,
+  renderPlaylistNav,
+  renderPlaylistMinimap,
+  renderFavoriteButton
 };
