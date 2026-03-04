@@ -86,9 +86,13 @@ function showToast(variant, title, message) {
 
 let _libraryRenderer = null;
 let _lectureDetailRenderer = null;
+let _onQuizResult = null;
+let _onSessionComplete = null;
 
 function setLibraryRenderer(fn) { _libraryRenderer = fn; }
 function setLectureDetailRenderer(fn) { _lectureDetailRenderer = fn; }
+function setOnQuizResult(fn) { _onQuizResult = fn; }
+function setOnSessionComplete(fn) { _onSessionComplete = fn; }
 
 // ============================================================================
 // ROUTER
@@ -580,6 +584,14 @@ class StudySession {
       });
     }
 
+    // Fire analytics callback (fire-and-forget, async-safe)
+    if (_onQuizResult) {
+      try {
+        const p = _onQuizResult({ lectureId: this.lectureId, flashcardId: card.id, quality, oldStatus, newStatus: updated.status });
+        if (p && typeof p.catch === 'function') p.catch(() => {});
+      } catch (_e) { /* analytics must not break study flow */ }
+    }
+
     this.currentIndex++;
     return updated;
   }
@@ -937,6 +949,22 @@ function renderSessionComplete(session) {
 
   const accuracy = session.getAccuracy();
   const elapsed = session.getElapsedSeconds();
+
+  // Fire analytics callback (fire-and-forget, async-safe)
+  if (_onSessionComplete) {
+    try {
+      const p = _onSessionComplete({
+        lectureId: session.lectureId,
+        type: 'quiz',
+        duration: elapsed,
+        cardsReviewed: session.reviewed,
+        correct: session.correct,
+        accuracy,
+        masteryChanges: session.masteryChanges
+      });
+      if (p && typeof p.catch === 'function') p.catch(() => {});
+    } catch (_e) { /* analytics must not break session complete */ }
+  }
   const mins = Math.floor(elapsed / 60);
   const secs = elapsed % 60;
 
@@ -1497,5 +1525,9 @@ export {
 
   // Hookable renderers (for library.js registration)
   setLibraryRenderer,
-  setLectureDetailRenderer
+  setLectureDetailRenderer,
+
+  // Analytics hooks (for analytics.js registration — AD-9)
+  setOnQuizResult,
+  setOnSessionComplete
 };

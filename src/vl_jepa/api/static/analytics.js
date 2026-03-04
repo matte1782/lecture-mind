@@ -15,6 +15,7 @@
  */
 
 import { SettingsRepository } from './storage/index.js';
+import { setOnQuizResult, setOnSessionComplete } from './flashcards.js';
 
 // ============================================================================
 // CONSTANTS
@@ -213,6 +214,128 @@ async function pruneOldRecords(key, maxEntries = MAX_ENTRIES) {
 }
 
 // ============================================================================
+// WATCH TIME TRACKER (AD-10)
+// ============================================================================
+
+const TIMEUPDATE_THROTTLE_MS = 10000; // 10 seconds
+
+/**
+ * Tracks video watch time for a lecture. Attaches to a video element,
+ * records play/pause durations, persists on detach.
+ */
+class WatchTimeTracker {
+  /**
+   * @param {string} lectureId
+   */
+  constructor(lectureId) {
+    this.lectureId = lectureId;
+    this._videoEl = null;
+    this._playing = false;
+    this._playStart = null;
+    this._totalDuration = 0;
+    this._startPosition = 0;
+    this._lastPosition = 0;
+    this._lastTimeupdateAt = 0;
+
+    // Bound handlers for cleanup
+    this._onPlay = this._handlePlay.bind(this);
+    this._onPause = this._handlePause.bind(this);
+    this._onTimeUpdate = this._handleTimeUpdate.bind(this);
+  }
+
+  /**
+   * Attach to a video element and start tracking.
+   * @param {HTMLVideoElement} videoEl
+   */
+  attach(videoEl) {
+    this._videoEl = videoEl;
+    this._startPosition = videoEl.currentTime || 0;
+    this._lastPosition = this._startPosition;
+    videoEl.addEventListener('play', this._onPlay);
+    videoEl.addEventListener('pause', this._onPause);
+    videoEl.addEventListener('timeupdate', this._onTimeUpdate);
+  }
+
+  /**
+   * Detach from video element, persist watch session, clean up.
+   * @returns {Promise<Object|null>} The saved watch record, or null if no time tracked
+   */
+  async detach() {
+    if (this._videoEl) {
+      this._videoEl.removeEventListener('play', this._onPlay);
+      this._videoEl.removeEventListener('pause', this._onPause);
+      this._videoEl.removeEventListener('timeupdate', this._onTimeUpdate);
+    }
+
+    // Finalize if still playing
+    if (this._playing && this._playStart !== null) {
+      this._totalDuration += (Date.now() - this._playStart) / 1000;
+      this._playing = false;
+      this._playStart = null;
+    }
+
+    if (this._totalDuration <= 0) {
+      this._videoEl = null;
+      return null;
+    }
+
+    const record = createWatchSessionRecord({
+      lectureId: this.lectureId,
+      startPosition: this._startPosition,
+      endPosition: this._lastPosition,
+      duration: Math.round(this._totalDuration)
+    });
+
+    await saveWatchSession(record);
+    this._videoEl = null;
+    this._totalDuration = 0;
+    return record;
+  }
+
+  _handlePlay() {
+    this._playing = true;
+    this._playStart = Date.now();
+  }
+
+  _handlePause() {
+    if (this._playing && this._playStart !== null) {
+      this._totalDuration += (Date.now() - this._playStart) / 1000;
+    }
+    this._playing = false;
+    this._playStart = null;
+  }
+
+  _handleTimeUpdate() {
+    const now = Date.now();
+    if (now - this._lastTimeupdateAt < TIMEUPDATE_THROTTLE_MS) return;
+    this._lastTimeupdateAt = now;
+    if (this._videoEl) {
+      this._lastPosition = this._videoEl.currentTime;
+    }
+  }
+}
+
+// ============================================================================
+// ANALYTICS HOOKS REGISTRATION (AD-9)
+// ============================================================================
+
+/**
+ * Register analytics callbacks with flashcards.js.
+ * Called once at app init to capture quiz results and session completions.
+ */
+function registerAnalyticsHooks() {
+  setOnQuizResult(async (data) => {
+    const record = createQuizResultRecord(data);
+    await saveQuizResult(record);
+  });
+
+  setOnSessionComplete(async (data) => {
+    const record = createStudySessionRecord(data);
+    await saveStudySession(record);
+  });
+}
+
+// ============================================================================
 // EXPORTS
 // ============================================================================
 
@@ -233,5 +356,11 @@ export {
   getStudySessions,
   getQuizResults,
   getWatchSessions,
-  pruneOldRecords
+  pruneOldRecords,
+
+  // Watch time tracking
+  WatchTimeTracker,
+
+  // Hooks
+  registerAnalyticsHooks
 };
