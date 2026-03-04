@@ -251,7 +251,12 @@ function mountView(view, params = {}) {
         showElement(sections.dashboard);
         const dashContainer = sections.dashboard.querySelector('.section-container') || sections.dashboard;
         clearElement(dashContainer);
-        if (_dashboardRenderer) _dashboardRenderer(dashContainer);
+        if (_dashboardRenderer) {
+          try {
+            const p = _dashboardRenderer(dashContainer);
+            if (p && typeof p.catch === 'function') p.catch(() => {});
+          } catch (_e) { /* dashboard render must not crash router */ }
+        }
       }
       break;
   }

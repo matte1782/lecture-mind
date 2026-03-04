@@ -882,6 +882,7 @@ describe('Analytics — Day 2: Aggregation + Charts', () => {
     expect(title).not.toBeNull();
     expect(desc).not.toBeNull();
     expect(svg.getAttribute('aria-labelledby')).toBe(title.getAttribute('id'));
+    expect(svg.getAttribute('aria-describedby')).toBe(desc.getAttribute('id'));
     const rects = svg.querySelectorAll('rect');
     expect(rects.length).toBe(3);
   });
@@ -909,6 +910,7 @@ describe('Analytics — Day 2: Aggregation + Charts', () => {
     expect(title).not.toBeNull();
     expect(desc).not.toBeNull();
     expect(svg.getAttribute('aria-labelledby')).toBe(title.getAttribute('id'));
+    expect(svg.getAttribute('aria-describedby')).toBe(desc.getAttribute('id'));
     // Data elements
     const polyline = svg.querySelector('polyline');
     expect(polyline).not.toBeNull();
@@ -935,6 +937,7 @@ describe('Analytics — Day 2: Aggregation + Charts', () => {
     expect(title).not.toBeNull();
     expect(desc).not.toBeNull();
     expect(svg.getAttribute('aria-labelledby')).toBe(title.getAttribute('id'));
+    expect(svg.getAttribute('aria-describedby')).toBe(desc.getAttribute('id'));
     const circles = svg.querySelectorAll('circle[stroke-dasharray]');
     expect(circles.length).toBe(3);
   });

@@ -384,7 +384,8 @@ function renderBarChart(container, data, options = {}) {
     viewBox: `0 0 ${width} ${height}`,
     preserveAspectRatio: 'xMidYMid meet',
     role: 'img',
-    'aria-labelledby': titleId
+    'aria-labelledby': titleId,
+    'aria-describedby': descId
   });
 
   svg.appendChild(createSVGElement('title', { id: titleId, textContent: 'Bar Chart' }));
@@ -463,7 +464,8 @@ function renderLineChart(container, data, options = {}) {
     viewBox: `0 0 ${width} ${height}`,
     preserveAspectRatio: 'xMidYMid meet',
     role: 'img',
-    'aria-labelledby': titleId
+    'aria-labelledby': titleId,
+    'aria-describedby': descId
   });
 
   svg.appendChild(createSVGElement('title', { id: titleId, textContent: 'Line Chart' }));
@@ -541,7 +543,8 @@ function renderDonutChart(container, segments, options = {}) {
     viewBox: `0 0 ${width} ${height}`,
     preserveAspectRatio: 'xMidYMid meet',
     role: 'img',
-    'aria-labelledby': titleId
+    'aria-labelledby': titleId,
+    'aria-describedby': descId
   });
 
   svg.appendChild(createSVGElement('title', { id: titleId, textContent: 'Donut Chart' }));
@@ -687,9 +690,10 @@ function aggregateAccuracyTrend(sessions, limit = 20) {
  * @returns {{new: number, learning: number, review: number, mastered: number}}
  */
 function aggregateMasteryDistribution(flashcards) {
-  const dist = { new: 0, learning: 0, review: 0, mastered: 0 };
+  const dist = Object.create(null);
+  dist.new = 0; dist.learning = 0; dist.review = 0; dist.mastered = 0;
   for (const card of flashcards) {
-    if (card.status in dist) {
+    if (Object.prototype.hasOwnProperty.call(dist, card.status)) {
       dist[card.status] += 1;
     }
   }

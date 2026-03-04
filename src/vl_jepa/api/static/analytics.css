@@ -25,7 +25,7 @@
   margin-bottom: 1.5rem;
 }
 
-.sp-analytics-section__title {
+.sp-analytics-section h3 {
   font-size: 1.125rem;
   font-weight: 600;
   margin: 0 0 0.75rem;
@@ -67,29 +67,29 @@
   margin-top: 0.25rem;
 }
 
-/* Charts */
-.sp-chart {
+/* Charts — SVGs rendered directly inside .sp-analytics-section */
+.sp-analytics-section svg {
+  width: 100%;
+  height: auto;
+  display: block;
   background: var(--sp-card-bg);
   border-radius: 8px;
-  padding: 1rem;
+  padding: 0.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   border: 1px solid var(--sp-border);
 }
 
-.sp-chart svg {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-.sp-chart--bar,
-.sp-chart--line {
-  min-height: 180px;
-}
-
-.sp-chart--donut {
-  max-width: 240px;
-  margin: 0 auto;
+/* Error State */
+.sp-analytics-error {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--sp-danger);
+  font-size: 1rem;
+  font-weight: 500;
+  background: #fff5f5;
+  border: 1px solid var(--sp-danger);
+  border-radius: 8px;
+  margin: 1rem;
 }
 
 /* Results Table */
@@ -188,7 +188,7 @@
 
 /* Focus */
 .sp-stat-card:focus-visible,
-.sp-results-table__row:focus-visible,
+.sp-results-table tbody tr:focus-visible,
 .sp-streak-card:focus-visible {
   outline: 2px solid var(--sp-primary);
   outline-offset: 2px;
@@ -211,20 +211,15 @@
     padding: 1.5rem 2rem;
   }
 
-  .sp-chart--bar,
-  .sp-chart--line {
+  .sp-analytics-section svg[viewBox] {
     min-height: 240px;
-  }
-
-  .sp-chart--donut {
-    max-width: 280px;
   }
 }
 
 /* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   .sp-stat-card,
-  .sp-results-table__row,
+  .sp-results-table tbody tr,
   .sp-streak-card {
     transition: none;
   }
@@ -237,13 +232,13 @@
 /* High Contrast */
 @media (forced-colors: active) {
   .sp-stat-card,
-  .sp-chart,
+  .sp-analytics-section svg,
   .sp-streak-card,
   .sp-results-table {
     border: 2px solid ButtonText;
   }
 
-  .sp-results-table__row {
+  .sp-results-table tbody tr {
     border-bottom: 1px solid ButtonText;
   }
 }
@@ -262,7 +257,7 @@
   }
 
   .sp-stat-card,
-  .sp-chart,
+  .sp-analytics-section svg,
   .sp-streak-card,
   .sp-results-table {
     box-shadow: none;
