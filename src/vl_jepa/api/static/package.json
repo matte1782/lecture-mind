@@ -35,6 +35,7 @@
       "dom-utils.js",
       "library.js",
       "analytics.js",
+      "sw-utils.js",
       "!**/*.test.js",
       "!**/node_modules/**"
     ]
