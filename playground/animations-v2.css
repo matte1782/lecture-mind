@@ -1,0 +1,299 @@
+/**
+ * Lecture Mind - Animation Library v2 (Student Playground)
+ *
+ * Flashcard flip, confetti, progress ring, mastery pulse, card entrance,
+ * micro-celebrations, page transitions, and skeleton loading.
+ *
+ * Rules:
+ * - Primarily transform and opacity animated (GPU-composited, 60fps)
+ * - SVG stroke-dashoffset (progress ring, checkmark) and box-shadow (mastery pulse) are exceptions
+ * - Every @keyframes has reduced-motion override
+ * - No collisions with animations.css keyframe names
+ *
+ * IMPORTANT: Load AFTER animations.css.
+ */
+
+/* ============================================
+   FLASHCARD FLIP (3D rotateY)
+   ============================================ */
+@keyframes flipToBack {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(180deg);
+  }
+}
+
+@keyframes flipToFront {
+  0% {
+    transform: rotateY(180deg);
+  }
+  100% {
+    transform: rotateY(0deg);
+  }
+}
+
+/* ============================================
+   CONFETTI FALL (CSS-only celebration)
+   ============================================ */
+@keyframes confettiFall {
+  0% {
+    transform: translateY(-100%) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+@keyframes confettiSway {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(15px);
+  }
+  75% {
+    transform: translateX(-15px);
+  }
+}
+
+/* ============================================
+   PROGRESS RING (SVG stroke animation)
+   ============================================ */
+@keyframes progressFill {
+  from {
+    stroke-dashoffset: var(--progress-circumference, 283);
+  }
+  to {
+    stroke-dashoffset: var(--progress-offset, 0);
+  }
+}
+
+/* ============================================
+   MASTERY PULSE (Level-up glow)
+   ============================================ */
+@keyframes masteryPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 var(--mastery-glow-color, rgba(16, 185, 129, 0.4));
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 12px transparent;
+    transform: scale(1.02);
+  }
+}
+
+/* ============================================
+   CARD ENTRANCE (Library grid stagger)
+   ============================================ */
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   CHECKMARK DRAW + SUCCESS BOUNCE
+   ============================================ */
+@keyframes checkmarkDraw {
+  from {
+    stroke-dashoffset: var(--checkmark-length, 24);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes successBounce {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ============================================
+   PAGE TRANSITIONS (Slide in from sides)
+   ============================================ */
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ============================================
+   SKELETON LOADING (Shimmer gradient)
+   ============================================ */
+@keyframes skeletonShimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ============================================
+   ANIMATION UTILITY CLASSES
+   ============================================ */
+
+/* Flashcard flip container */
+.animate-flip-to-back {
+  animation: flipToBack var(--duration-medium) var(--ease-out) forwards;
+}
+
+.animate-flip-to-front {
+  animation: flipToFront var(--duration-medium) var(--ease-out) forwards;
+}
+
+/* Confetti particle */
+.animate-confetti {
+  animation: confettiFall 2s var(--ease-out) forwards,
+             confettiSway 1s var(--ease-in-out) infinite;
+}
+
+/* Progress ring fill */
+.animate-progress-fill {
+  animation: progressFill var(--duration-large) var(--ease-out) forwards;
+}
+
+/* Mastery level-up pulse */
+.animate-mastery-pulse {
+  animation: masteryPulse 1.5s var(--ease-in-out) 3;
+}
+
+/* Card entrance with stagger support */
+.animate-card-entrance {
+  animation: cardEntrance var(--duration-slow) var(--ease-spring) backwards;
+  animation-delay: calc(var(--stagger-index, 0) * 60ms);
+}
+
+/* Checkmark success animation */
+.animate-checkmark {
+  animation: checkmarkDraw var(--duration-slow) var(--ease-out) forwards;
+}
+
+.animate-success-bounce {
+  animation: successBounce var(--duration-medium) var(--spring-bounce-1) forwards;
+}
+
+/* Page transitions */
+.animate-slide-in-right {
+  animation: slideInFromRight var(--duration-slow) var(--ease-out) forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInFromLeft var(--duration-slow) var(--ease-out) forwards;
+}
+
+/* Skeleton loading */
+.sp-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--background-subtle);
+  border-radius: var(--radius-md);
+}
+
+.sp-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--glass-bg) 50%,
+    transparent 100%
+  );
+  animation: skeletonShimmer 1.5s var(--ease-in-out) infinite;
+}
+
+/* ============================================
+   REDUCED MOTION OVERRIDES
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .animate-flip-to-back,
+  .animate-flip-to-front {
+    animation: none;
+  }
+
+  .animate-flip-to-back {
+    transform: rotateY(180deg);
+  }
+
+  .animate-flip-to-front {
+    transform: rotateY(0deg);
+  }
+
+  .animate-confetti {
+    animation: none;
+    display: none;
+  }
+
+  .animate-progress-fill {
+    animation: none;
+  }
+
+  .animate-mastery-pulse {
+    animation: none;
+  }
+
+  .animate-card-entrance {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .animate-checkmark {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+
+  .animate-success-bounce {
+    animation: none;
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  .animate-slide-in-right,
+  .animate-slide-in-left {
+    animation: none;
+    transform: none;
+    opacity: 1;
+  }
+
+  .sp-skeleton::after {
+    animation: none;
+    display: none;
+  }
+}

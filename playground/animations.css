@@ -1,0 +1,901 @@
+/**
+ * Lecture Mind - Premium Background Animations
+ *
+ * Lightweight, GPU-friendly animations:
+ * - Animated noise texture
+ * - Floating particles
+ * - Aurora/gradient effects
+ * - Parallax support
+ *
+ * All animations use transform/opacity for GPU acceleration.
+ * Respects prefers-reduced-motion.
+ */
+
+/* ============================================
+   ANIMATED NOISE TEXTURE
+   ============================================ */
+.noise-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+}
+
+.dark .noise-overlay {
+  opacity: 0.05;
+}
+
+/* ============================================
+   FLOATING PARTICLES
+   ============================================ */
+.particles-container {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  width: var(--particle-size, 4px);
+  height: var(--particle-size, 4px);
+  background: var(--particle-color, var(--primary));
+  border-radius: 50%;
+  opacity: 0;
+  /* Removed will-change - apply only during animation via JS */
+  animation: particleFloat var(--particle-duration, 15s) var(--particle-delay, 0s) infinite;
+}
+
+@keyframes particleFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(100vh) scale(0);
+  }
+  10% {
+    opacity: var(--particle-opacity, 0.6);
+    transform: translateY(90vh) scale(1);
+  }
+  90% {
+    opacity: var(--particle-opacity, 0.6);
+    transform: translateY(10vh) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0) scale(0);
+  }
+}
+
+/* Particle variations */
+.particle:nth-child(1) {
+  left: 5%;
+  --particle-size: 3px;
+  --particle-duration: 20s;
+  --particle-delay: 0s;
+  --particle-opacity: 0.4;
+  --particle-color: var(--primary);
+}
+
+.particle:nth-child(2) {
+  left: 15%;
+  --particle-size: 5px;
+  --particle-duration: 18s;
+  --particle-delay: 2s;
+  --particle-opacity: 0.5;
+  --particle-color: var(--accent);
+}
+
+.particle:nth-child(3) {
+  left: 25%;
+  --particle-size: 2px;
+  --particle-duration: 22s;
+  --particle-delay: 4s;
+  --particle-opacity: 0.3;
+  --particle-color: var(--primary);
+}
+
+.particle:nth-child(4) {
+  left: 40%;
+  --particle-size: 4px;
+  --particle-duration: 16s;
+  --particle-delay: 1s;
+  --particle-opacity: 0.6;
+  --particle-color: var(--accent);
+}
+
+.particle:nth-child(5) {
+  left: 55%;
+  --particle-size: 3px;
+  --particle-duration: 24s;
+  --particle-delay: 3s;
+  --particle-opacity: 0.4;
+  --particle-color: var(--primary);
+}
+
+.particle:nth-child(6) {
+  left: 70%;
+  --particle-size: 6px;
+  --particle-duration: 19s;
+  --particle-delay: 5s;
+  --particle-opacity: 0.5;
+  --particle-color: var(--accent);
+}
+
+.particle:nth-child(7) {
+  left: 80%;
+  --particle-size: 2px;
+  --particle-duration: 21s;
+  --particle-delay: 2.5s;
+  --particle-opacity: 0.3;
+  --particle-color: var(--primary);
+}
+
+.particle:nth-child(8) {
+  left: 92%;
+  --particle-size: 4px;
+  --particle-duration: 17s;
+  --particle-delay: 4.5s;
+  --particle-opacity: 0.5;
+  --particle-color: var(--accent);
+}
+
+/* ============================================
+   AURORA / GRADIENT BLOBS
+   ============================================ */
+.aurora-container {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.aurora-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  /* Removed will-change - GPU memory optimization */
+  animation: auroraFloat 20s ease-in-out infinite;
+  animation-play-state: running;
+}
+
+.aurora-blob--primary {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+  top: -10%;
+  left: -10%;
+  animation-delay: 0s;
+}
+
+.aurora-blob--accent {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+  bottom: -5%;
+  right: -5%;
+  animation-delay: -10s;
+  animation-duration: 25s;
+}
+
+.aurora-blob--tertiary {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, var(--success) 0%, transparent 70%);
+  top: 40%;
+  left: 60%;
+  animation-delay: -5s;
+  animation-duration: 22s;
+  opacity: 0.2;
+}
+
+@keyframes auroraFloat {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(30px, -20px) scale(1.05);
+  }
+  50% {
+    transform: translate(-20px, 30px) scale(0.95);
+  }
+  75% {
+    transform: translate(20px, 20px) scale(1.02);
+  }
+}
+
+/* Dark mode aurora adjustments */
+.dark .aurora-blob {
+  opacity: 0.3;
+  filter: blur(100px);
+}
+
+.dark .aurora-blob--primary {
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.6) 0%, transparent 70%);
+}
+
+.dark .aurora-blob--accent {
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.5) 0%, transparent 70%);
+}
+
+.dark .aurora-blob--tertiary {
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.4) 0%, transparent 70%);
+}
+
+/* ============================================
+   LIGHT BEAMS
+   ============================================ */
+.light-beam {
+  position: absolute;
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--primary) 30%,
+    var(--accent) 70%,
+    transparent 100%
+  );
+  opacity: 0;
+  /* Removed will-change - performance optimization */
+  animation: lightBeam 8s ease-in-out infinite;
+}
+
+.light-beam:nth-child(1) {
+  left: 20%;
+  animation-delay: 0s;
+}
+
+.light-beam:nth-child(2) {
+  left: 50%;
+  animation-delay: 2.5s;
+}
+
+.light-beam:nth-child(3) {
+  left: 80%;
+  animation-delay: 5s;
+}
+
+@keyframes lightBeam {
+  0%, 100% {
+    opacity: 0;
+    transform: translateY(-100%) scaleY(0.5);
+  }
+  30% {
+    opacity: 0.15;
+    transform: translateY(0) scaleY(1);
+  }
+  70% {
+    opacity: 0.15;
+    transform: translateY(0) scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100%) scaleY(0.5);
+  }
+}
+
+.dark .light-beam {
+  opacity: 0;
+  animation-name: lightBeamDark;
+}
+
+@keyframes lightBeamDark {
+  0%, 100% {
+    opacity: 0;
+    transform: translateY(-100%) scaleY(0.5);
+  }
+  30% {
+    opacity: 0.1;
+    transform: translateY(0) scaleY(1);
+  }
+  70% {
+    opacity: 0.1;
+    transform: translateY(0) scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100%) scaleY(0.5);
+  }
+}
+
+/* ============================================
+   PARALLAX LAYERS
+   ============================================ */
+.parallax-layer {
+  position: absolute;
+  inset: 0;
+  /* will-change applied via JS during scroll */
+  pointer-events: none;
+}
+
+.parallax-layer--slow {
+  /* Moves at 0.3x scroll speed - set via JS */
+}
+
+.parallax-layer--medium {
+  /* Moves at 0.5x scroll speed - set via JS */
+}
+
+.parallax-layer--fast {
+  /* Moves at 0.7x scroll speed - set via JS */
+}
+
+/* ============================================
+   GLOW EFFECTS
+   ============================================ */
+.glow-ring {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  border: 1px solid var(--primary);
+  opacity: 0.1;
+  animation: glowPulse 4s ease-in-out infinite;
+}
+
+.glow-ring:nth-child(1) {
+  top: -200px;
+  left: -200px;
+}
+
+.glow-ring:nth-child(2) {
+  animation-delay: 1s;
+  width: 700px;
+  height: 700px;
+  top: -250px;
+  left: -250px;
+}
+
+.glow-ring:nth-child(3) {
+  animation-delay: 2s;
+  width: 800px;
+  height: 800px;
+  top: -300px;
+  left: -300px;
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.2;
+  }
+}
+
+/* ============================================
+   MORPHING GRADIENT BACKGROUND
+   ============================================ */
+.morph-bg {
+  position: absolute;
+  inset: -50%;
+  background:
+    radial-gradient(ellipse at 20% 30%, rgba(6, 182, 212, 0.15) 0%, transparent 40%),
+    radial-gradient(ellipse at 80% 70%, rgba(139, 92, 246, 0.12) 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 50%, rgba(34, 197, 94, 0.08) 0%, transparent 50%);
+  animation: morphBg 30s ease-in-out infinite;
+  /* Removed will-change - GPU memory optimization */
+}
+
+@keyframes morphBg {
+  0%, 100% {
+    transform: rotate(0deg) scale(1);
+  }
+  33% {
+    transform: rotate(5deg) scale(1.05);
+  }
+  66% {
+    transform: rotate(-3deg) scale(0.98);
+  }
+}
+
+.dark .morph-bg {
+  background:
+    radial-gradient(ellipse at 20% 30%, rgba(6, 182, 212, 0.2) 0%, transparent 40%),
+    radial-gradient(ellipse at 80% 70%, rgba(139, 92, 246, 0.18) 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 50%, rgba(34, 197, 94, 0.1) 0%, transparent 50%);
+}
+
+/* ============================================
+   HERO ENHANCED BACKGROUND
+   ============================================ */
+.hero-bg-enhanced {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+}
+
+/* ============================================
+   PREFERS REDUCED MOTION
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .particle,
+  .aurora-blob,
+  .light-beam,
+  .glow-ring,
+  .morph-bg {
+    animation: none !important;
+  }
+
+  .particle {
+    opacity: 0.3;
+    transform: none;
+  }
+
+  .aurora-blob {
+    opacity: 0.2;
+  }
+
+  .light-beam {
+    display: none;
+  }
+
+  .morph-bg {
+    transform: none;
+  }
+}
+
+/* ============================================
+   3D CARD TILT EFFECT - Enhanced with Spring Physics
+   ============================================ */
+.tilt-card {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  transition: transform var(--duration-medium, 400ms) var(--spring-smooth, cubic-bezier(0.22, 0.61, 0.36, 1));
+}
+
+.tilt-card:hover {
+  /* JS will set --rotateX and --rotateY */
+  transform: rotateX(var(--rotateX, 0deg)) rotateY(var(--rotateY, 0deg)) translateZ(10px);
+}
+
+.tilt-card .tilt-content {
+  transform: translateZ(20px);
+  transition: transform var(--duration-medium, 400ms) var(--spring-bounce-1, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+
+.tilt-card:hover .tilt-content {
+  transform: translateZ(40px);
+}
+
+/* 3D Card shine effect */
+.tilt-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.05) 100%
+  );
+  opacity: 0;
+  transition: opacity var(--duration-small, 250ms) ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tilt-card:hover::before {
+  opacity: 1;
+}
+
+/* ============================================
+   BUTTON RIPPLE EFFECT
+   ============================================ */
+.btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(0);
+  animation: rippleEffect 0.6s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes rippleEffect {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   CURSOR GLOW TRAIL
+   ============================================ */
+.cursor-glow {
+  position: fixed;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(6, 182, 212, 0.15) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.3s ease;
+  opacity: 0;
+  mix-blend-mode: screen;
+}
+
+.cursor-glow.active {
+  opacity: 1;
+}
+
+.dark .cursor-glow {
+  background: radial-gradient(
+    circle,
+    rgba(6, 182, 212, 0.25) 0%,
+    transparent 70%
+  );
+}
+
+/* ============================================
+   MAGNETIC BUTTON EFFECT
+   ============================================ */
+.magnetic-btn {
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+/* ============================================
+   ANIMATED COUNTER
+   ============================================ */
+.counter-value {
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================
+   TYPEWRITER EFFECT
+   ============================================ */
+.typewriter {
+  display: inline;
+}
+
+.typewriter-cursor {
+  display: inline-block;
+  width: 3px;
+  height: 1em;
+  background: var(--primary);
+  margin-left: 2px;
+  animation: typewriterBlink 0.8s infinite;
+  vertical-align: text-bottom;
+}
+
+@keyframes typewriterBlink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* ============================================
+   SECTION COLOR TRANSITIONS
+   ============================================ */
+.section-gradient-bg {
+  position: relative;
+}
+
+.section-gradient-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.features-section::before {
+  background: linear-gradient(180deg, transparent 0%, rgba(6, 182, 212, 0.03) 50%, transparent 100%);
+}
+
+.how-it-works-section::before {
+  background: linear-gradient(180deg, transparent 0%, rgba(139, 92, 246, 0.03) 50%, transparent 100%);
+}
+
+.tech-section::before {
+  background: linear-gradient(180deg, transparent 0%, rgba(34, 197, 94, 0.03) 50%, transparent 100%);
+}
+
+.section-gradient-bg.in-view::before {
+  opacity: 1;
+}
+
+.dark .features-section::before {
+  background: linear-gradient(180deg, transparent 0%, rgba(6, 182, 212, 0.05) 50%, transparent 100%);
+}
+
+.dark .how-it-works-section::before {
+  background: linear-gradient(180deg, transparent 0%, rgba(139, 92, 246, 0.05) 50%, transparent 100%);
+}
+
+.dark .tech-section::before {
+  background: linear-gradient(180deg, transparent 0%, rgba(34, 197, 94, 0.05) 50%, transparent 100%);
+}
+
+/* ============================================
+   INTERACTIVE PARTICLES
+   ============================================ */
+.particle.interactive {
+  transition: transform 0.3s ease-out;
+}
+
+/* ============================================
+   MOBILE OPTIMIZATIONS
+   ============================================ */
+@media (max-width: 767px) {
+  /* Disable cursor effects on mobile */
+  .cursor-glow {
+    display: none;
+  }
+
+  /* Disable tilt on mobile */
+  .tilt-card:hover {
+    transform: none;
+  }
+
+  /* Disable magnetic on mobile */
+  .magnetic-btn {
+    transform: none !important;
+  }
+  /* Reduce particle count on mobile */
+  .particle:nth-child(n+5) {
+    display: none;
+  }
+
+  /* Simplify aurora on mobile */
+  .aurora-blob {
+    filter: blur(60px);
+  }
+
+  .aurora-blob--tertiary {
+    display: none;
+  }
+
+  /* Hide light beams on mobile */
+  .light-beam {
+    display: none;
+  }
+
+  /* Reduce morph bg animation */
+  .morph-bg {
+    animation-duration: 45s;
+  }
+
+  /* Reduce glow rings */
+  .glow-ring:nth-child(n+2) {
+    display: none;
+  }
+}
+
+/* ============================================
+   LIQUID GRADIENT EFFECTS - Premium 2026
+   ============================================ */
+.liquid-gradient {
+  position: relative;
+  overflow: hidden;
+}
+
+.liquid-gradient::before,
+.liquid-gradient::after {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(
+    from var(--angle, 0deg),
+    var(--color-primary-500) 0deg,
+    var(--color-accent-500) 120deg,
+    var(--color-success-500) 240deg,
+    var(--color-primary-500) 360deg
+  );
+  animation: liquidRotate 15s linear infinite;
+  filter: blur(80px);
+  opacity: 0.4;
+}
+
+.liquid-gradient::after {
+  animation-delay: -7.5s;
+  animation-direction: reverse;
+  filter: blur(100px);
+  opacity: 0.25;
+}
+
+@keyframes liquidRotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Blob morphing animation */
+.liquid-blob {
+  border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+  animation: blobMorph 8s ease-in-out infinite,
+             blobFloat 6s ease-in-out infinite;
+}
+
+@keyframes blobMorph {
+  0%, 100% {
+    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+  }
+  25% {
+    border-radius: 58% 42% 75% 25% / 76% 46% 54% 24%;
+  }
+  50% {
+    border-radius: 50% 50% 33% 67% / 55% 27% 73% 45%;
+  }
+  75% {
+    border-radius: 33% 67% 58% 42% / 63% 68% 32% 37%;
+  }
+}
+
+@keyframes blobFloat {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(20px, -15px) scale(1.03);
+  }
+  66% {
+    transform: translate(-15px, 10px) scale(0.97);
+  }
+}
+
+/* ============================================
+   SCROLL-LINKED ANIMATIONS (CSS 2026)
+   ============================================ */
+@supports (animation-timeline: scroll()) {
+  .scroll-reveal {
+    animation: scrollFadeIn linear;
+    animation-timeline: view();
+    animation-range: entry 0% cover 30%;
+  }
+
+  @keyframes scrollFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(40px) scale(0.95);
+      filter: blur(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+    }
+  }
+
+  /* Scroll progress indicator */
+  .scroll-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    transform-origin: left;
+    animation: scrollProgress linear;
+    animation-timeline: scroll(root);
+    z-index: var(--z-fixed);
+  }
+
+  @keyframes scrollProgress {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+}
+
+/* ============================================
+   SPRING-BASED STAGGER REVEALS
+   ============================================ */
+[data-stagger] {
+  --stagger-delay: 80ms;
+}
+
+[data-stagger] > * {
+  opacity: 0;
+  transform: translateY(30px) scale(0.95);
+}
+
+[data-stagger].visible > * {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition:
+    opacity var(--duration-medium, 400ms) var(--spring-smooth, cubic-bezier(0.22, 0.61, 0.36, 1)),
+    transform var(--duration-large, 600ms) var(--spring-bounce-1, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+
+[data-stagger].visible > *:nth-child(1) { transition-delay: calc(var(--stagger-delay) * 0); }
+[data-stagger].visible > *:nth-child(2) { transition-delay: calc(var(--stagger-delay) * 1); }
+[data-stagger].visible > *:nth-child(3) { transition-delay: calc(var(--stagger-delay) * 2); }
+[data-stagger].visible > *:nth-child(4) { transition-delay: calc(var(--stagger-delay) * 3); }
+[data-stagger].visible > *:nth-child(5) { transition-delay: calc(var(--stagger-delay) * 4); }
+[data-stagger].visible > *:nth-child(6) { transition-delay: calc(var(--stagger-delay) * 5); }
+[data-stagger].visible > *:nth-child(7) { transition-delay: calc(var(--stagger-delay) * 6); }
+[data-stagger].visible > *:nth-child(8) { transition-delay: calc(var(--stagger-delay) * 7); }
+
+/* ============================================
+   HAPTIC BUTTON FEEDBACK
+   ============================================ */
+.btn-haptic {
+  transition: transform var(--duration-micro, 150ms) var(--spring-snappy, cubic-bezier(0.17, 0.89, 0.32, 1.28));
+}
+
+.btn-haptic:active {
+  transform: scale(0.97);
+}
+
+/* ============================================
+   PREMIUM HOVER SHADOW TRANSITIONS
+   ============================================ */
+.hover-lift {
+  transition:
+    transform var(--duration-small, 250ms) var(--spring-bounce-1, cubic-bezier(0.34, 1.56, 0.64, 1)),
+    box-shadow var(--duration-small, 250ms) ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 10px 40px -10px rgba(6, 182, 212, 0.3),
+    0 0 0 1px rgba(6, 182, 212, 0.1);
+}
+
+.dark .hover-lift:hover {
+  box-shadow:
+    0 10px 40px -10px rgba(34, 211, 238, 0.4),
+    0 0 0 1px rgba(34, 211, 238, 0.15);
+}
+
+/* GPU-composited shadow hover (no paint) */
+.hover-shadow-gpu {
+  position: relative;
+}
+
+.hover-shadow-gpu::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 20px 50px -10px rgba(6, 182, 212, 0.35);
+  opacity: 0;
+  transition: opacity var(--duration-small, 250ms) ease;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.hover-shadow-gpu:hover::after {
+  opacity: 1;
+}
+
+/* ============================================
+   CONTAIN PROPERTY FOR PERFORMANCE
+   ============================================ */
+.contain-layout {
+  contain: layout;
+}
+
+.contain-paint {
+  contain: paint;
+}
+
+.contain-strict {
+  contain: layout style paint;
+}

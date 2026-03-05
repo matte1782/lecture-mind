@@ -1,0 +1,504 @@
+/**
+ * Lecture Mind - Layout System
+ *
+ * Page-level layout styles, responsive grid, header/footer
+ */
+
+/* ============================================
+   UTILITIES
+   ============================================ */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.min-h-screen {
+  min-height: 100vh;
+}
+
+/* Dark mode visibility toggles */
+.dark-show {
+  display: none;
+}
+
+.dark .dark-show {
+  display: block;
+}
+
+.dark .dark-hide {
+  display: none;
+}
+
+/* Icon utilities */
+.icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
+
+.icon-inline {
+  display: inline-block;
+  vertical-align: -0.125em;
+  margin-right: var(--space-2);
+}
+
+/* Button utilities */
+.btn-full {
+  width: 100%;
+}
+
+/* ============================================
+   APP CONTAINER
+   ============================================ */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  height: var(--header-height);
+  background: var(--surface-overlay);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  transition: background-color var(--duration-slow) var(--ease-out),
+              border-color var(--duration-slow) var(--ease-out);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1400px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  transition: transform var(--duration-normal) var(--ease-spring),
+              box-shadow var(--duration-normal) var(--ease-out);
+}
+
+.brand-logo:hover {
+  transform: scale(1.05);
+}
+
+.dark .brand-logo {
+  box-shadow: var(--shadow-glow-sm);
+}
+
+.brand-logo-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--color-white);
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-name {
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  letter-spacing: var(--tracking-tight);
+  line-height: 1;
+  background: linear-gradient(135deg, var(--foreground), var(--primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.brand-tagline {
+  font-size: var(--text-xs);
+  color: var(--foreground-muted);
+  margin-top: var(--space-0_5);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ============================================
+   MAIN CONTENT
+   ============================================ */
+.main {
+  flex: 1;
+  padding: var(--space-8) var(--space-6);
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-8);
+}
+
+@media (min-width: 1024px) {
+  .main-grid {
+    grid-template-columns: 3fr 2fr;
+  }
+}
+
+/* ============================================
+   PANELS
+   ============================================ */
+.panel-left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.panel-right {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-card {
+  position: sticky;
+  top: calc(var(--header-height) + var(--space-8));
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  transition: box-shadow var(--duration-normal) var(--ease-out),
+              border-color var(--duration-normal) var(--ease-out);
+}
+
+.dark .sidebar-card {
+  box-shadow: var(--shadow-glow-sm);
+}
+
+/* ============================================
+   PROGRESS SECTION
+   ============================================ */
+.progress-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.progress-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  border-radius: var(--radius-xl);
+}
+
+.progress-icon .spinner {
+  border-color: rgba(255, 255, 255, 0.3);
+  border-top-color: var(--color-white);
+}
+
+.progress-info {
+  flex: 1;
+}
+
+.progress-stage {
+  font-weight: var(--font-semibold);
+  margin: 0;
+}
+
+.progress-message {
+  font-size: var(--text-sm);
+  margin: 0;
+}
+
+.progress-percent {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--primary);
+  font-family: var(--font-mono);
+}
+
+/* ============================================
+   INFO GRID
+   ============================================ */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
+
+.info-item {
+  padding: var(--space-3);
+  background: var(--background-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.info-label {
+  font-size: var(--text-xs);
+  color: var(--foreground-muted);
+  margin: 0 0 var(--space-1) 0;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+}
+
+.info-value {
+  font-weight: var(--font-medium);
+  margin: 0;
+  word-break: break-word;
+}
+
+/* ============================================
+   EVENTS LIST
+   ============================================ */
+.events-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ============================================
+   TABS CUSTOMIZATION
+   ============================================ */
+.tabs-list {
+  display: flex;
+  padding: var(--space-2);
+  gap: var(--space-1);
+  background: var(--background-subtle);
+}
+
+.tabs-trigger {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2_5) var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--foreground-muted);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.tabs-trigger:hover {
+  color: var(--foreground);
+  background: var(--surface);
+}
+
+.tabs-trigger[data-state="active"] {
+  color: var(--primary);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.tabs-panels {
+  padding: var(--space-6);
+}
+
+.tabs-content[data-state="inactive"] {
+  display: none;
+}
+
+/* ============================================
+   SEARCH RESULTS
+   ============================================ */
+.search-results {
+  position: relative;
+  z-index: 1;
+  margin-top: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Ensure input stays above empty state */
+.input-group {
+  position: relative;
+  z-index: 10;
+}
+
+/* ============================================
+   TRANSCRIPT LIST
+   ============================================ */
+.transcript-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+/* ============================================
+   EXPORT SECTION
+   ============================================ */
+.export-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.export-label {
+  font-size: var(--text-sm);
+  margin: 0;
+}
+
+.export-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.export-option-content {
+  flex: 1;
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
+.footer {
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.footer-text {
+  font-size: var(--text-sm);
+  color: var(--foreground-muted);
+  margin: 0;
+}
+
+/* ============================================
+   RESPONSIVE BREAKPOINTS
+   ============================================ */
+
+/* Tablet (768px) */
+@media (min-width: 768px) {
+  .info-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Mobile adjustments */
+@media (max-width: 767px) {
+  .header-content {
+    padding: 0 var(--space-4);
+  }
+
+  .main {
+    padding: var(--space-6) var(--space-4);
+  }
+
+  .brand-tagline {
+    display: none;
+  }
+
+  .tabs-trigger {
+    padding: var(--space-2);
+    font-size: var(--text-xs);
+  }
+
+  .tabs-trigger .icon {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .tabs-trigger span:not(.icon) {
+    display: none;
+  }
+
+  .upload-zone {
+    padding: var(--space-8);
+  }
+
+  .upload-zone-icon {
+    width: var(--space-12);
+    height: var(--space-12);
+    padding: var(--space-3);
+  }
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground-muted);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+@media print {
+  .header,
+  .footer,
+  .panel-right {
+    display: none;
+  }
+
+  .main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    break-inside: avoid;
+  }
+}
