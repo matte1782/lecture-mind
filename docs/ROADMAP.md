@@ -82,7 +82,7 @@ v0.3.0 RELEASE GATE — PASSED
 **Effort**: 100 hours (5 weeks @ 20h/week)
 **Prerequisites**: v0.3.0 complete, security hardened
 **Target Users**: Students, Teaching Assistants
-**Status**: Weeks 10-12 complete (483 tests), Weeks 13-14 next
+**Status**: RELEASED (2026-03-05) — 557 tests, 10 suites, hostile review 91/100
 
 ### Vision
 
@@ -141,55 +141,59 @@ Built:
   98 library tests (483 total across 8 suites)
 ```
 
-### What Remains (Weeks 13-14)
+### Weeks 13-14: Analytics + Polish + Release (COMPLETE)
 
-#### Week 13: Study Analytics + Progress — SP3
+#### Week 13: Study Analytics + Progress — SP3 (COMPLETE)
+```
+Built:
+  analytics.js (1240 lines) — Study analytics module
+  Study dashboard with streak tracking, weekly charts, top lectures
+  Per-lecture analytics (accuracy trends, mastery distribution)
+  getCSSVar helper for CSS custom property integration
+  registerAnalyticsHooks() auto-registration on module load
+  18 analytics tests (557 total across 10 suites)
+```
 
-| Task | Hours | Description |
-|------|-------|-------------|
-| Watch progress tracking | 4h | Track segment watch time, resume position |
-| Quiz/flashcard score history | 4h | Persist scores, show mastery over time |
-| Study session analytics | 6h | Time spent, cards reviewed, accuracy trends |
-| Study dashboard UI | 6h | Charts/stats view in library, per-lecture and aggregate |
+#### Week 14: Polish + Offline + Release — SP5, SP6 (COMPLETE)
+```
+Built:
+  sw.js + sw-utils.js — Service Worker (cache-first static assets, origin check)
+  Loading skeletons in dom-utils.js
+  Animation polish (transitions, micro-interactions, prefers-reduced-motion)
+  focus-visible on all interactive elements
+  registerViewCleanup pattern for cross-module cleanup
+  P0 bug fixes: sidebar filter cascade, flashcard edit/delete wiring, bookmark delete
+  Hostile review: 91/100 SHIP (docs/reviews/REVIEW_v040_final_gate.md)
+  README rewrite with 4 screenshots
+  Tagged v0.4.0, pushed, GitHub release created
+```
 
-**Quality Gate:** Study data persists across sessions, dashboard shows accurate stats
+**Quality Gate:** FINAL — hostile review 91/100 APPROVED, 557 tests passing, docs updated, GH Pages deployed
 
-#### Week 14: Polish + Offline + Release — SP5, SP6
-
-| Task | Hours | Description |
-|------|-------|-------------|
-| Service Worker (basic) | 4h | Cache static assets for offline use |
-| Loading skeletons | 2h | Skeleton UI for library cards and detail view |
-| Animation polish | 4h | Smooth page transitions, micro-interactions |
-| Hostile review: final | 4h | Full review of v0.4.0 |
-| Documentation update | 4h | Update docs site with Playground features |
-| Release v0.4.0 | 2h | Tag, changelog, GitHub release |
-
-**Quality Gate:** FINAL — hostile review APPROVED, all tests passing, docs updated
-
-### Actual Deliverables (Files that Exist)
+### Final Deliverables
 
 ```
 v0.4.0/
   src/vl_jepa/api/static/
-    app.js              (3479 lines) — Main app, processing UI, video player
-    dom-utils.js        (202 lines)  — Shared DOM utilities
-    flashcards.js       (1501 lines) — Flashcard system + router
-    library.js          (2246 lines) — Multi-lecture library
-    library.test.js     (1721 lines) — 98 library tests
-    flashcards.test.js  (1296 lines) — Flashcard + router tests
+    app.js              (~3500 lines) — Main app, processing UI, video player
+    dom-utils.js        (~280 lines)  — Shared DOM utilities + skeletons
+    flashcards.js       (~1530 lines) — Flashcard system + router + view cleanup
+    library.js          (~2260 lines) — Multi-lecture library
+    analytics.js        (~1240 lines) — Study analytics + dashboard
+    sw.js               (~100 lines)  — Service Worker (cache-first)
+    sw-utils.js         (~80 lines)   — Testable SW registration helpers
+    playground-components.css          — Design system
+    app-components.css                 — Additional component styles
+    library.test.js     — 112 library tests
+    flashcards.test.js  — 135 flashcard tests
+    analytics.test.js   — 18 analytics tests
+    sw-utils.test.js    — 10 SW tests
     storage/
-      db.js             (675 lines)  — IndexedDB database layer
-      models.js         (726 lines)  — Lecture, Flashcard, Bookmark, Settings models
-      repositories.js   (1052 lines) — CRUD repositories
-      migrations.js     (152 lines)  — Schema migrations
-      sync.js           (382 lines)  — Online/offline sync
-      index.js          (109 lines)  — Public API
-      + test files for each (292 storage tests)
+      db.js, models.js, repositories.js, migrations.js, sync.js, index.js
+      + test files (292 storage tests)
 ```
 
-**Week 13 will add:** `analytics.js` (study analytics module)
-**Week 14 will add:** `sw.js` (Service Worker), updated docs
+**Total: 10 test suites, 557 tests, 0 failures**
 
 ### Quality Gates (Per Week)
 
@@ -197,8 +201,8 @@ v0.4.0/
 Week 10 Gate: Architecture approved by hostile-reviewer      PASSED
 Week 11 Gate: Flashcard system functional, animations smooth PASSED (91 tests)
 Week 12 Gate: Library manages 10+ lectures without slowdown  PASSED (483 tests, 6 hostile reviews)
-Week 13 Gate: Analytics accurate, data persists across sessions
-Week 14 Gate: FINAL — hostile review APPROVED, offline works, docs updated
+Week 13 Gate: Analytics accurate, data persists             PASSED (545 tests)
+Week 14 Gate: FINAL — hostile review 91/100 SHIP            PASSED (557 tests)
 ```
 
 ---
@@ -284,8 +288,8 @@ March 2026
     Week 10: Architecture + Design System    COMPLETE (292 tests)
     Week 11: Flashcard System                COMPLETE (91 tests)
     Week 12: Multi-Lecture Library            COMPLETE (483 tests)
-    Week 13: Study Analytics + Progress      <-- NEXT
-    Week 14: Polish + Offline + Release
+    Week 13: Study Analytics + Progress       COMPLETE (545 tests)
+    Week 14: Polish + Offline + Release       COMPLETE (557 tests) — RELEASED 2026-03-05
 
 April 2026
   Weeks 15-16: v0.5.0 - Professor Edition
@@ -318,12 +322,21 @@ May 2026
 8. ~~Week 12 Day 5: Playlist navigation + favorites~~ (committed `fba9bb5`, 469 tests)
 9. ~~Week 12 Day 6: Integration, performance, polish~~ (committed `7fc6fa3`, 483 tests)
 
+### Completed (v0.4.0 Weeks 13-14)
+1. ~~Week 13: Study analytics + dashboard~~ (545 tests)
+2. ~~Week 14 Day 0: Service Worker + index.html fix~~ (545 tests)
+3. ~~Week 14 Day 1: Loading skeletons + animation polish~~ (557 tests)
+4. ~~Week 14 Day 2-3: Hostile review fixes, docs, GH Pages~~ (557 tests)
+5. ~~Week 14: UI/UX audit + P0 bug fixes + README rewrite~~
+6. ~~Week 14: Final hostile review 91/100 SHIP~~
+7. ~~v0.4.0 tagged + pushed + GitHub release created~~
+
 ### Now: v0.5.0 — Professor Edition
 1. Plan v0.5.0 implementation (Weeks 15-16)
-2. Watch progress tracking (segment time, resume position)
-3. Quiz/flashcard score history
-4. Study session analytics
-5. Study dashboard UI
+2. Confusion voting backend (anonymous)
+3. Aggregate confusion heatmap per lecture
+4. Professor dashboard UI
+5. Export confusion reports
 
 ---
 
@@ -350,6 +363,7 @@ May 2026
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v4.1 | 2026-03-05 | v0.4.0 RELEASED: Weeks 13-14 complete, 557 tests, hostile review 91/100, tagged+pushed |
 | v4.0 | 2026-03-04 | Roadmap optimization: Week 12 complete, defer SP4+SP7 to v0.5.0, accurate deliverables |
 | v3.4 | 2026-02-27 | Week 12 Days 0-2: library.js, import pipeline, context menu (418 tests) |
 | v3.3 | 2026-02-27 | Week 12 plan approved: Rev 2 scored 91/100 (Days 0-3) and 92/100 (Days 4-6) |
