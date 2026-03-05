@@ -27,6 +27,7 @@ function getStaticAssetList() {
     '/static/accessibility.css',
     '/static/playground-components.css',
     '/static/analytics.css',
+    '/static/app-components.css',
     // JS
     '/static/app.js',
     '/static/dom-utils.js',

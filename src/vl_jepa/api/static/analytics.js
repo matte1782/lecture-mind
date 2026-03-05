@@ -14,13 +14,23 @@
  * @version 1.0.0
  */
 
-import { SettingsRepository, FlashcardRepository } from './storage/index.js';
-import { setOnQuizResult, setOnSessionComplete } from './flashcards.js';
+import { SettingsRepository, FlashcardRepository, LectureRepository } from './storage/index.js';
+import { setOnQuizResult, setOnSessionComplete, navigateTo } from './flashcards.js';
 import { createSVGElement, createElement, clearElement } from './dom-utils.js';
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
+
+/** Read a CSS custom property from :root, with fallback. */
+function getCSSVar(name, fallback) {
+  try {
+    const val = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return val || fallback;
+  } catch (_e) {
+    return fallback;
+  }
+}
 
 const STORAGE_KEYS = {
   STUDY_SESSIONS: 'analytics:studySessions',
@@ -376,7 +386,7 @@ function renderBarChart(container, data, options = {}) {
   const {
     width = 300,
     height = 200,
-    barColor = '#4a90d9',
+    barColor = getCSSVar('--color-primary-500', '#4a90d9'),
     labelKey = 'label',
     valueKey = 'value'
   } = options;
@@ -457,8 +467,8 @@ function renderLineChart(container, data, options = {}) {
   const {
     width = 300,
     height = 200,
-    lineColor = '#4a90d9',
-    fillColor = 'rgba(74,144,217,0.1)'
+    lineColor = getCSSVar('--color-primary-500', '#4a90d9'),
+    fillColor = getCSSVar('--color-primary-100', 'rgba(74,144,217,0.1)')
   } = options;
 
   const padLeft = 40;
@@ -1039,7 +1049,7 @@ function renderWeeklyStudyChart(container, dailyData) {
   renderBarChart(section, mappedData, {
     width: 400,
     height: 200,
-    barColor: '#4a90d9',
+    barColor: getCSSVar('--color-primary-500', '#4a90d9'),
     labelKey: 'label',
     valueKey: 'value'
   });
@@ -1084,7 +1094,7 @@ function renderGlobalMasteryBreakdown(container, flashcards) {
  * @param {HTMLElement} container - DOM element to append into
  * @param {Array<Object>} sessions - Study sessions with lectureId and duration
  */
-function renderTopLecturesTable(container, sessions) {
+async function renderTopLecturesTable(container, sessions) {
   const section = createElement('div', 'sp-analytics-section');
   const title = createElement('h3', '', { textContent: 'Top Lectures by Study Time' });
   section.appendChild(title);
@@ -1099,6 +1109,15 @@ function renderTopLecturesTable(container, sessions) {
     entry.totalDuration += (s.duration || 0);
     entry.count += 1;
   }
+
+  // Resolve lecture titles
+  const lectureTitles = new Map();
+  try {
+    const allLectures = await LectureRepository.getAll();
+    for (const l of allLectures) {
+      lectureTitles.set(l.id, l.title || 'Untitled');
+    }
+  } catch (_e) { /* fallback to IDs */ }
 
   // Sort by total duration descending
   const sorted = [...lectureMap.entries()].sort((a, b) => b[1].totalDuration - a[1].totalDuration);
@@ -1119,7 +1138,8 @@ function renderTopLecturesTable(container, sessions) {
   const tbody = createElement('tbody');
   for (const [lectureId, data] of sorted) {
     const tr = createElement('tr');
-    tr.appendChild(createElement('td', '', { textContent: String(lectureId) }));
+    const displayName = lectureTitles.get(lectureId) || lectureId.substring(0, 8) + '…';
+    tr.appendChild(createElement('td', '', { textContent: displayName }));
     tr.appendChild(createElement('td', '', { textContent: String(Math.round(data.totalDuration / 60)) }));
     tr.appendChild(createElement('td', '', { textContent: String(data.count) }));
     tbody.appendChild(tr);
@@ -1151,6 +1171,11 @@ async function renderStudyDashboard(container) {
 
     // Header
     const header = createElement('div', 'sp-dashboard__header');
+    const backBtn = createElement('button', 'sp-detail-back', {
+      textContent: '\u2190 Library'
+    });
+    backBtn.addEventListener('click', () => navigateTo('#/playground'));
+    header.appendChild(backBtn);
     const heading = createElement('h2', '', { textContent: 'Study Dashboard' });
     header.appendChild(heading);
     wrapper.appendChild(header);
@@ -1178,7 +1203,7 @@ async function renderStudyDashboard(container) {
     }
 
     // Top lectures table
-    renderTopLecturesTable(wrapper, sessions);
+    await renderTopLecturesTable(wrapper, sessions);
 
     container.appendChild(wrapper);
   } catch (_err) {

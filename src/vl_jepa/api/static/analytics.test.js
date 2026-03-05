@@ -1291,7 +1291,7 @@ describe('Analytics — Day 4: Study Dashboard', () => {
   // renderTopLecturesTable
   // --------------------------------------------------------------------------
 
-  it('renderTopLecturesTable sorts by study time desc', () => {
+  it('renderTopLecturesTable sorts by study time desc', async () => {
     const sessions = [
       { lectureId: 'lec-A', duration: 300 },
       { lectureId: 'lec-A', duration: 200 },
@@ -1300,7 +1300,7 @@ describe('Analytics — Day 4: Study Dashboard', () => {
     ];
 
     const container = document.createElement('div');
-    renderTopLecturesTable(container, sessions);
+    await renderTopLecturesTable(container, sessions);
 
     const rows = container.querySelectorAll('tr');
     const dataRows = Array.from(rows).filter(r => !r.querySelector('th'));

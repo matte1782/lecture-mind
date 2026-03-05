@@ -4,7 +4,11 @@ The Student Playground is a client-side learning environment that lets you organ
 
 ## Overview
 
-Access the playground at `/static/index.html` when running the Lecture Mind server, or via GitHub Pages at the project's published URL.
+Access the playground at:
+- **GitHub Pages**: [matte1782.github.io/lecture-mind/playground/](https://matte1782.github.io/lecture-mind/playground/)
+- **Local server**: `http://127.0.0.1:8000/static/index.html#/playground`
+
+![Lecture Library](../assets/playground-library.png)
 
 **Key Features:**
 
@@ -70,6 +74,12 @@ Cards are scheduled using the SM-2 algorithm:
 - **Review** cards appear based on their interval
 - **Mastered** cards have intervals > 21 days
 
+## Lecture Detail View
+
+![Lecture Detail](../assets/playground-lecture-detail.png)
+
+Click any lecture card to open the detail view with tabs for Segments, Flashcards, Bookmarks, Info, and Analytics. Use the Previous/Next buttons to navigate between lectures in the same course.
+
 ## Study Analytics
 
 ### Per-Lecture Analytics
@@ -83,7 +93,11 @@ Each lecture's detail view has an **Analytics** tab showing:
 
 ### Aggregate Dashboard
 
-The library sidebar has a **Dashboard** link showing:
+Click the **Dashboard** button in the library toolbar to see your overall study stats:
+
+![Study Dashboard](../assets/playground-dashboard.png)
+
+The dashboard shows:
 
 - Current study streak (consecutive days)
 - Weekly study time (bar chart)

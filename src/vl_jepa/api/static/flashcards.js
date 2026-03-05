@@ -96,6 +96,20 @@ function setDashboardRenderer(fn) { _dashboardRenderer = fn; }
 function setOnQuizResult(fn) { _onQuizResult = fn; }
 function setOnSessionComplete(fn) { _onSessionComplete = fn; }
 
+/** Per-view cleanup callbacks registered by downstream modules (e.g. library.js) */
+const _viewCleanupCallbacks = new Map();
+
+/**
+ * Register a cleanup function for a specific view.
+ * Called during unmountView to prevent memory leaks (e.g. stale keydown handlers).
+ */
+function registerViewCleanup(viewName, fn) {
+  if (!_viewCleanupCallbacks.has(viewName)) {
+    _viewCleanupCallbacks.set(viewName, []);
+  }
+  _viewCleanupCallbacks.get(viewName).push(fn);
+}
+
 // ============================================================================
 // ROUTER
 // ============================================================================
@@ -263,12 +277,20 @@ function mountView(view, params = {}) {
 }
 
 function unmountView(view) {
+  // Run registered cleanup callbacks for this view
+  const callbacks = _viewCleanupCallbacks.get(view);
+  if (callbacks) {
+    for (const cb of callbacks) cb();
+  }
+
   if (view === VIEWS.STUDY) {
     cleanupStudySession();
   }
   if (view === VIEWS.LECTURE_DETAIL) {
-    const section = document.getElementById('lecture-detail-view');
-    if (section) clearElement(section.querySelector('.section-container') || section);
+    const header = document.getElementById('lecture-detail-header');
+    const content = document.getElementById('lecture-detail-content');
+    if (header) clearElement(header);
+    if (content) clearElement(content);
   }
 }
 
@@ -1465,8 +1487,9 @@ async function deleteCardWithConfirmation(cardId, onComplete) {
 function initRouter() {
   registerListener(window, 'hashchange', handleRouteChange);
 
-  // Handle initial route
-  handleRouteChange();
+  // NOTE: initial handleRouteChange() is deferred to library.js module init
+  // to ensure all renderers (setLibraryRenderer, setLectureDetailRenderer,
+  // setDashboardRenderer) are registered before the first route fires.
 }
 
 // ============================================================================
@@ -1552,5 +1575,8 @@ export {
 
   // Analytics hooks (for analytics.js registration — AD-9)
   setOnQuizResult,
-  setOnSessionComplete
+  setOnSessionComplete,
+
+  // View cleanup registry (for library.js to register cleanup callbacks)
+  registerViewCleanup
 };

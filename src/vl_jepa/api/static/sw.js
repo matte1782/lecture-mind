@@ -24,6 +24,7 @@ const STATIC_ASSETS = [
   '/static/accessibility.css',
   '/static/playground-components.css',
   '/static/analytics.css',
+  '/static/app-components.css',
   '/static/app.js',
   '/static/dom-utils.js',
   '/static/flashcards.js',

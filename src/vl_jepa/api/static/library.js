@@ -38,8 +38,12 @@ import {
   setLibraryRenderer,
   setLectureDetailRenderer,
   setDashboardRenderer,
+  handleRouteChange,
   navigateTo,
   showToast,
+  openEditCardModal,
+  deleteCardWithConfirmation,
+  registerViewCleanup,
   VIEWS
 } from './flashcards.js';
 
@@ -454,8 +458,8 @@ function renderCourseSidebar(courses, selectedCourseId, meta) {
 
     btn.addEventListener('click', () => {
       libraryState.selectedCourseId = filterId;
-      // Re-render sidebar to update active state
-      renderCourseSidebar(courses, filterId, meta);
+      // enhancedRenderLibraryView re-renders both sidebar and grid
+      enhancedRenderLibraryView();
     });
 
     return btn;
@@ -517,6 +521,7 @@ function renderLibraryToolbar(sortBy, viewMode) {
   }
   sortSelect.addEventListener('change', () => {
     libraryState.sortBy = sortSelect.value;
+    enhancedRenderLibraryView();
   });
   toolbar.appendChild(sortSelect);
 
@@ -531,7 +536,7 @@ function renderLibraryToolbar(sortBy, viewMode) {
   if (viewMode === 'grid') gridBtn.setAttribute('aria-pressed', 'true');
   gridBtn.addEventListener('click', () => {
     libraryState.viewMode = 'grid';
-    renderLibraryToolbar(libraryState.sortBy, 'grid');
+    enhancedRenderLibraryView();
   });
 
   const listBtn = createElement('button', 'sp-library-toolbar__btn', {
@@ -542,7 +547,7 @@ function renderLibraryToolbar(sortBy, viewMode) {
   if (viewMode === 'list') listBtn.setAttribute('aria-pressed', 'true');
   listBtn.addEventListener('click', () => {
     libraryState.viewMode = 'list';
-    renderLibraryToolbar(libraryState.sortBy, 'list');
+    enhancedRenderLibraryView();
   });
 
   toggleContainer.appendChild(gridBtn);
@@ -1071,6 +1076,7 @@ async function crossLectureSearch(query) {
  */
 function renderSearchInput(container, onSearch) {
   const wrapper = createElement('div', 'sp-search-input-wrapper');
+  wrapper.setAttribute('role', 'search');
 
   const input = createElement('input', '', {
     type: 'text',
@@ -1241,6 +1247,7 @@ function renderSearchTabs(container, activeTab, counts, onTabChange) {
 function renderLibraryCard(lecture, course) {
   const card = createElement('div', 'sp-library-card');
   card.setAttribute('role', 'listitem');
+  card.setAttribute('aria-label', `Open lecture: ${lecture.title}`);
   card.dataset.lectureId = lecture.id;
 
   const title = createElement('h3', 'sp-library-card__title', {
@@ -1778,12 +1785,20 @@ async function renderFlashcardsList(container, lectureId) {
       textContent: 'Edit'
     });
     editBtn.setAttribute('aria-label', `Edit flashcard: ${card.front.slice(0, 30)}`);
+    editBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openEditCardModal(card, () => renderFlashcardsList(container, lectureId));
+    });
     actions.appendChild(editBtn);
 
     const deleteBtn = createElement('button', 'sp-flashcard-item__delete', {
       textContent: 'Delete'
     });
     deleteBtn.setAttribute('aria-label', `Delete flashcard: ${card.front.slice(0, 30)}`);
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteCardWithConfirmation(card.id, () => renderFlashcardsList(container, lectureId));
+    });
     actions.appendChild(deleteBtn);
 
     item.appendChild(actions);
@@ -1822,6 +1837,15 @@ async function renderBookmarksList(container, lectureId) {
       textContent: 'Delete'
     });
     deleteBtn.setAttribute('aria-label', `Delete bookmark at ${formatTime(bookmark.timestamp)}`);
+    deleteBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      try {
+        await BookmarkRepository.delete(bookmark.id);
+        renderBookmarksList(container, lectureId);
+      } catch (_e) {
+        showToast('error', 'Error', 'Failed to delete bookmark');
+      }
+    });
     item.appendChild(deleteBtn);
 
     container.appendChild(item);
@@ -2042,6 +2066,17 @@ async function getPlaylistForLecture(lectureId) {
 let _playlistKeyHandler = null;
 
 /**
+ * Remove the playlist keyboard handler from document.
+ * Call this when unmounting the lecture detail view to prevent stale closures.
+ */
+function cleanupPlaylistNav() {
+  if (_playlistKeyHandler) {
+    document.removeEventListener('keydown', _playlistKeyHandler);
+    _playlistKeyHandler = null;
+  }
+}
+
+/**
  * Render playlist navigation bar.
  * @param {HTMLElement} container
  * @param {Object} playlist - From getPlaylistForLecture
@@ -2180,6 +2215,13 @@ setLibraryRenderer(enhancedRenderLibraryView);
 setLectureDetailRenderer(renderLectureDetailView);
 setDashboardRenderer((container) => renderStudyDashboard(container));
 
+// Register cleanup: remove playlist keyboard handler when leaving lecture detail
+registerViewCleanup(VIEWS.LECTURE_DETAIL, cleanupPlaylistNav);
+
+// Fire initial route AFTER all renderers are registered (fixes timing bug
+// where direct loads to #/dashboard or #/lecture/:id rendered blank)
+handleRouteChange();
+
 // ============================================================================
 // EXPORTS
 // ============================================================================
@@ -2251,6 +2293,7 @@ export {
   // Day 5: Playlist
   getPlaylistForLecture,
   renderPlaylistNav,
+  cleanupPlaylistNav,
   renderPlaylistMinimap,
   renderFavoriteButton,
 
