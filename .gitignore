@@ -73,3 +73,33 @@ site/
 
 # Playwright MCP cache
 .playwright-mcp/
+
+# Screenshots (dev/testing artifacts — never commit)
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+# Exception: keep icons/assets in static/
+!src/vl_jepa/api/static/**/*.png
+!src/vl_jepa/api/static/**/*.jpg
+!docs/**/*.png
+
+# Temporary / one-off scripts
+_tmp*
+_scratch*
+
+# Review generator scripts (one-off, not project tooling)
+docs/reviews/_*.py
+docs/reviews/write_review.py
+
+# Node
+node_modules/
+
+# Environment / secrets (defense in depth)
+.env
+.env.*
+*.pem
+*.key
+credentials.json
+secrets.json
