@@ -73,7 +73,7 @@
 
 | ID | Risk | Impact | Likelihood | Mitigation |
 |----|------|--------|------------|------------|
-| R1 | SVG heatmap complexity (responsive + accessible) | MEDIUM | MEDIUM | Reuse analytics.js SVG patterns, keep simple horizontal bars |
+| R1 | SVG heatmap complexity (responsive + accessible) | HIGH | MEDIUM | analytics.js uses Chart.js — there are NO hand-written SVG patterns to reuse. Fallback: HTML/CSS bar chart (div height proportional to vote count, CSS gradient fill) — simpler and WCAG compliant. If SVG attempted, allocate 6h not 3h. |
 | R2 | Week 15 delays push tasks into Week 16 | MEDIUM | MEDIUM | Cut line: heatmap can degrade to simple table, Week 17 contingency available |
 | R3 | `navigator.storage.estimate()` not available on all browsers | LOW | MEDIUM | Feature-detect with fallback to "storage usage unavailable" message |
 

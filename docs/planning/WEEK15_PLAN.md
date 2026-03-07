@@ -54,10 +54,10 @@
 
 | ID | Task | Hours | Spec | Acceptance |
 |----|------|-------|------|------------|
-| W15.1.1 | DB Migration v1 to v2: add `recordingSessions`, `audioData`, `photoCaptures` stores | 2 | `DB_VERSION=2`, 3 new object stores with proper indexes, migration tested with v1 fixture data | Migration tests pass, all existing v1 data preserved after upgrade |
+| W15.1.1 | DB Migration v1 to v2: add `recordingSessions`, `audioData`, `photoCaptures`, `autoNotes` stores | 2 | `DB_VERSION=2`, 4 new object stores with proper indexes, migration tested with v1 fixture data. `confusionVotes` is pre-existing in v1 — migration skips it. `autoNotes.lectureId` index is `{unique: true}`. | Migration tests pass, all existing v1 data preserved after upgrade |
 | W15.1.2 | `RecordingSession` + `AudioData` model factories in models.js | 1 | `createRecordingSession(fields)` and `createAudioData(fields)` with validation. Fields per ARCHITECTURE_v050.md | Model validation tests pass (5+ tests) |
 | W15.1.3 | `RecordingSessionRepository` + `AudioDataRepository` in repositories.js | 1.5 | `put/get/getAll/delete` + `getByStatus` for sessions | Repo CRUD tests pass (8+ tests) |
-| W15.1.4 | recorder.js: MediaRecorder wrapper + Web Speech API integration | 2 | `start/stop/pause`, codec negotiation (`isTypeSupported()`: opus/webm > aac/mp4 > wav), Web Speech API with `continuous: true` and auto-restart on `onend`, chunked audio accumulation in memory | 10+ unit tests with fully mocked `MediaRecorder` and `SpeechRecognition` |
+| W15.1.4 | recorder.js: MediaRecorder wrapper + Web Speech API integration | 2 | `start/stop/pause`, codec negotiation (`isTypeSupported()`: opus/webm > aac/mp4 > wav), Web Speech API with `continuous: true` and auto-restart on `onend` using `setTimeout(() => recognition.start(), 100)` (NOT immediate — throws `InvalidStateError`). Startup recovery: on init, query `getByStatus('recording')` → sessions >10min old → set `status:'failed'`. | 10+ unit tests; restart must use setTimeout; `InvalidStateError` caught and retried |
 | W15.1.5 | recorder.js: Record button UI + timer + live transcript display | 1.5 | Mobile-first record button (56px+ touch target), elapsed timer with `aria-live="polite"`, live transcript textarea, ARIA labels on all controls | UI renders correctly, button states toggle between record/stop/pause, keyboard accessible |
 
 **Subtotal: 8h**
@@ -83,15 +83,17 @@
 
 ## Day 5: SP4-lite Confusion Voting (4h)
 
-**Dependency:** W15.1.1 complete (DB v2 with confusion store). Can run in parallel with Days 3-4 photo work.
+**Dependency:** None for W15.3.2 — `confusionVotes` store and `ConfusionVoteRepository` already exist in v1.
+
+**NOTE:** `createConfusionVote`, `validateConfusionVote`, and `ConfusionVoteRepository` (with `create/getById/delete/getByLecture/getBySegment/countBySegment`) are **already implemented** in v1 (`models.js:454`, `repositories.js:836`). The only new storage work is adding `toggle()`.
 
 | ID | Task | Hours | Spec | Acceptance |
 |----|------|-------|------|------------|
-| W15.3.1 | `ConfusionVote` model in models.js | 0.5 | `createConfusionVote(fields)` factory. Fields: `id`, `segmentId`, `lectureId`, `timestamp`. Binary voting (confused / not confused), no intensity scale | Model validation tests pass (3+ tests) |
-| W15.3.2 | `ConfusionVoteRepository` in repositories.js | 1.5 | `put/delete/getByLecture/getBySegment/toggle`. New `confusionVotes` store added in v1 to v2 migration (W15.1.1) | Repo CRUD tests pass (6+ tests), toggle flips existing vote |
-| W15.3.3 | Confusion vote button on segment cards in library.js | 2 | "I'm confused" button on each segment card in lecture detail segments tab. Click toggles vote, persists to IDB. Shows vote count per segment. `role="button"`, `tabindex="0"`, keyboard handler for Enter/Space | Click toggles visual state, refresh preserves vote, ARIA label present (`aria-pressed`), keyboard accessible |
+| W15.3.1 | ~~`ConfusionVote` model~~ — **already exists** (`models.js:454`, fields: `id`, `lectureId`, `segmentId`, `comment`, `createdAt`) | 0h | No work needed. Update ARCHITECTURE §8.4 field spec to match code. | — |
+| W15.3.2 | Add `toggle(segmentId, lectureId)` to existing `ConfusionVoteRepository` | 1 | Read-modify-write: if vote exists → delete; if not → create. **Must use per-key mutex** (CLAUDE.md anti-pattern: in-memory `Set` of pending segmentIds). Double-tap must not create duplicate records. | 2 new tests (toggle-create, toggle-delete, double-tap race condition) |
+| W15.3.3 | Confusion vote button on segment cards in library.js | 2 | "I'm confused" button on each segment card in lecture detail segments tab. Click calls `toggle()`, persists to IDB. Shows vote count. `role="button"`, `tabindex="0"`, keyboard handler for Enter/Space | Click toggles visual state, refresh preserves vote, `aria-pressed` present, keyboard accessible |
 
-**Subtotal: 4h**
+**Subtotal: 3h** (1h saved vs. original plan — most work already done in v1)
 
 ---
 
@@ -217,7 +219,7 @@ W15.3.3 (confusion UI) ----> W15.3.2 (repo exists)
 
 - [ ] All Day 0 tech debt items resolved, 8 Dependabot PRs merged
 - [ ] iOS spike documented with clear result and decision
-- [ ] DB migration v1 to v2 working with 5 new stores (recordingSessions, audioData, photoCaptures, confusionVotes, autoNotes), existing data preserved
+- [ ] DB migration v1 to v2: 4 new stores (recordingSessions, audioData, photoCaptures, autoNotes) created; `confusionVotes` pre-existing and untouched; existing data preserved
 - [ ] Live capture: can record audio, see live transcript (Web Speech), stop, see lecture in library
 - [ ] Photo capture: can take timestamped photos during recording, photos appear in lecture detail
 - [ ] Confusion voting: can vote "confused" on segments, votes persist across refresh

@@ -17,7 +17,7 @@ v0.5.0 adds live capture capabilities to the Student Playground, enabling studen
 2. **Photo Capture** -- Timestamped photos via file input, canvas-resized to 1920px at 80% JPEG quality. No OCR.
 3. **SP4-lite: Personal Confusion Markers** -- Binary confusion voting per segment + heatmap visualization on lecture detail.
 4. **Auto-Notes Framework** -- Extractive summarization (TextRank/TF-IDF, free/offline) + LLM-powered notes (user-provided Claude API key). "Notes" tab in lecture detail.
-5. **DB Migration v1 to v2** -- Five new IndexedDB stores: recordingSessions, audioData, photoCaptures, confusionVotes, autoNotes.
+5. **DB Migration v1 to v2** -- Four new IndexedDB stores: recordingSessions, audioData, photoCaptures, autoNotes. (`confusionVotes` already exists in v1.)
 6. **Privacy** -- Info-toast at first recording, Web Speech API toggle (default OFF), photo responsibility toast.
 7. **Storage Quota UI** -- Usage indicator with warning thresholds.
 
@@ -87,11 +87,12 @@ dom-utils.js <- flashcards.js <- analytics.js  <- library.js
 
 | Rule | Description |
 |------|-------------|
-| L0 imports nothing | `dom-utils.js` is a leaf module |
+| L0 imports nothing | `dom-utils.js` and pure utilities are leaf modules. A module with zero internal project imports and no DOM/IDB side effects beyond `fetch` is L0 by definition. |
 | L1 imports only L0 | `flashcards.js` imports `dom-utils.js` only |
-| L2 imports L0 and L1 | `recorder.js` and `analytics.js` import from `dom-utils.js` and `flashcards.js` |
+| L2 imports L0 and L1 | `recorder.js`, `analytics.js`, `notes-engine.js` import from `dom-utils.js` and `flashcards.js` |
 | L3 imports L0, L1, L2 | `library.js` can import from any lower layer |
-| No upward imports | Never. L2 never imports L3. L1 never imports L2. |
+| No upward imports | Never. L2 never imports L3. L1 never imports L2. L2 never imports L2. |
+| No cross-L2 imports | `recorder.js` cannot import `notes-engine.js`. Notes generation must be orchestrated by L3 (`library.js`) or via DOM events. |
 
 ### Key Decisions
 
@@ -111,8 +112,8 @@ dom-utils.js <- flashcards.js <- analytics.js  <- library.js
 | `recorder.test.js` | test | Tests for recorder.js (MediaRecorder mock, getUserMedia, IDB, photo resize) | ~300 |
 | `recorder.css` | style | Record button, timer, photo thumbnail grid, mobile-first layout | ~150 |
 | `notes-engine.js` | L2 | TextRank/TF-IDF extractive summarization + notes persistence | ~300 |
-| `notes-engine.test.js` | test | Tests for extractive pipeline, edge cases (empty/short/long input) | ~150 |
-| `llm-client.js` | util | Claude API client (user-provided key, direct browser CORS) | ~150 |
+| `notes-engine.test.js` | test | Tests for extractive pipeline (300+ lines; covers empty, single-sentence, long, stopword-only, Unicode input) | ~300 |
+| `llm-client.js` | **L0** | Claude API client (user-provided key, direct browser CORS). Zero internal imports — pure `fetch` wrapper. | ~150 |
 
 ---
 
@@ -122,11 +123,12 @@ dom-utils.js <- flashcards.js <- analytics.js  <- library.js
 |------|---------|
 | `flashcards.js` | Add `VIEWS.RECORD` to router. Add parseHash case for `#/record`. Add `setRecordRenderer(fn)` hookable callback. Export it. |
 | `index.html` | Add `<section id="record-view">` section. Add nav link for Record. |
-| `storage/db.js` | Bump `DB_VERSION` to 2. Add all 5 new stores to STORES constant. |
-| `storage/models.js` | Add factories: `createRecordingSession`, `createAudioData`, `createPhotoCapture`, `createConfusionVote`, `createAutoNote`. |
-| `storage/repositories.js` | Add repos: `RecordingSessionRepository`, `AudioDataRepository`, `PhotoCaptureRepository`, `ConfusionVoteRepository`, `AutoNoteRepository`. |
-| `storage/migrations.js` | Migration v1 to v2: create all 5 new object stores with indexes. |
-| `storage/index.js` | Re-export all 5 new repositories. |
+| `storage/db.js` | Bump `DB_VERSION` to 2. Add 4 new stores to STORES constant (`confusionVotes` already there). |
+| `storage/models.js` | Add factories: `createRecordingSession`, `createAudioData`, `createPhotoCapture`, `createAutoNote`. (`createConfusionVote` already exists.) |
+| `storage/repositories.js` | Add repos: `RecordingSessionRepository`, `AudioDataRepository`, `PhotoCaptureRepository`, `AutoNoteRepository`. Add `toggle()` to existing `ConfusionVoteRepository`. |
+| `storage/migrations.js` | Migration v1 to v2: create 4 new object stores. (`confusionVotes` pre-existing, skipped.) |
+| `storage/index.js` | Re-export 4 new repositories. (`ConfusionVoteRepository` already exported.) |
+| `sw.js` | Add `recorder.js`, `recorder.css`, `notes-engine.js`, `llm-client.js` to `STATIC_ASSETS`. Bump `CACHE_NAME` to `lm-v0.5.0`. |
 | `library.js` | Add confusion vote button on segment cards. Add photo gallery to lecture detail. Add confusion heatmap tab. |
 | `analytics.js` | Add `getConfusionAggregates(lectureId)` for heatmap data. |
 | `sw.js` | Add `recorder.js`, `recorder.css` to STATIC_ASSETS. |
@@ -257,18 +259,22 @@ There is no `ocrText` field. OCR is deferred to v0.5.1+.
 ### 8.4 ConfusionVote
 
 ```
-Store: confusionVotes
+Store: confusionVotes        -- EXISTS IN v1 (not new in v2)
 KeyPath: id
 Indexes: lectureId, segmentId
 
-Fields:
+Fields (matches production models.js:454):
   id: string (UUID)
-  segmentId: string
   lectureId: string
-  timestamp: number           -- when the vote was cast
+  segmentId: string
+  comment: string             -- optional user note, defaults to ''
+  createdAt: number           -- timestamp when vote was cast
 ```
 
 Confusion voting is binary (confused or not). There is no intensity field. A vote exists or it does not.
+The `confusionVotes` store was created in v1 and is NOT new in the v1→v2 migration.
+The only new work for v0.5.0 is adding a `toggle(segmentId, lectureId)` method to the
+existing `ConfusionVoteRepository` (with a per-key mutex — see CLAUDE.md anti-patterns).
 
 ### 8.5 AutoNote
 
@@ -299,31 +305,22 @@ DB_VERSION: 1 -> 2
 onupgradeneeded(event):
   if (event.oldVersion < 2) {
     // Create new object stores
-    db.createObjectStore('recordingSessions', { keyPath: 'id' });
-    db.createObjectStore('audioData', { keyPath: 'id' });
-    db.createObjectStore('photoCaptures', { keyPath: 'id' });
-    db.createObjectStore('confusionVotes', { keyPath: 'id' });
-    db.createObjectStore('autoNotes', { keyPath: 'id' });
+    // NOTE: confusionVotes already exists in v1 — createObjectStore() skips it if present.
+    // Only 4 stores are genuinely new in v2.
 
-    // recordingSessions indexes
-    const rsStore = tx.objectStore('recordingSessions');
+    const rsStore = db.createObjectStore('recordingSessions', { keyPath: 'id' });
     rsStore.createIndex('lectureId', 'lectureId', { unique: false });
     rsStore.createIndex('status', 'status', { unique: false });
     rsStore.createIndex('createdAt', 'createdAt', { unique: false });
 
-    // photoCaptures indexes
-    const pcStore = tx.objectStore('photoCaptures');
+    db.createObjectStore('audioData', { keyPath: 'id' });
+
+    const pcStore = db.createObjectStore('photoCaptures', { keyPath: 'id' });
     pcStore.createIndex('recordingSessionId', 'recordingSessionId', { unique: false });
     pcStore.createIndex('timestampMs', 'timestampMs', { unique: false });
 
-    // confusionVotes indexes
-    const cvStore = tx.objectStore('confusionVotes');
-    cvStore.createIndex('lectureId', 'lectureId', { unique: false });
-    cvStore.createIndex('segmentId', 'segmentId', { unique: false });
-
-    // autoNotes indexes
-    const anStore = tx.objectStore('autoNotes');
-    anStore.createIndex('lectureId', 'lectureId', { unique: false });
+    const anStore = db.createObjectStore('autoNotes', { keyPath: 'id' });
+    anStore.createIndex('lectureId', 'lectureId', { unique: true });   // enforces one-per-lecture
     anStore.createIndex('generatedAt', 'generatedAt', { unique: false });
   }
 ```
@@ -398,8 +395,14 @@ Step 3: Confusion heatmap (analytics tab in lecture detail)
 
 ### 10.3 Auto-Notes Flow
 
+**Call site:** `library.js` (L3) is the legal orchestrator. Two options:
+- **Option A (lazy):** library.js calls `notes-engine.js runExtractive()` on first Notes tab open.
+- **Option B (immediate):** `recorder.js` dispatches `new CustomEvent('lectureCreated', { detail: { lectureId } })` after transcription; `library.js` listens and calls `notes-engine.js`.
+
+Decision must be made before W18 implementation. Recorder.js CANNOT import notes-engine.js (same L2 layer — violates AD-1 no-cross-L2 rule).
+
 ```
-Step 1: After stub transcription completes (or user triggers manually)
+Step 1: After stub transcription completes (triggered by library.js on Notes tab open OR via lectureCreated event)
   -> notes-engine.js runExtractive(transcript) -> string (Markdown bullets)
   -> AutoNote created in IDB (source: 'extractive')
   -> "Notes" tab in lecture detail shows auto-generated notes
@@ -413,8 +416,10 @@ Step 2 (optional): User has Claude API key configured in Settings
   -> AutoNote updated in IDB (source: 'llm', model: 'claude-opus-4-6')
 
 Step 3: Student edits notes
-  -> contentEditable div on Notes tab
-  -> On blur: AutoNote.content updated in IDB, editedAt set
+  -> <textarea> on Notes tab (NOT contentEditable — avoids stored XSS; see §17)
+  -> Content stored as plain Markdown string (no HTML)
+  -> On blur: check editedAt !== null; if edits exist and user clicks Regenerate, show confirmation
+  -> AutoNote.content updated in IDB, editedAt set
   -> Toast: "Notes saved"
 
 Step 4: Export
@@ -490,7 +495,7 @@ Step 3: After recording completes
 | Web Speech auto-stops | `onend` event fires during recording | Auto-restart recognition with gap logging |
 | Photo kills audio (iOS) | iOS spike result (Day 0.5) | Disable photo button during recording on iOS |
 | IDB version upgrade blocked | `onblocked` event | Prompt user to close other tabs |
-| Recording interrupted (tab close) | `beforeunload` event | Save partial audio + set status to 'stopped' |
+| Recording interrupted (tab close) | `beforeunload` event (unreliable on iOS) | Save partial audio + set status to 'stopped'. **On next app init:** query `getByStatus('recording')` — any session older than 10 min → set `status: 'failed'`, `error: 'Orphaned'`. Show failed sessions in recordings list with delete button. |
 | Audio blob too large | Size check after stop | Warn, suggest shorter recordings |
 
 ---
@@ -504,7 +509,7 @@ Live Capture is primarily a mobile feature. Students record in lecture halls usi
 | Constraint | Solution |
 |------------|----------|
 | One-handed operation | Record button 56px+ touch target, bottom-anchored |
-| Screen must stay on | Screen Wake Lock API (`navigator.wakeLock.request('screen')`) |
+| Screen must stay on | Screen Wake Lock API (`navigator.wakeLock.request('screen')`). Re-acquire on `visibilitychange` → `'visible'` during active recording. Show lock-status icon in timer bar. |
 | iOS background suspension | "Keep this tab open" warning banner |
 | Small screen | Minimal recording UI: timer + live transcript + stop + photo button |
 | Network unavailable | Fully local-first. No backend needed. |
@@ -573,7 +578,7 @@ Priority order (checked via MediaRecorder.isTypeSupported):
 
 - Default OFF. User must enable via toggle.
 - `continuous: true` mode for ongoing recognition.
-- Known issue: Chrome may auto-stop after silence. Mitigation: listen for `onend`, auto-restart with gap timestamp logged.
+- Known issue: Chrome may auto-stop after silence. Mitigation: listen for `onend`, auto-restart with `setTimeout(() => recognition.start(), 100)` — NOT immediate call, which throws `InvalidStateError`. Catch `InvalidStateError` and retry after 500ms.
 - Android Chrome: full support. iOS Safari: SpeechRecognition not available.
 - Transcript is best-effort live text. Not stored permanently (the stub transcription generates the final transcript).
 
@@ -607,7 +612,7 @@ Priority order (checked via MediaRecorder.isTypeSupported):
 | Photo data privacy | Photos stored only in local IndexedDB. Never uploaded. |
 | Web Speech API data | Toggle defaults to OFF. When ON, audio is sent to Google for recognition. Info-toast warns the user. |
 | XSS in transcript display | Transcripts rendered via `textContent`, never `innerHTML`. Same safe DOM pattern as v0.4.0. |
-| Photo blob injection | Photos are always re-encoded via canvas (resize + JPEG compress), stripping EXIF and potential payloads. |
+| Photo blob injection | Photos are **unconditionally** re-encoded via canvas + `toBlob()` (even if under 1920px) — this is enforced in W15.2.2 spec. Canvas decode discards EXIF in Chrome/Firefox; this is browser behaviour not a W3C guarantee, but is the strongest available mitigation without a server. |
 | SW cache | `recorder.js` and `recorder.css` added to known `STATIC_ASSETS` list. Origin check enforced. |
 
 ---

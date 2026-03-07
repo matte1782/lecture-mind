@@ -133,17 +133,22 @@ dom-utils.js <- flashcards.js <- analytics.js <- library.js
 
 Confusion votes stored as properties within the existing segment data model or a lightweight extension. Votes are personal and anonymous: no user ID, just segmentId + timestamp + boolean confused flag.
 
-### AD-11: Recording Storage (5 New IDB Stores)
+### AD-11: Recording Storage (4 New IDB Stores)
+
+`confusionVotes` already exists in v1 (`storage/db.js:74`). Only 4 stores are genuinely new:
 
 | Store | Purpose | Key Fields |
 |-------|---------|------------|
 | `recordingSessions` | Recording metadata | id, lectureId, status, startedAt, stoppedAt, duration, codec |
 | `audioData` | Audio blobs | id (= session id), blob, size |
 | `photoCaptures` | Timestamped photos | id, recordingSessionId, timestampMs, blob, size, caption |
-| `confusionVotes` | Binary confusion markers | id, segmentId, lectureId, timestamp |
 | `autoNotes` | Generated lecture notes | id, lectureId, content, source ('extractive'\|'llm'), generatedAt, editedAt |
 
-DB_VERSION upgrades from 1 to 2. Single migration creates all 5 stores. Existing data is untouched.
+DB_VERSION upgrades from 1 to 2. Migration creates these 4 stores. `confusionVotes` is skipped
+(already present). Existing data is untouched.
+
+Also: `ConfusionVoteRepository.toggle(segmentId, lectureId)` is new work — add to existing repo
+with a per-key mutex (CLAUDE.md anti-pattern requirement).
 
 ### AD-12: Stub Transcription
 
@@ -354,8 +359,8 @@ Week 19:
 March 2026
   Week 14 (Mar 2-8):   v0.4.0 RELEASED (557 tests)
   Week 15 (Mar 9-15):  v0.5.0 — Tech Debt + iOS Spike + DB Migration + Live Audio Capture
-  Week 16 (Mar 16-22): v0.5.0 — Photo Capture + Confusion Voting + Transcript Stub
-  Week 17 (Mar 23-29): v0.5.0 — Confusion Heatmap + Privacy + Storage Quota UI
+  Week 16 (Mar 16-22): v0.5.0 — Confusion Heatmap + Privacy + Storage Quota UI + A11y Audit
+  Week 17 (Mar 23-29): CONTINGENCY (overflow from W15-16, or early prep spikes)
   Week 18 (Mar 30-Apr 5): v0.5.0 — Auto-Notes Framework (extractive + LLM API)
   Week 19 (Apr 6-12):  v0.5.0 — Polish + Hostile Review + Release (CONTINGENCY buffer)
 

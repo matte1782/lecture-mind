@@ -35,12 +35,15 @@
 
 ---
 
-## Day 4: Hostile Review + Fixes (4h)
+## Days 3-5: Hostile Review + Fixes + Release (9h)
 
 | ID | Task | Hours | Spec | Acceptance |
 |----|------|-------|------|------------|
 | W19.3.1 | Run hostile reviewer on full v0.5.0 | 2h | Write review to `docs/reviews/REVIEW_v050_final_gate.md`. Target >= 85/100. | Review file written |
-| W19.3.2 | Fix critical/major issues from review | 2h | Address any BLOCKING or MUST-FIX findings | All critical issues resolved, score >= 85 |
+| W19.3.2 | Fix critical/major issues from review | 4h | Address any BLOCKING or MUST-FIX findings. If score < 70: cut Auto-Notes to v0.5.1, extend release to Week 20. | All critical issues resolved, score >= 85 |
+| W19.3.3 | Re-run reviewer if score < 85 on first pass | 1h | Write second review file | Score >= 85 |
+| W19.3.4 | Update SW + bump CACHE_NAME + final test run | 1h | Add `recorder.js`, `recorder.css`, `notes-engine.js`, `llm-client.js` to `STATIC_ASSETS`. Bump `CACHE_NAME` to `lm-v0.5.0` (required for old v0.4.0 cache eviction). All 640+ tests pass. | SW caches all files, old cache deleted on activate |
+| W19.3.5 | Tag v0.5.0 + GitHub release + deploy | 1h | Git tag, GitHub release with full description, deploy playground to GH Pages | Release live |
 
 ---
 
@@ -91,7 +94,7 @@ If Weeks 15-18 complete cleanly, only ~10h needed for release prep. Remaining ~7
 
 | ID | Risk | Impact | Likelihood | Mitigation |
 |----|------|--------|------------|------------|
-| R1 | Hostile review returns BLOCK | HIGH | LOW | 2h buffer for fixes, previous reviews informed all decisions |
+| R1 | Hostile review returns BLOCK | HIGH | MEDIUM | 4h fix buffer + 1h re-review. If score < 70: cut Auto-Notes to v0.5.1, extend to Week 20. Previous plan reviews found 3 critical issues — a code review will likely find more. |
 | R2 | Cross-browser issues discovered late | MEDIUM | MEDIUM | Document as known issues, fix critical only |
 | R3 | GH Pages deploy fails | LOW | LOW | Already solved in v0.4.0, same process |
 
