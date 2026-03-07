@@ -7,6 +7,7 @@ on:
       - 'docs/**'
       - 'mkdocs.yml'
       - '.github/workflows/docs.yml'
+      - 'src/vl_jepa/api/static/**'
   workflow_dispatch:
 
 permissions:
@@ -40,5 +41,17 @@ jobs:
       - name: Build documentation
         run: mkdocs build --strict 2>&1 | grep -v "^INFO" || true
 
+      - name: Copy Playground files into built site
+        run: |
+          mkdir -p site/playground
+          cp src/vl_jepa/api/static/*.html site/playground/
+          cp src/vl_jepa/api/static/*.js site/playground/
+          cp src/vl_jepa/api/static/*.css site/playground/
+          cp -r src/vl_jepa/api/static/storage site/playground/storage
+          # Fix paths: remove /static/ prefix for GH Pages
+          sed -i 's|/static/||g' site/playground/index.html
+
       - name: Deploy to GitHub Pages
-        run: mkdocs gh-deploy --force
+        run: |
+          pip install ghp-import
+          ghp-import site -p -f -m "Deploy docs + playground"

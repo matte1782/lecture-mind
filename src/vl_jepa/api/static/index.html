@@ -11,14 +11,21 @@
     <!-- Preload fonts for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Design System -->
     <link rel="stylesheet" href="/static/tokens.css">
+    <link rel="stylesheet" href="/static/tokens-v2.css">
     <link rel="stylesheet" href="/static/components.css">
     <link rel="stylesheet" href="/static/layout.css">
+    <link rel="stylesheet" href="/static/utilities.css">
     <link rel="stylesheet" href="/static/landing.css">
     <link rel="stylesheet" href="/static/animations.css">
+    <link rel="stylesheet" href="/static/animations-v2.css">
+    <link rel="stylesheet" href="/static/accessibility.css">
+    <link rel="stylesheet" href="/static/playground-components.css">
+    <link rel="stylesheet" href="/static/analytics.css">
+    <link rel="stylesheet" href="/static/app-components.css">
 
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
@@ -59,6 +66,7 @@
                     <a href="#features" class="nav-link">Features</a>
                     <a href="#how-it-works" class="nav-link">How it Works</a>
                     <a href="#tech-stack" class="nav-link">Tech Stack</a>
+                    <a href="#/playground" class="nav-link" id="nav-playground">Playground</a>
                 </nav>
                 <div class="header-actions">
                     <a href="#app-section" class="btn" data-variant="primary" data-size="sm">Try Now</a>
@@ -908,6 +916,62 @@
             </div>
         </section>
 
+        <!-- Playground View (Flashcard Library) -->
+        <section id="playground-view" class="app-section hidden" aria-label="Student Playground" inert>
+            <div class="section-container">
+                <div class="section-header">
+                    <span class="section-badge">Student Playground</span>
+                    <h2 class="section-title">Your Lecture Library</h2>
+                    <p class="section-subtitle">Review and master your lecture content with spaced repetition flashcards</p>
+                </div>
+                <div id="playground-search" class="playground-search-bar"></div>
+                <div id="library-toolbar" class="sp-library-toolbar" role="toolbar" aria-label="Library controls"></div>
+                <div class="sp-library-layout">
+                    <aside id="library-sidebar" class="sp-library-sidebar" role="navigation" aria-label="Course filter">
+                        <!-- Populated by library.js -->
+                    </aside>
+                    <div class="sp-library-main" id="library-main">
+                        <div id="library-grid" class="sp-card-grid" role="list" aria-label="Lecture library"></div>
+                        <div id="library-empty" class="empty-state hidden">
+                            <div class="empty-state-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                                </svg>
+                            </div>
+                            <p class="empty-state-title">No lectures yet</p>
+                            <p class="empty-state-description">Upload a video to get started with flashcards</p>
+                            <a href="#/app-section" class="btn" data-variant="primary" data-size="sm" id="library-upload-link">Upload a Lecture</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Study View (Flashcard Study Session) -->
+        <section id="study-view" class="app-section hidden" aria-label="Study Session" inert>
+            <div class="section-container">
+                <div id="study-header" class="study-session-header"></div>
+                <div id="study-card-area" class="study-card-area"></div>
+                <div id="study-controls" class="study-controls-area"></div>
+                <div id="study-complete" class="study-complete-area hidden"></div>
+            </div>
+        </section>
+
+        <!-- Lecture Detail View -->
+        <section id="lecture-detail-view" class="app-section hidden" aria-label="Lecture Details" inert>
+            <div class="section-container">
+                <div id="lecture-detail-header"></div>
+                <div id="lecture-detail-stats"></div>
+                <div id="lecture-detail-tabs"></div>
+                <div id="lecture-detail-content"></div>
+            </div>
+        </section>
+
+        <!-- Dashboard View -->
+        <section id="dashboard-view" class="app-section hidden" aria-label="Study Dashboard" inert>
+            <div class="section-container"></div>
+        </section>
+
         <!-- Footer -->
         <footer class="footer-landing">
             <div class="footer-container">
@@ -960,5 +1024,14 @@
 
     <!-- Scripts -->
     <script src="/static/app.js"></script>
+    <script type="module" src="/static/dom-utils.js"></script>
+    <script type="module" src="/static/flashcards.js"></script>
+    <script type="module" src="/static/library.js"></script>
+    <script type="module" src="/static/analytics.js"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/static/sw.js').catch(function() {});
+      }
+    </script>
 </body>
 </html>
