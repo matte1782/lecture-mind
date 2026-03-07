@@ -1,54 +1,51 @@
 # Week 16 Task Plan
 
 **Date Range:** 2026-03-16 to 2026-03-22
-**Goal:** Confusion Heatmap, Professor Dashboard UI, and v0.5.0 release polish
+**Goal:** Confusion heatmap visualization, privacy controls, storage quota UI
 **Status:** DRAFT
 
 ---
 
 ## Prerequisites
 
-- [ ] Week 15 gate passed (live capture + confusion voting working)
-- [ ] 590+ tests passing
+- [ ] Week 15 gate passed (live audio capture + photo capture + confusion voting working)
+- [ ] 592+ tests passing
 - [ ] No P0 bugs from Week 15
+- [ ] recorder.js at L2, parallel to analytics.js (AD-1 preserved)
 
 ---
 
-## Days 1-2: Confusion Heatmap Visualization (8h)
+## Days 1-2: SP4-lite Confusion Heatmap (8h)
 
 | ID | Task | Hours | Spec | Acceptance |
 |----|------|-------|------|------------|
-| W16.1.1 | Aggregate confusion data per lecture | 2 | `getConfusionHeatmapData(lectureId)` returns `{segmentId, voteCount, percentage}[]` | Unit tests with fixture data pass, sorts by segment order |
-| W16.1.2 | SVG heatmap component | 3 | Horizontal bar chart in analytics style, color gradient (green->yellow->red), segment labels | Renders with mock data, responsive width, ARIA description |
-| W16.1.3 | Integrate heatmap into lecture detail view | 1.5 | New "Confusion" tab in lecture detail alongside segments/flashcards/bookmarks | Tab renders heatmap, empty state when no votes |
-| W16.1.4 | Confusion summary stats | 1.5 | Total votes, most confused segment, average confusion rate | Stats render correctly, tested with edge cases (0 votes, 1 segment) |
+| W16.1.1 | Aggregate confusion data: `getConfusionHeatmapData(lectureId)` | 2 | Returns `{segmentId, voteCount, percentage}[]` sorted by segment order | Unit tests with fixture data pass |
+| W16.1.2 | SVG heatmap component (analytics-style) | 3 | Horizontal bar chart, color gradient green-yellow-red, segment labels, responsive | Renders with mock data, ARIA description present |
+| W16.1.3 | Integrate heatmap into lecture detail "Confusion" tab | 1.5 | New tab alongside segments/flashcards/bookmarks in lecture detail view | Tab renders heatmap, empty state when no votes, roving tabindex on tab bar |
+| W16.1.4 | Confusion summary stats on lecture detail | 1.5 | Total votes, most confused segment, segments with >50% confusion | Stats render correctly, edge cases tested (0 votes, 1 segment) |
 
 ---
 
-## Days 3-4: Professor Dashboard (8h)
+## Days 3-4: Privacy + Storage Quota (5h)
 
 | ID | Task | Hours | Spec | Acceptance |
 |----|------|-------|------|------------|
-| W16.2.1 | Route `#/professor` + professor-view section | 1 | New route in flashcards.js, `<section id="professor-view">` in index.html | Navigation works, view renders |
-| W16.2.2 | Dashboard layout: lecture selector + metrics | 2 | Dropdown to pick lecture, cards for key metrics (total confusion votes, hotspot count, avg quiz score) | Renders with real IndexedDB data, empty state handled |
-| W16.2.3 | Class-wide confusion heatmap | 2 | Reuse W16.1.2 component, aggregate across all lectures or filter by course | Heatmap renders for selected lecture/course |
-| W16.2.4 | Most-replayed segments list | 1.5 | Ranked list of segments by replay count (from ProgressRepository watch data) | List renders, sorted descending, shows segment title + count |
-| W16.2.5 | Quiz performance aggregate | 1.5 | Average accuracy, mastery distribution chart (reuse analytics.js patterns) | Chart renders, data matches underlying flashcard results |
+| W16.2.1 | Privacy info-toast at first recording | 1.5 | Toast: "Recording may be subject to policies. Audio stored locally only." + "Don't show again" checkbox. Stored in localStorage. NOT a blocking dialog. | Toast shows on first record tap, dismissible, not shown again after acknowledgment |
+| W16.2.2 | Web Speech API privacy toggle (default OFF) | 1 | Toggle in record view: "Enable live transcription (sends audio to Google)". Default OFF. Stored in localStorage. When OFF, only MediaRecorder runs. | Toggle persists across sessions, Web Speech only activates when ON |
+| W16.2.3 | Storage quota UI: usage indicator + warning | 2 | Storage usage bar using `navigator.storage.estimate()`, shows "X MB used of ~Y MB". Warning toast at 80% quota. Bulk delete option for old recordings. Feature-detect fallback. | Usage displays correctly, warning triggers at threshold |
+| W16.2.4 | Photo capture disclaimer (first-use) | 0.5 | One-time toast: "You are responsible for ensuring you have permission to photograph this content." Stored in localStorage. | Shows once on first photo, never shown again |
 
 ---
 
-## Day 5: Export + Polish + Release (6h)
+## Day 5: Accessibility Audit (2h)
 
 | ID | Task | Hours | Spec | Acceptance |
 |----|------|-------|------|------------|
-| W16.3.1 | Export confusion report as JSON/CSV | 2 | Button on professor dashboard, downloads file | File downloads, contains correct data, tested |
-| W16.3.2 | Navigation: add Professor link to sidebar/nav | 0.5 | Visible link in navigation, icon distinguishes from student views | Link visible, navigates correctly |
-| W16.3.3 | Accessibility audit (ARIA, keyboard, focus) | 1.5 | All new components: role, tabindex, keyboard handlers, focus-visible | Manual + automated check passes |
-| W16.3.4 | v0.5.0 release prep | 2 | Update CHANGELOG.md, ROADMAP.md, tag, GitHub release | All docs updated, tag pushed, release created |
+| W16.3.1 | Accessibility audit of all new v0.5.0 components | 2 | All new components: role, tabindex, keyboard handlers, focus-visible, ARIA labels. Record button 56px+ touch target. Timer `aria-live="polite"`. | Manual + automated check passes, no ARIA violations |
 
 ---
 
-## Estimated Total: 22h (with 2x buffer on visualization work)
+## Estimated Total: 15h
 
 ---
 
@@ -56,7 +53,7 @@
 
 | ID | Task | Blocked By | Unblock Condition |
 |----|------|------------|-------------------|
-| W16.B1 | Real multi-user aggregation | Auth system | v1.0.0 — local simulation only for v0.5.0 |
+| W16.B1 | Aggregate confusion across users | Multi-user auth system | v0.6.0 -- local personal data only for v0.5.0 |
 
 ---
 
@@ -64,10 +61,11 @@
 
 | Task | Why Deferred |
 |------|--------------|
-| Multi-user backend | v1.0.0 |
-| Real-time WebSocket confusion feed | v1.0.0 |
-| PDF export of reports | v1.0.0 (JSON/CSV sufficient) |
-| Professor account/login | v1.0.0 |
+| Professor Dashboard | v0.6.0 -- CUT from v0.5.0, needs multi-user backend |
+| Tesseract.js OCR on photos | v0.6.0 -- ship photos first, validate demand |
+| Real Whisper transcription | v1.0.0 -- stub is sufficient for v0.5.0 |
+| Auto-Notes Framework | Week 18 -- separate focus week |
+| v0.5.0 release | Week 19 -- release after all features complete |
 
 ---
 
@@ -75,20 +73,19 @@
 
 | ID | Risk | Impact | Likelihood | Mitigation |
 |----|------|--------|------------|------------|
-| R1 | SVG heatmap complexity (responsive, accessible) | MEDIUM | MEDIUM | Reuse analytics.js SVG patterns, keep it simple |
-| R2 | Router getting crowded (6 routes now) | LOW | LOW | Document route table, consider route config object |
-| R3 | Professor dashboard scope creep | HIGH | HIGH | Strict MVP: 3 cards + 1 heatmap + 1 list + export |
-| R4 | Week 15 delays push into Week 16 | MEDIUM | MEDIUM | Cut line: export can be deferred |
+| R1 | SVG heatmap complexity (responsive + accessible) | MEDIUM | MEDIUM | Reuse analytics.js SVG patterns, keep simple horizontal bars |
+| R2 | Week 15 delays push tasks into Week 16 | MEDIUM | MEDIUM | Cut line: heatmap can degrade to simple table, Week 17 contingency available |
+| R3 | `navigator.storage.estimate()` not available on all browsers | LOW | MEDIUM | Feature-detect with fallback to "storage usage unavailable" message |
 
 ---
 
 ## Completion Criteria
 
-- [ ] Confusion heatmap renders on lecture detail view
-- [ ] Professor dashboard shows metrics for any lecture
-- [ ] Export downloads valid JSON/CSV
-- [ ] 25+ new tests added (target: 615+ total)
+- [ ] Confusion heatmap renders on lecture detail view with color gradient
+- [ ] Privacy info-toast and Web Speech toggle working and persisted
+- [ ] Storage quota indicator showing usage with warning at 80%
+- [ ] Photo capture disclaimer shows on first use
+- [ ] All new components keyboard accessible with proper ARIA
+- [ ] 20+ new tests added (target: 612+ total)
 - [ ] All tests pass
-- [ ] HOSTILE_REVIEWER approves v0.5.0 final gate
-- [ ] CHANGELOG.md and ROADMAP.md updated
-- [ ] v0.5.0 tagged and released
+- [ ] No release in this week -- release is in Week 19

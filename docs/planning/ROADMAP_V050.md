@@ -1,18 +1,18 @@
-# v0.5.0 Professor Edition — Implementation Plan
+# v0.5.0 "Live Capture" — Implementation Roadmap
 
-**Version:** 1.0.0
+**Version:** 3.0.0
 **Author:** PLANNER
-**Status:** DRAFT
-**Duration:** 2 weeks (+ 1 contingency)
-**Budget:** 44h core + 16h contingency = 60h max
+**Status:** APPROVED (expanded scope — Auto-Notes added)
+**Duration:** 4 weeks + 1 week contingency
+**Budget:** 68h core + 16h contingency = 84h max
 
 ---
 
 ## Executive Summary
 
-- **Goal:** Add Live Lecture Mode (audio capture), confusion analytics, and a professor dashboard to transform Lecture Mind from a student-only tool into a two-sided learning platform.
-- **Critical Path:** Live Capture storage layer -> Audio capture UI -> Confusion voting -> Confusion heatmap -> Professor dashboard -> Export -> Release
-- **Major Risks:** (1) MediaRecorder API mocking complexity in tests, (2) IndexedDB migration v3 data safety, (3) Scope creep on professor dashboard
+- **Goal:** Add live audio recording, timestamped photo capture, personal confusion markers, and an Auto-Notes framework to transform Lecture Mind from a review-only tool into a full capture-study-review tool.
+- **Critical Path:** DB migration v1-v2 -> Audio capture -> Photo capture -> Confusion voting -> Confusion heatmap -> Privacy + quota UI -> Auto-Notes (extractive + LLM API) -> Release
+- **Major Risks:** (1) MediaRecorder API mocking complexity in tests, (2) iOS Safari kills MediaRecorder when taking a photo, (3) IndexedDB storage limits on mobile browsers
 
 ---
 
@@ -22,151 +22,233 @@
 
 | Feature | MVP Definition | Hours |
 |---------|---------------|-------|
-| **Live Lecture Mode** | Record audio in browser, store chunks in IndexedDB, create lecture entry with mock transcript, auto-generate flashcards | 16h |
-| **Confusion Voting** | Per-segment vote button, votes persist in IndexedDB | 4h |
+| **Live Audio Capture** | Record audio via MediaRecorder, live transcript via Web Speech API (Android Chrome), store chunks in IndexedDB, create lecture entry with stub transcript | 16h |
+| **Photo Capture** | Timestamped photos during/after recording, canvas resize to 1920px + 80% JPEG, correlated with recording timeline | 11h |
+| **DB Migration v1-v2** | 3 new IDB stores: recordingSessions, audioData, photoCaptures | 4h |
+| **Privacy info-toast + Web Speech toggle** | Non-blocking info-toast at first recording, Web Speech API toggle (default OFF) | 2h |
+| **Storage quota UI** | Usage indicator in settings/record view, warning at 80% capacity | 3h |
 
 ### P1 — Should Ship (release is weaker without these)
 
 | Feature | MVP Definition | Hours |
 |---------|---------------|-------|
-| **Confusion Heatmap** | SVG color-coded bar chart on lecture detail "Confusion" tab | 8h |
-| **Professor Dashboard** | Route with lecture selector, 3 metric cards, heatmap, most-replayed list | 8h |
+| **SP4-lite: Confusion markers** | Binary "I'm confused" vote button on segments + personal confusion heatmap on lecture detail | 8h |
+| **Auto-Notes Framework** | Extractive summarization (TextRank/TF-IDF) for free offline notes + optional LLM API integration (user-provided Claude/GPT key) for high-quality generative notes. Notes tab in lecture detail view. | 12h |
 
 ### P2 — Nice to Have (cut first if behind schedule)
 
 | Feature | MVP Definition | Hours |
 |---------|---------------|-------|
-| **Export Reports** | JSON/CSV download from professor dashboard | 2h |
-| **Quiz Aggregate View** | Accuracy + mastery charts on professor dashboard | 2h |
-| **Tech Debt Cleanup** | getCSSVar tests, renderConfetti, LICENSE, dead code | 2h |
-| **Dependabot PRs** | Merge 4 pending security updates | 0.5h |
+| **Tech debt cleanup** | getCSSVar tests, renderConfetti removal/testing, LICENSE file, dead code removal | 3h |
+| **Dependabot PRs** | Merge 8 open PRs (pip, npm, GH Actions) | 2h |
+| **Tests + Polish** | Additional edge case tests, accessibility audit, documentation | 5h |
 
 ---
 
 ## 2. Feature MVPs (Smallest Useful Version)
 
-### Live Lecture Mode MVP
+### Live Audio Capture MVP
 
 What it IS:
-- Press "Record" button on mobile browser
+- Press "Record" button on mobile or desktop browser
 - Audio captured via MediaRecorder API, chunked to IndexedDB every 5 seconds
-- Works offline (chunks stored locally)
-- Press "Stop" -> transcript stub creates a mock transcript
+- Codec negotiation: `isTypeSupported()` -> opus/webm > aac/mp4 > wav
+- Audio size: Opus 32kbps = ~20MB for a 90-minute lecture
+- Web Speech API provides live transcript text on supported browsers (Android Chrome)
+- Web Speech API is opt-in (toggle, default OFF) with auto-restart on `onend`
+- Works offline (chunks stored locally in IndexedDB)
+- Press "Stop" -> transcript stub creates mock segments from audio duration
 - Lecture entry + segments created in library automatically
-- Flashcards auto-generated from transcript segments
 
 What it is NOT:
-- No real Whisper transcription (stub service with mock data)
-- No streaming transcription during recording
+- No real Whisper transcription (stub service with mock data — real in v1.0.0)
 - No waveform visualization
 - No cloud upload of audio
 - No video capture (audio only)
 
-### Confusion Voting MVP
+### Photo Capture MVP
 
 What it IS:
-- "I'm confused" button on each segment card in lecture detail view
-- Click toggles vote, persists to IndexedDB
-- Anonymous (no user identity)
-- Vote count visible on segment
+- "Take Photo" button available during and after recording
+- Uses `<input type="file" accept="image/*">` (triggers native camera on mobile)
+- Photos resized via canvas to max 1920px width, compressed to 80% JPEG (~0.5MB each)
+- Each photo timestamped and correlated with current recording position
+- Photos stored in `photoCaptures` IDB store
+- Photos visible in lecture detail view, linked to timeline position
 
 What it is NOT:
-- No real-time aggregation across users
-- No time-weighted confusion decay
+- No OCR / Tesseract.js (deferred to v0.5.1+ pending demand validation)
+- No photo gallery/editor
+- No automatic slide detection
+- No photo-to-notes conversion
+
+### Confusion Voting MVP (SP4-lite)
+
+What it IS:
+- Binary "I'm confused" button on each segment card in lecture detail view
+- Click toggles personal confusion marker, persists to IndexedDB
+- Personal only (no multi-user aggregation)
+- Confusion heatmap on lecture detail view showing which segments were marked
+- Color-coded bar: green (not confused) / red (confused)
+
+What it is NOT:
+- No intensity scale (binary confused / not confused only)
+- No multi-user aggregation (personal markers only)
 - No teacher notification
+- No time-weighted decay
 
-### Professor Dashboard MVP
+### Auto-Notes Framework MVP
 
 What it IS:
-- Route `#/professor` accessible from navigation
-- Lecture dropdown selector
-- 3 metric cards: total confusion votes, hotspot count, average quiz accuracy
-- Confusion heatmap (reused SVG component)
-- Most-replayed segments list (top 5)
-- JSON/CSV export button
+- "Notes" tab in lecture detail view alongside segments/flashcards/bookmarks/confusion
+- **Mode 1 — Free/Offline (extractive):** TextRank or TF-IDF extracts key sentences from transcript, displayed as bullet-point auto-notes. Zero dependencies beyond a small JS library (~5KB). Works on any browser, no API key needed.
+- **Mode 2 — LLM-Powered (user API key):** User provides their own Claude or GPT API key in Settings. Transcript chunks are sent to the API to generate structured, high-quality HTML notes with headings, bullet points, key concepts highlighted. API key stored in localStorage (never leaves device, never sent to our servers).
+- Auto-notes generated after transcription completes (triggered automatically or manually)
+- Notes editable by student (contentEditable or textarea)
+- Export as Markdown or HTML
 
 What it is NOT:
-- No multi-user data (simulated from local IndexedDB)
-- No login/auth
-- No real-time updates
-- No PDF reports
-- No course-level aggregation (lecture-level only)
+- No auto-summarization during recording (post-processing only)
+- No built-in API key (user provides their own — zero cost to us)
+- No speaker diarization
+- No PDF export (Markdown/HTML only)
+- No real-time collaborative editing
 
 ---
 
 ## 3. Architecture Decisions
 
-### AD-9: Live Capture Module Position
+### AD-9: Recorder Module Position
 
 ```
 dom-utils.js <- flashcards.js <- analytics.js <- library.js
                     ^
                     |
-              live-capture.js (new, imports from flashcards for router)
-              confusion.js (new, imports from flashcards + dom-utils)
-              professor.js (new, imports from analytics + confusion + dom-utils)
+              recorder.js (L2, parallel to analytics.js)
 ```
 
-`live-capture.js`, `confusion.js`, and `professor.js` are leaf modules. They import from the existing chain but nothing imports from them (except `index.html` script tags). This preserves AD-1.
+`recorder.js` is a leaf module at L2. It imports from `flashcards.js` (for router registration via `setRecordRenderer`) and `dom-utils.js`. Nothing imports from `recorder.js`. This preserves AD-1.
 
-### AD-10: Confusion Data Model
+### AD-10: Confusion Data Storage
 
-Confusion votes stored via `ConfusionRepository` (new) backed by a new `confusion-votes` object store in IndexedDB. Migration v3 adds this store. Votes are anonymous: no user ID, just segmentId + timestamp.
+Confusion votes stored as properties within the existing segment data model or a lightweight extension. Votes are personal and anonymous: no user ID, just segmentId + timestamp + boolean confused flag.
 
-### AD-11: Recording Storage
+### AD-11: Recording Storage (5 New IDB Stores)
 
-Audio chunks stored as Blobs in a new `recording-chunks` object store. Recordings are ephemeral: once transcribed, chunks can be deleted. Separate from lecture data to avoid bloating lecture queries.
+| Store | Purpose | Key Fields |
+|-------|---------|------------|
+| `recordingSessions` | Recording metadata | id, lectureId, status, startedAt, stoppedAt, duration, codec |
+| `audioData` | Audio blobs | id (= session id), blob, size |
+| `photoCaptures` | Timestamped photos | id, recordingSessionId, timestampMs, blob, size, caption |
+| `confusionVotes` | Binary confusion markers | id, segmentId, lectureId, timestamp |
+| `autoNotes` | Generated lecture notes | id, lectureId, content, source ('extractive'\|'llm'), generatedAt, editedAt |
+
+DB_VERSION upgrades from 1 to 2. Single migration creates all 5 stores. Existing data is untouched.
 
 ### AD-12: Stub Transcription
 
-`transcript-service.js` exports `transcribe(audioBlob)` returning `Promise<TranscriptResult>`. v0.5.0 ships with a stub that generates mock segments from audio duration. v1.0.0 replaces stub with real Whisper API call. Interface stays the same.
+`recorder.js` includes a `transcribeStub(audioDurationMs)` function returning `Promise<{text, segments[]}>`. v0.5.0 ships with a stub that generates mock segments from audio duration. v1.0.0 replaces stub with real Whisper API call behind the same interface.
+
+### AD-13: Router Registration
+
+`recorder.js` calls `setRecordRenderer(fn)` to register its view renderer with the `flashcards.js` router. This follows the same pattern as `setLibraryRenderer(fn)` used by `library.js`.
+
+- New route: `#/record` -> `record-view` section in `index.html`
+- New HTML: `<section id="record-view" class="view" hidden>` in `index.html`
+
+### AD-14: Privacy Model
+
+- First recording triggers a non-blocking info-toast explaining what is captured and stored
+- Web Speech API toggle in record view (default OFF) — user must explicitly enable
+- All data stays in local IndexedDB (no server upload in v0.5.0)
+- GDPR household exemption applies (personal study use)
+
+### AD-15: Audio Codec Negotiation
+
+```javascript
+const CODECS = [
+  { mimeType: 'audio/webm;codecs=opus', ext: 'webm' },
+  { mimeType: 'audio/mp4;codecs=aac',   ext: 'mp4'  },
+  { mimeType: 'audio/webm',             ext: 'webm' },
+];
+// Pick first supported, fallback to default MediaRecorder
+```
 
 ---
 
 ## 4. Week-by-Week Breakdown
 
-### Week 15 (March 9-15): Live Capture + Confusion Voting
+### Week 15 (March 9-15): Foundation + Live Audio Capture
 
-**Focus:** Build the recording pipeline and confusion voting data layer
-**Hours:** 22h
-**Gate:** Can record audio, stop, see lecture in library. Can vote on segments.
-
-| Day | Focus | Hours | Deliverables |
-|-----|-------|-------|-------------|
-| Day 0 | Housekeeping: Dependabot, LICENSE, tech debt | 2 | 4 PRs merged, LICENSE added, getCSSVar tested |
-| Days 1-2 | Live capture: data model, repository, MediaRecorder wrapper, UI | 8 | live-capture.js, RecordingRepository, record-view |
-| Days 3-4 | Transcript integration: stub service, post-recording flow, route | 8 | transcript-service.js, lecture creation flow, #/record route |
-| Day 5 | Confusion voting: data model, repository, vote button | 4 | ConfusionRepository, vote UI on segment cards |
-
-**New tests:** 30+ (target 590+ total)
-**New files:** live-capture.js, live-capture.test.js, transcript-service.js, confusion.js, confusion.test.js
-
-See `docs/planning/WEEK15_PLAN.md` for full task breakdown.
-
-### Week 16 (March 16-22): Heatmap + Dashboard + Release
-
-**Focus:** Visualization, professor dashboard, release
-**Hours:** 22h
-**Gate:** Professor can view confusion hotspots. v0.5.0 tagged and released.
+**Focus:** Tech debt, iOS spike, DB migration, audio recording pipeline
+**Hours:** 25h
+**Gate:** Can record audio with live transcript (Android), see lecture in library.
 
 | Day | Focus | Hours | Deliverables |
 |-----|-------|-------|-------------|
-| Days 1-2 | Confusion heatmap: aggregation, SVG component, lecture detail tab | 8 | Heatmap in lecture detail, confusion stats |
-| Days 3-4 | Professor dashboard: route, layout, metrics, lists | 8 | professor.js, #/professor route, dashboard UI |
-| Day 5 | Export, accessibility audit, release prep | 6 | JSON/CSV export, CHANGELOG, tag v0.5.0 |
+| Day 0 | Tech debt: Dependabot (8 PRs), LICENSE, getCSSVar tests, dead code | 3h | Clean codebase |
+| Day 0.5 | iOS spike: photo capture during MediaRecorder on real iPhone | 2h | Spike result documented |
+| Days 1-2 | DB migration v1→v2 (5 stores) + recorder.js + MediaRecorder + Web Speech API | 8h | recorder.js, migration, record-view |
+| Days 3-4 | Photo capture + transcript stub + post-recording flow | 8h | Photos timestamped, stub transcription, lecture creation |
+| Day 5 | SP4-lite confusion voting: vote button on segment cards | 4h | Binary vote, IDB persistence, ARIA |
 
-**New tests:** 25+ (target 615+ total)
-**New files:** professor.js, professor.test.js
+**New tests:** ~35 (target 592+). **New files:** recorder.js, recorder.test.js, recorder.css
 
-See `docs/planning/WEEK16_PLAN.md` for full task breakdown.
+### Week 16 (March 16-22): Confusion Heatmap + Privacy + Storage Quota
+
+**Focus:** Confusion visualization, privacy controls, storage management
+**Hours:** 15h (release tasks moved to Week 19)
+**Gate:** Heatmap visible, privacy toasts work, storage quota shown.
+
+| Day | Focus | Hours | Deliverables |
+|-----|-------|-------|-------------|
+| Days 1-2 | Confusion heatmap: aggregation, SVG component, "Confusion" tab | 8h | Heatmap on lecture detail, stats |
+| Days 3-4 | Privacy info-toast + Web Speech toggle + storage quota UI | 5h | Info-toast, toggle, quota indicator |
+| Day 5 | Accessibility audit of all new v0.5.0 components | 2h | ARIA, keyboard, focus, touch targets |
+
+**New tests:** ~20 (target 612+)
 
 ### Week 17 (March 23-29): CONTINGENCY
 
 **Activation:** Only if Weeks 15-16 overflow or hostile review returns BLOCK.
-**Hours:** Up to 16h
-**Alternative use:** Early v1.0.0 spikes (Whisper integration design, Y-decoder architecture)
+**Hours:** Up to 14h
+**Alternative use:** If on schedule, begin Auto-Notes research spike.
 
-See `docs/planning/WEEK17_PLAN.md` for details.
+| ID | Task | Hours | Trigger |
+|----|------|-------|---------|
+| W17.1 | Hostile review fixes | 4h | Review score < 85 |
+| W17.2 | Live capture edge cases (pause/resume, error recovery) | 4h | iOS spike issues |
+| W17.3 | Photo gallery polish | 2h | Photo UX needs work |
+| W17.4 | Additional test coverage | 2h | Coverage below 90% |
+| W17.5 | Spike: evaluate TextRank/TF-IDF libraries for Auto-Notes | 2h | On schedule |
+
+### Week 18 (March 30 - April 5): Auto-Notes Framework
+
+**Focus:** Extractive summarization + LLM API integration + Notes UI
+**Hours:** 12h
+**Gate:** Notes tab shows auto-generated notes, LLM enhancement works with Claude API key.
+
+| Day | Focus | Hours | Deliverables |
+|-----|-------|-------|-------------|
+| Days 1-2 | notes-engine.js: TextRank extractive pipeline + AutoNote model/repo | 5h | Free offline notes from transcripts |
+| Days 3-4 | llm-client.js: Claude API integration + Notes tab UI + export | 7h | LLM notes with user key, editable, exportable |
+
+**New tests:** ~15 (target 627+). **New files:** notes-engine.js, llm-client.js, notes-engine.test.js
+
+### Week 19 (April 6-12): Polish + Release
+
+**Focus:** Integration testing, hostile review, release
+**Hours:** 10-17h (flexible — absorbs overflow from earlier weeks)
+**Gate:** All tests pass, hostile review >= 85, v0.5.0 tagged.
+
+| Day | Focus | Hours | Deliverables |
+|-----|-------|-------|-------------|
+| Days 1-2 | Integration testing, edge cases, cross-browser smoke test | 6h | Full user journey verified |
+| Day 3 | Accessibility + performance audit | 4h | Zero WCAG AA violations, within perf budget |
+| Day 4 | Hostile review + fix critical/major issues | 4h | Review file written, score >= 85 |
+| Day 5 | CHANGELOG, docs, tag v0.5.0, deploy | 3h | Release live on GitHub + GH Pages |
+
+**New tests:** ~8 (target 640+ total)
 
 ---
 
@@ -176,14 +258,14 @@ If behind schedule, cut in this order (bottom first):
 
 | Priority | Feature | Cut Impact |
 |----------|---------|------------|
-| CUT LAST | Live Lecture Mode (P0) | No release without this |
-| CUT LAST | Confusion Voting (P0) | No release without this |
-| CUT 4th | Confusion Heatmap (P1) | Dashboard has no visualization — still releasable |
-| CUT 3rd | Professor Dashboard (P1) | Confusion data exists but no professor view — defer to v0.5.1 |
-| CUT 2nd | Export Reports (P2) | Professors can't export — minor, data visible in UI |
-| CUT 1st | Quiz Aggregate (P2) | Dashboard slightly less useful — acceptable |
+| CUT LAST | Live Audio Capture (P0) | No release without this |
+| CUT 5th | Photo Capture (P0) | Can ship audio-only, photos in v0.5.1 |
+| CUT 4th | Auto-Notes Framework (P1) | Can ship without notes, add in v0.5.1 |
+| CUT 3rd | SP4-lite Heatmap visualization (P1) | Voting data still captured, just no visualization |
+| CUT 2nd | Tech debt cleanup (P2) | Deferred to next cycle |
+| CUT 1st | Dependabot PRs (P2) | No user impact, merge anytime |
 
-**Minimum viable release:** Live Lecture Mode + Confusion Voting + Heatmap on lecture detail. This ships without a dedicated professor dashboard but still delivers value.
+**Minimum viable release:** Live Audio Capture + DB migration + Privacy toast + Storage quota. This ships without photos, notes, and confusion markers but still delivers the core capture workflow.
 
 ---
 
@@ -191,26 +273,33 @@ If behind schedule, cut in this order (bottom first):
 
 | When | Decision | Options |
 |------|----------|---------|
-| End of Week 15 Day 2 | Is MediaRecorder mocking working? | YES: continue. NO: simplify to file-upload-only mode |
-| End of Week 15 | Gate check: Live capture + voting done? | YES: proceed to Week 16. NO: extend live capture into Week 16 Day 1, cut export |
-| End of Week 16 Day 2 | Is heatmap SVG working? | YES: build dashboard. NO: use simple table instead of SVG |
-| End of Week 16 Day 4 | Quality gate: all features working? | YES: release. NO: activate Week 17 |
-| End of Week 16 | Hostile review score | >= 85: release. < 85: fix in Week 17. < 70: re-scope |
+| End of Day 0.5 | iOS spike result: does photo kill audio? | YES: disable photo during recording on iOS. NO: enable everywhere |
+| End of Week 15 Day 2 | Is MediaRecorder mocking working in tests? | YES: continue. NO: simplify to file-upload-only mode |
+| End of Week 15 | Gate: Live capture + voting done? | YES: proceed to W16. NO: extend, cut heatmap |
+| End of Week 16 | Gate: Heatmap + privacy + quota done? | YES: proceed to W18. NO: use W17 contingency |
+| End of Week 18 Day 2 | CORS test: Claude API from browser works? | YES: build LLM integration. NO: extractive-only for v0.5.0, defer LLM to v0.6.0 |
+| End of Week 19 Day 4 | Hostile review score | >= 85: release. < 85: fix and re-review. < 70: re-scope |
 
 ---
 
-## 7. Updated Calendar View
+## 7. Test Strategy
 
-```
-March 2026
-  Week 14 (Mar 2-8):   v0.4.0 RELEASED (557 tests)
-  Week 15 (Mar 9-15):  v0.5.0 - Live Capture + Confusion Voting
-  Week 16 (Mar 16-22): v0.5.0 - Heatmap + Professor Dashboard + Release
-  Week 17 (Mar 23-29): CONTINGENCY (overflow or v1.0.0 prep)
-
-April 2026
-  Weeks 18-21: v1.0.0 - Production (real Whisper, Y-decoder, security audit)
-```
+| Module | Estimated New Tests | Approach |
+|--------|-------------------|----------|
+| DB migration v1-v2 | 6 | Migration with fixture data, verify 5 new stores created |
+| RecordingSession CRUD | 8 | Standard repo CRUD pattern from storage/ |
+| AudioData CRUD | 5 | Blob storage, session linking |
+| PhotoCapture CRUD | 6 | Blob storage, timestamp correlation, session filtering |
+| ConfusionVote CRUD | 6 | Vote toggle, getByLecture, getBySegment |
+| AutoNote CRUD | 5 | put/get/getByLecture |
+| recorder.js (MediaRecorder) | 10 | Mock MediaRecorder, test state machine |
+| recorder.js (Web Speech API) | 5 | Mock SpeechRecognition, auto-restart, toggle |
+| recorder.js (Photo capture) | 5 | Mock file input, canvas resize, timestamp |
+| Confusion voting UI | 6 | DOM rendering, click toggle, ARIA |
+| Confusion heatmap | 7 | SVG structure, color mapping, empty/edge states |
+| notes-engine.js (extractive) | 8 | TextRank pipeline, empty/short/long input |
+| llm-client.js (LLM API) | 6 | Mock API responses, error cases, Claude provider |
+| **Total new** | **~83** | **Target: 640+ total** |
 
 ---
 
@@ -218,55 +307,96 @@ April 2026
 
 ```
 Week 15:
-  W15.0 (tech debt) -----> no dependencies
-  W15.1 (live capture) --> W15.0 (clean codebase)
-  W15.2 (transcript) ----> W15.1 (audio chunks exist)
-  W15.3 (confusion) -----> W15.0 (clean codebase, parallel with W15.1)
+  W15.0 (tech debt) ---------> no dependencies
+  W15.0.5 (iOS spike) -------> no dependencies (parallel with W15.0)
+  W15.1 (DB migration) ------> W15.0 (clean codebase)
+  W15.2 (audio capture) -----> W15.1 (IDB stores exist)
+  W15.3 (photo capture) -----> W15.2 (recorder.js exists) + W15.0.5 (iOS result)
+  W15.4 (transcript stub) ---> W15.2 (audio data exists)
+  W15.5 (confusion voting) --> W15.1 (confusionVotes store exists)
 
 Week 16:
-  W16.1 (heatmap) -------> W15.3 (confusion data exists)
-  W16.2 (dashboard) ------> W16.1 (heatmap component reusable)
-  W16.3 (export+release) -> W16.2 (dashboard has data to export)
+  W16.1 (confusion heatmap) -> W15.5 (confusion data exists)
+  W16.2 (privacy toast) -----> W15.2 (record view exists)
+  W16.3 (storage quota) -----> W15.1 (IDB stores exist)
+  W16.4 (a11y audit) --------> W16.1, W16.2, W16.3
+
+Week 17: CONTINGENCY (skip if on schedule)
+
+Week 18:
+  W18.1 (extractive engine) -> W15.4 (transcript data exists) + W15.1 (autoNotes store)
+  W18.2 (LLM client) --------> W18.1 (notes pipeline exists)
+  W18.3 (Notes tab UI) ------> W18.1 (notes data exists)
+
+Week 19:
+  W19.1 (integration test) --> W18 (all features complete)
+  W19.2 (hostile review) ----> W19.1
+  W19.3 (release) -----------> W19.2 (review passes)
 ```
 
 ---
 
-## 9. Test Strategy
-
-| Module | Estimated New Tests | Approach |
-|--------|-------------------|----------|
-| RecordingRepository | 8 | Standard repo CRUD pattern from storage/ |
-| live-capture.js | 12 | Mock MediaRecorder, test state machine |
-| transcript-service.js | 4 | Test stub returns correct shape |
-| ConfusionRepository | 6 | Standard repo CRUD pattern |
-| confusion.js (vote UI) | 6 | DOM rendering + click handler tests |
-| Heatmap component | 8 | SVG structure assertions |
-| professor.js | 10 | Dashboard rendering + data flow |
-| Export | 4 | File content assertions |
-| **Total new** | **~58** | Target: 615+ total |
-
----
-
-## 10. Tech Debt Resolution
+## 9. Tech Debt Resolution
 
 | Item | When | Action |
 |------|------|--------|
-| `getCSSVar` zero test coverage | Week 15 Day 0 | Add 3 tests in analytics.test.js |
+| `getCSSVar` zero test coverage | Week 15 Day 0 | Add 3+ tests in analytics.test.js |
 | `renderConfetti` exported with zero tests | Week 15 Day 0 | Add tests or remove export |
-| Legacy `renderLibraryView` fallback | Week 15 Day 0 | Remove dead code path |
+| Legacy `renderLibraryView` fallback | Week 15 Day 0 | Remove dead code path in flashcards.js |
 | Missing LICENSE file | Week 15 Day 0 | Add MIT LICENSE to project root |
-| Dependabot alerts (3 high, 1 low) | Week 15 Day 0 | Triage and merge PRs |
+| Dependabot alerts (8 open PRs) | Week 15 Day 0 | Triage and merge: pip (av, fsspec, huggingface-hub, regex, transformers), npm (minimatch, multi), GH Actions (upload-artifact) |
+
+---
+
+## 10. Calendar View
+
+```
+March 2026
+  Week 14 (Mar 2-8):   v0.4.0 RELEASED (557 tests)
+  Week 15 (Mar 9-15):  v0.5.0 — Tech Debt + iOS Spike + DB Migration + Live Audio Capture
+  Week 16 (Mar 16-22): v0.5.0 — Photo Capture + Confusion Voting + Transcript Stub
+  Week 17 (Mar 23-29): v0.5.0 — Confusion Heatmap + Privacy + Storage Quota UI
+  Week 18 (Mar 30-Apr 5): v0.5.0 — Auto-Notes Framework (extractive + LLM API)
+  Week 19 (Apr 6-12):  v0.5.0 — Polish + Hostile Review + Release (CONTINGENCY buffer)
+
+April-May 2026
+  Weeks 20-22: v0.6.0 — Tesseract.js OCR, Professor Dashboard, broader audience rebranding
+  Weeks 23+:   v1.0.0 — Real Whisper backend, Y-decoder, multi-user
+```
+
+---
+
+## 11. What is CUT from v0.5.0 (Deferred)
+
+| Feature | Deferred To | Reason |
+|---------|-------------|--------|
+| Professor Dashboard | v0.6.0 | Needs multi-user backend; single-user version is just analytics tab with extra steps |
+| Tesseract.js OCR | v0.5.1+ | Ship photos first, validate demand before adding 1MB+ dependency |
+| Aggregate confusion analytics | v0.6.0 | Needs multi-user backend for meaningful aggregation |
+| Real Whisper transcription | v1.0.0 | Requires server-side GPU; stub interface in v0.5.0 preserves upgrade path |
+| Broader audience rebranding | v0.6.0 | Naming and marketing only, not engineering |
+
+---
+
+## 12. Future Roadmap (Beyond v0.5.0)
+
+| Version | Codename | Key Features | Estimated Duration |
+|---------|----------|-------------|-------------------|
+| v0.6.0 | "Intelligence" | Tesseract.js OCR for photos, Professor Dashboard (multi-user), broader audience rebranding | 3 weeks |
+| v1.0.0 | "Production" | Real Whisper backend, Y-decoder (Phi-3 mini), multi-user auth, security audit | 4 weeks |
 
 ---
 
 ## PLANNER: Plan Complete
 
 Artifacts:
-- docs/planning/ROADMAP_V050.md (this file)
-- docs/planning/WEEK15_PLAN.md
-- docs/planning/WEEK16_PLAN.md
-- docs/planning/WEEK17_PLAN.md
+- `docs/planning/ROADMAP_V050.md` (this file)
+- `docs/planning/WEEK15_PLAN.md`
+- `docs/planning/WEEK16_PLAN.md`
+- `docs/planning/WEEK17_PLAN.md`
+- `docs/planning/WEEK18_PLAN.md`
+- `docs/planning/WEEK19_PLAN.md`
 
-Status: PENDING_HOSTILE_REVIEW
+Status: APPROVED (expanded scope — Auto-Notes added, 4-5 week timeline)
 
-Next: Review this plan, approve or request changes, then begin Week 15 Day 0.
+Next: Begin Week 15 Day 0 — Tech Debt + Dependabot cleanup.
