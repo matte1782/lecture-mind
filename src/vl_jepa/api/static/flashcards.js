@@ -241,7 +241,7 @@ function mountView(view, params = {}) {
       if (sections.playground) {
         showElement(sections.playground);
         if (_libraryRenderer) _libraryRenderer();
-        else renderLibraryView();  // fallback if library.js not loaded
+        else renderLibraryView(); // fallback for tests without library.js
       }
       break;
 

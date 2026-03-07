@@ -4,6 +4,7 @@
  * auto-generation, manual CRUD, and integration scenarios.
  */
 
+import { jest } from '@jest/globals';
 import { closeDatabase, deleteDatabase } from './storage/db.js';
 import {
   FlashcardRepository,
@@ -33,6 +34,7 @@ import {
   startStudyView,
   renderSessionComplete,
   createProgressRing,
+  renderConfetti,
   autoGenerateFlashcards,
   generateQuestion,
   openCreateCardModal,
@@ -1292,5 +1294,42 @@ describe('Integration: Listener Cleanup', () => {
 
     cleanupListeners();
     // No error thrown = success
+  });
+});
+
+// ============================================================================
+// renderConfetti — Day 0 Tech Debt
+// ============================================================================
+
+describe('renderConfetti', () => {
+  afterEach(() => {
+    // Clean up any confetti containers left in the DOM
+    document.querySelectorAll('[aria-hidden="true"]').forEach(el => {
+      if (el.style.pointerEvents === 'none') el.remove();
+    });
+  });
+
+  test('creates confetti container with particles', () => {
+    renderConfetti();
+    const containers = document.querySelectorAll('[aria-hidden="true"]');
+    const confettiContainer = Array.from(containers).find(
+      el => el.style.pointerEvents === 'none'
+    );
+    expect(confettiContainer).toBeTruthy();
+    expect(confettiContainer.children.length).toBe(30);
+  });
+
+  test('auto-removes confetti container after timeout', () => {
+    jest.useFakeTimers();
+    renderConfetti();
+    const containers = document.querySelectorAll('[aria-hidden="true"]');
+    const confettiContainer = Array.from(containers).find(
+      el => el.style.pointerEvents === 'none'
+    );
+    expect(confettiContainer.parentNode).toBe(document.body);
+
+    jest.advanceTimersByTime(4000);
+    expect(confettiContainer.parentNode).toBeNull();
+    jest.useRealTimers();
   });
 });

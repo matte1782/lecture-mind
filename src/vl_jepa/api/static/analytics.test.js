@@ -44,7 +44,8 @@ import {
   renderWeeklyStudyChart,
   renderGlobalMasteryBreakdown,
   renderTopLecturesTable,
-  renderDashboardEmptyState
+  renderDashboardEmptyState,
+  getCSSVar
 } from './analytics.js';
 
 import {
@@ -1319,4 +1320,37 @@ describe('Analytics — Day 4: Study Dashboard', () => {
     expect(result.view).toBe(VIEWS.DASHBOARD);
   });
 
+});
+
+// ============================================================================
+// getCSSVar — Day 0 Tech Debt
+// ============================================================================
+
+describe('getCSSVar', () => {
+  it('returns actual value when CSS variable is set', () => {
+    document.documentElement.style.setProperty('--test-var', '#123456');
+    const result = getCSSVar('--test-var', 'fallback');
+    expect(result).toBe('#123456');
+    document.documentElement.style.removeProperty('--test-var');
+  });
+
+  it('returns fallback when jsdom has no computed styles for the property', () => {
+    const result = getCSSVar('--nonexistent-var', '#ff0000');
+    expect(result).toBe('#ff0000');
+  });
+
+  it('returns fallback when value is empty string', () => {
+    // jsdom getComputedStyle returns empty string for unset CSS vars
+    const result = getCSSVar('--color-primary-500', 'default-blue');
+    expect(result).toBe('default-blue');
+  });
+
+  it('returns fallback when getComputedStyle throws', () => {
+    const origDocEl = document.documentElement;
+    // Temporarily break document.documentElement
+    Object.defineProperty(document, 'documentElement', { value: null, configurable: true });
+    const result = getCSSVar('--anything', 'safe-fallback');
+    expect(result).toBe('safe-fallback');
+    Object.defineProperty(document, 'documentElement', { value: origDocEl, configurable: true });
+  });
 });
