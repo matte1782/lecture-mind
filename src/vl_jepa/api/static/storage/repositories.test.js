@@ -1008,6 +1008,49 @@ describe('Cascade Delete', () => {
     expect((await FlashcardRepository.getByLecture(lecture1.id)).length).toBe(0);
     expect((await FlashcardRepository.getByLecture(lecture2.id)).length).toBe(0);
   });
+
+  test('deleting a lecture cascades to v0.5.0 entities (sessions, audio, photos, notes)', async () => {
+    // Create a lecture
+    const lecture = await LectureRepository.create({ title: 'Cascade v050' });
+
+    // Create a recording session linked to the lecture
+    const session = await RecordingSessionRepository.create(
+      createRecordingSession({ lectureId: lecture.id })
+    );
+
+    // Create audio data with key-sharing (id = session.id)
+    await AudioDataRepository.create(
+      createAudioData({ id: session.id, blob: null, size: 0 })
+    );
+
+    // Create a photo capture linked to the session
+    const photo = await PhotoCaptureRepository.create(
+      createPhotoCapture({ recordingSessionId: session.id })
+    );
+
+    // Create an auto note linked to the lecture
+    const note = await AutoNoteRepository.create(
+      createAutoNote({ lectureId: lecture.id })
+    );
+
+    // Verify all entities exist before cascade
+    expect(await RecordingSessionRepository.getById(session.id)).toBeDefined();
+    expect(await AudioDataRepository.getById(session.id)).toBeDefined();
+    expect(await PhotoCaptureRepository.getById(photo.id)).toBeDefined();
+    expect(await AutoNoteRepository.getById(note.id)).toBeDefined();
+
+    // Delete lecture with cascade
+    await LectureRepository.deleteWithCascade(lecture.id);
+
+    // Verify lecture is deleted
+    expect(await LectureRepository.getById(lecture.id)).toBeUndefined();
+
+    // Verify all v0.5.0 entities are deleted
+    expect(await RecordingSessionRepository.getById(session.id)).toBeUndefined();
+    expect(await AudioDataRepository.getById(session.id)).toBeUndefined();
+    expect(await PhotoCaptureRepository.getById(photo.id)).toBeUndefined();
+    expect(await AutoNoteRepository.getById(note.id)).toBeUndefined();
+  });
 });
 
 describe('RecordingSessionRepository', () => {

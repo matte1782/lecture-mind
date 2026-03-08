@@ -1,0 +1,156 @@
+/* recorder.css — v0.5.0 Live Capture styles */
+/* Mobile-first layout for recording view */
+
+.record-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md, 16px);
+  padding: var(--space-md, 16px);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.record-title-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs, 4px);
+}
+
+.record-title-label {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.record-title-input {
+  width: 100%;
+  padding: var(--space-sm, 8px) var(--space-md, 16px);
+  border: 1px solid var(--border, #d1d5db);
+  border-radius: var(--radius-md, 8px);
+  font-size: 1rem;
+  background: var(--surface, #fff);
+  color: var(--text, #111);
+}
+
+.record-title-input:focus {
+  outline: 2px solid var(--primary, #6366f1);
+  outline-offset: 1px;
+}
+
+.record-timer {
+  font-size: 2.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text, #111);
+  letter-spacing: 0.05em;
+  text-align: center;
+  padding: var(--space-lg, 24px) 0;
+}
+
+.record-status {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6b7280);
+  text-align: center;
+}
+
+.record-transcript {
+  width: 100%;
+  min-height: 80px;
+  padding: var(--space-md, 16px);
+  border: 1px solid var(--border, #d1d5db);
+  border-radius: var(--radius-md, 8px);
+  background: var(--surface-raised, #f9fafb);
+  color: var(--text, #111);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.record-photo-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm, 8px);
+  width: 100%;
+}
+
+.record-btn-row {
+  display: flex;
+  gap: var(--space-md, 16px);
+  justify-content: center;
+  padding: var(--space-lg, 24px) 0;
+}
+
+.record-btn,
+.stop-btn,
+.photo-btn {
+  min-width: 56px;
+  min-height: 56px;
+  padding: var(--space-sm, 8px) var(--space-lg, 24px);
+  border: none;
+  border-radius: var(--radius-lg, 12px);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.record-btn {
+  background: var(--danger, #ef4444);
+  color: #fff;
+}
+
+.record-btn:hover {
+  background: var(--danger-hover, #dc2626);
+}
+
+.record-btn:active {
+  transform: scale(0.97);
+}
+
+.stop-btn {
+  background: var(--text-secondary, #6b7280);
+  color: #fff;
+}
+
+.stop-btn:hover {
+  background: var(--text, #111);
+}
+
+.photo-btn {
+  background: var(--primary, #6366f1);
+  color: #fff;
+}
+
+.photo-btn:hover:not(:disabled) {
+  background: var(--primary-hover, #4f46e5);
+}
+
+.photo-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Focus visible for keyboard nav */
+.record-btn:focus-visible,
+.stop-btn:focus-visible,
+.photo-btn:focus-visible {
+  outline: 2px solid var(--primary, #6366f1);
+  outline-offset: 2px;
+}
+
+/* Desktop layout */
+@media (min-width: 768px) {
+  .record-container {
+    padding: var(--space-xl, 32px);
+  }
+
+  .record-timer {
+    font-size: 3.5rem;
+  }
+
+  .record-transcript {
+    min-height: 120px;
+  }
+}
