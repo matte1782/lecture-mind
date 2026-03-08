@@ -41,7 +41,8 @@ import {
   registerListener,
   cleanupListeners,
   showToast,
-  navigateTo
+  navigateTo,
+  setRecordRenderer
 } from './flashcards.js';
 
 // ============================================================================
@@ -160,6 +161,30 @@ function setupTestDOM() {
   studyView.appendChild(studyContainer);
   app.appendChild(studyView);
 
+  // Dashboard view
+  const dashboardView = document.createElement('section');
+  dashboardView.id = 'dashboard-view';
+  dashboardView.className = 'app-section hidden';
+  dashboardView.setAttribute('inert', '');
+  dashboardView.setAttribute('aria-label', 'Study Dashboard');
+
+  const dashboardContainer = document.createElement('div');
+  dashboardContainer.className = 'section-container';
+  dashboardView.appendChild(dashboardContainer);
+  app.appendChild(dashboardView);
+
+  // Record view
+  const recordView = document.createElement('section');
+  recordView.id = 'record-view';
+  recordView.className = 'app-section hidden';
+  recordView.setAttribute('inert', '');
+  recordView.setAttribute('aria-label', 'Record Lecture');
+
+  const recordContainer = document.createElement('div');
+  recordContainer.className = 'record-container';
+  recordView.appendChild(recordContainer);
+  app.appendChild(recordView);
+
   // Footer
   const footer = document.createElement('footer');
   footer.className = 'footer-landing';
@@ -228,6 +253,10 @@ describe('Router: parseHash', () => {
 
   test('unknown hash returns landing view', () => {
     expect(parseHash('#/unknown-route')).toEqual({ view: VIEWS.LANDING, params: {} });
+  });
+
+  test('hash "#/record" returns record view', () => {
+    expect(parseHash('#/record')).toEqual({ view: VIEWS.RECORD, params: {} });
   });
 });
 
@@ -1331,5 +1360,41 @@ describe('renderConfetti', () => {
     jest.advanceTimersByTime(4000);
     expect(confettiContainer.parentNode).toBeNull();
     jest.useRealTimers();
+  });
+});
+
+// ============================================================================
+// v0.5.0: RECORD ROUTE
+// ============================================================================
+
+describe('Router: VIEWS.RECORD constant', () => {
+  test('VIEWS.RECORD equals "record"', () => {
+    expect(VIEWS.RECORD).toBe('record');
+  });
+});
+
+describe('Router: setRecordRenderer', () => {
+  test('setRecordRenderer is a function', () => {
+    expect(typeof setRecordRenderer).toBe('function');
+  });
+});
+
+describe('Router: record view mounting', () => {
+  test('#/record shows record-view and calls registered renderer', () => {
+    const mockRenderer = jest.fn();
+    setRecordRenderer(mockRenderer);
+
+    window.location.hash = '#/record';
+    handleRouteChange();
+
+    expect(state.currentView).toBe(VIEWS.RECORD);
+    const recordSection = document.getElementById('record-view');
+    expect(recordSection.classList.contains('hidden')).toBe(false);
+
+    const container = recordSection.querySelector('.record-container');
+    expect(mockRenderer).toHaveBeenCalledWith(container);
+
+    // Reset renderer to avoid leaking into other tests
+    setRecordRenderer(null);
   });
 });

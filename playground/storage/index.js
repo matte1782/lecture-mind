@@ -42,6 +42,8 @@ export {
   EVENT_TYPES,
   SYNC_OPERATION,
   SYNC_STATUS,
+  RECORDING_STATUS,
+  AUTO_NOTE_SOURCE,
   createSetting,
   createCourse,
   createLecture,
@@ -52,6 +54,10 @@ export {
   createBookmark,
   createConfusionVote,
   createSyncQueueItem,
+  createRecordingSession,
+  createAudioData,
+  createPhotoCapture,
+  createAutoNote,
   validateSetting,
   validateCourse,
   validateLecture,
@@ -61,7 +67,11 @@ export {
   validateFlashcard,
   validateBookmark,
   validateConfusionVote,
-  validateSyncQueueItem
+  validateSyncQueueItem,
+  validateRecordingSession,
+  validateAudioData,
+  validatePhotoCapture,
+  validateAutoNote
 } from './models.js';
 
 // ============================================================================
@@ -80,7 +90,11 @@ export {
   FlashcardRepository,
   BookmarkRepository,
   ConfusionVoteRepository,
-  SyncQueueRepository
+  SyncQueueRepository,
+  RecordingSessionRepository,
+  AudioDataRepository,
+  PhotoCaptureRepository,
+  AutoNoteRepository
 } from './repositories.js';
 
 // ============================================================================

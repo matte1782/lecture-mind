@@ -14,7 +14,7 @@ import { get, put, batch } from './db.js';
 // ============================================================================
 
 /** Current schema version (app-level, not IndexedDB version) */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 /** Key used to store schema version in settings store */
 const VERSION_KEY = '__schemaVersion';
@@ -135,8 +135,8 @@ export async function runStartupMigration() {
     // Run localStorage import (idempotent)
     localStorageKeys = await migrateFromLocalStorage();
 
-    // Future: add version-specific migrations here
-    // if (fromVersion < 2) { await migrateV1toV2(); }
+    // v1 → v2: New stores (recordingSessions, audioData, photoCaptures, autoNotes)
+    // are created by IndexedDB onupgradeneeded in db.js — no app-level data migration needed.
 
     // Update version
     await setVersion(SCHEMA_VERSION);

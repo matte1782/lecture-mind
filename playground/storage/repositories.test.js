@@ -20,9 +20,15 @@ import {
   createBookmark,
   createConfusionVote,
   createSyncQueueItem,
+  createRecordingSession,
+  createAudioData,
+  createPhotoCapture,
+  createAutoNote,
   LECTURE_STATUS,
   FLASHCARD_STATUS,
-  SYNC_OPERATION
+  SYNC_OPERATION,
+  RECORDING_STATUS,
+  AUTO_NOTE_SOURCE
 } from './models.js';
 
 import {
@@ -39,6 +45,10 @@ import {
   BookmarkRepository,
   ConfusionVoteRepository,
   SyncQueueRepository,
+  RecordingSessionRepository,
+  AudioDataRepository,
+  PhotoCaptureRepository,
+  AutoNoteRepository,
   // SM-2 algorithm
   calculateSM2
 } from './repositories.js';
@@ -997,6 +1007,267 @@ describe('Cascade Delete', () => {
     expect(await LectureRepository.getById(lecture2.id)).toBeUndefined();
     expect((await FlashcardRepository.getByLecture(lecture1.id)).length).toBe(0);
     expect((await FlashcardRepository.getByLecture(lecture2.id)).length).toBe(0);
+  });
+
+  test('deleting a lecture cascades to v0.5.0 entities (sessions, audio, photos, notes)', async () => {
+    // Create a lecture
+    const lecture = await LectureRepository.create({ title: 'Cascade v050' });
+
+    // Create a recording session linked to the lecture
+    const session = await RecordingSessionRepository.create(
+      createRecordingSession({ lectureId: lecture.id })
+    );
+
+    // Create audio data with key-sharing (id = session.id)
+    await AudioDataRepository.create(
+      createAudioData({ id: session.id, blob: null, size: 0 })
+    );
+
+    // Create a photo capture linked to the session
+    const photo = await PhotoCaptureRepository.create(
+      createPhotoCapture({ recordingSessionId: session.id })
+    );
+
+    // Create an auto note linked to the lecture
+    const note = await AutoNoteRepository.create(
+      createAutoNote({ lectureId: lecture.id })
+    );
+
+    // Verify all entities exist before cascade
+    expect(await RecordingSessionRepository.getById(session.id)).toBeDefined();
+    expect(await AudioDataRepository.getById(session.id)).toBeDefined();
+    expect(await PhotoCaptureRepository.getById(photo.id)).toBeDefined();
+    expect(await AutoNoteRepository.getById(note.id)).toBeDefined();
+
+    // Delete lecture with cascade
+    await LectureRepository.deleteWithCascade(lecture.id);
+
+    // Verify lecture is deleted
+    expect(await LectureRepository.getById(lecture.id)).toBeUndefined();
+
+    // Verify all v0.5.0 entities are deleted
+    expect(await RecordingSessionRepository.getById(session.id)).toBeUndefined();
+    expect(await AudioDataRepository.getById(session.id)).toBeUndefined();
+    expect(await PhotoCaptureRepository.getById(photo.id)).toBeUndefined();
+    expect(await AutoNoteRepository.getById(note.id)).toBeUndefined();
+  });
+});
+
+describe('RecordingSessionRepository', () => {
+  let lectureId;
+
+  beforeEach(async () => {
+    await openDatabase();
+    lectureId = generateId();
+  });
+
+  afterEach(async () => {
+    closeDatabase();
+    await deleteDatabase();
+  });
+
+  test('create stores a recording session and retrieves it', async () => {
+    const session = await RecordingSessionRepository.create({
+      lectureId,
+      mimeType: 'audio/webm;codecs=opus'
+    });
+    expect(session.id).toBeDefined();
+    expect(session.status).toBe(RECORDING_STATUS.RECORDING);
+
+    const retrieved = await RecordingSessionRepository.getById(session.id);
+    expect(retrieved.lectureId).toBe(lectureId);
+    expect(retrieved.mimeType).toBe('audio/webm;codecs=opus');
+  });
+
+  test('getByStatus returns sessions with matching status', async () => {
+    await RecordingSessionRepository.create({ lectureId, status: RECORDING_STATUS.RECORDING });
+    await RecordingSessionRepository.create({ lectureId, status: RECORDING_STATUS.RECORDING });
+    await RecordingSessionRepository.create({ lectureId, status: RECORDING_STATUS.STOPPED });
+
+    const recording = await RecordingSessionRepository.getByStatus(RECORDING_STATUS.RECORDING);
+    expect(recording).toHaveLength(2);
+
+    const stopped = await RecordingSessionRepository.getByStatus(RECORDING_STATUS.STOPPED);
+    expect(stopped).toHaveLength(1);
+  });
+
+  test('getByLecture returns sessions for a lecture', async () => {
+    const otherLectureId = generateId();
+    await RecordingSessionRepository.create({ lectureId });
+    await RecordingSessionRepository.create({ lectureId });
+    await RecordingSessionRepository.create({ lectureId: otherLectureId });
+
+    const sessions = await RecordingSessionRepository.getByLecture(lectureId);
+    expect(sessions).toHaveLength(2);
+  });
+
+  test('update modifies session fields and sets updatedAt', async () => {
+    const session = await RecordingSessionRepository.create({ lectureId });
+    const updated = await RecordingSessionRepository.update(session.id, {
+      status: RECORDING_STATUS.STOPPED,
+      duration: 60
+    });
+    expect(updated.status).toBe(RECORDING_STATUS.STOPPED);
+    expect(updated.duration).toBe(60);
+    expect(updated.updatedAt).toBeGreaterThanOrEqual(session.updatedAt);
+  });
+
+  test('delete removes a session', async () => {
+    const session = await RecordingSessionRepository.create({ lectureId });
+    await RecordingSessionRepository.delete(session.id);
+    const result = await RecordingSessionRepository.getById(session.id);
+    expect(result).toBeUndefined();
+  });
+});
+
+describe('AudioDataRepository', () => {
+  beforeEach(async () => {
+    await openDatabase();
+  });
+
+  afterEach(async () => {
+    closeDatabase();
+    await deleteDatabase();
+  });
+
+  test('create stores audio data with key-shared id and retrieves it', async () => {
+    const sessionId = generateId();
+    const audio = await AudioDataRepository.create({
+      id: sessionId,
+      size: 1024
+    });
+    expect(audio.id).toBe(sessionId);
+
+    const retrieved = await AudioDataRepository.getById(sessionId);
+    expect(retrieved.size).toBe(1024);
+  });
+
+  test('getById returns undefined for unknown id', async () => {
+    const result = await AudioDataRepository.getById('nonexistent');
+    expect(result).toBeUndefined();
+  });
+
+  test('delete removes audio data', async () => {
+    const sessionId = generateId();
+    await AudioDataRepository.create({ id: sessionId });
+    await AudioDataRepository.delete(sessionId);
+    const result = await AudioDataRepository.getById(sessionId);
+    expect(result).toBeUndefined();
+  });
+});
+
+describe('PhotoCaptureRepository', () => {
+  let recordingSessionId;
+
+  beforeEach(async () => {
+    await openDatabase();
+    recordingSessionId = generateId();
+  });
+
+  afterEach(async () => {
+    closeDatabase();
+    await deleteDatabase();
+  });
+
+  test('create stores photo and retrieves it', async () => {
+    const photo = await PhotoCaptureRepository.create({
+      recordingSessionId,
+      timestampMs: 5000,
+      size: 512000,
+      caption: 'Slide 3'
+    });
+    expect(photo.id).toBeDefined();
+    expect(photo.recordingSessionId).toBe(recordingSessionId);
+
+    const retrieved = await PhotoCaptureRepository.getById(photo.id);
+    expect(retrieved.timestampMs).toBe(5000);
+    expect(retrieved.caption).toBe('Slide 3');
+  });
+
+  test('getBySession returns photos for a session', async () => {
+    const otherSessionId = generateId();
+    await PhotoCaptureRepository.create({ recordingSessionId, timestampMs: 1000 });
+    await PhotoCaptureRepository.create({ recordingSessionId, timestampMs: 2000 });
+    await PhotoCaptureRepository.create({ recordingSessionId: otherSessionId, timestampMs: 3000 });
+
+    const photos = await PhotoCaptureRepository.getBySession(recordingSessionId);
+    expect(photos).toHaveLength(2);
+  });
+
+  test('getBySession returns empty array for unknown session', async () => {
+    const photos = await PhotoCaptureRepository.getBySession('non-existent-session');
+    expect(photos).toHaveLength(0);
+  });
+
+  test('delete removes a photo', async () => {
+    const photo = await PhotoCaptureRepository.create({ recordingSessionId });
+    await PhotoCaptureRepository.delete(photo.id);
+    const result = await PhotoCaptureRepository.getById(photo.id);
+    expect(result).toBeUndefined();
+  });
+});
+
+describe('AutoNoteRepository', () => {
+  let lectureId;
+
+  beforeEach(async () => {
+    await openDatabase();
+    lectureId = generateId();
+  });
+
+  afterEach(async () => {
+    closeDatabase();
+    await deleteDatabase();
+  });
+
+  test('create stores auto-note and retrieves it', async () => {
+    const note = await AutoNoteRepository.create({
+      lectureId,
+      content: 'Key points from lecture...',
+      source: AUTO_NOTE_SOURCE.EXTRACTIVE
+    });
+    expect(note.id).toBeDefined();
+    expect(note.lectureId).toBe(lectureId);
+
+    const retrieved = await AutoNoteRepository.getById(note.id);
+    expect(retrieved.content).toBe('Key points from lecture...');
+    expect(retrieved.source).toBe('extractive');
+  });
+
+  test('getByLecture returns note for a lecture', async () => {
+    await AutoNoteRepository.create({
+      lectureId,
+      content: 'Summary text'
+    });
+
+    const note = await AutoNoteRepository.getByLecture(lectureId);
+    expect(note).toBeDefined();
+    expect(note.content).toBe('Summary text');
+  });
+
+  test('update overwrites existing note', async () => {
+    const note = await AutoNoteRepository.create({
+      lectureId,
+      content: 'Original content',
+      source: AUTO_NOTE_SOURCE.EXTRACTIVE
+    });
+
+    const updated = await AutoNoteRepository.update({
+      ...note,
+      content: 'Updated content',
+      editedAt: Date.now()
+    });
+
+    const retrieved = await AutoNoteRepository.getById(note.id);
+    expect(retrieved.content).toBe('Updated content');
+    expect(retrieved.editedAt).toBeDefined();
+  });
+
+  test('delete removes a note', async () => {
+    const note = await AutoNoteRepository.create({ lectureId, content: 'To delete' });
+    await AutoNoteRepository.delete(note.id);
+    const result = await AutoNoteRepository.getById(note.id);
+    expect(result).toBeUndefined();
   });
 });
 

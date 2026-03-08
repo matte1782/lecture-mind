@@ -26,6 +26,7 @@
     <link rel="stylesheet" href="playground-components.css">
     <link rel="stylesheet" href="analytics.css">
     <link rel="stylesheet" href="app-components.css">
+    <link rel="stylesheet" href="recorder.css">
 
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
@@ -67,6 +68,7 @@
                     <a href="#how-it-works" class="nav-link">How it Works</a>
                     <a href="#tech-stack" class="nav-link">Tech Stack</a>
                     <a href="#/playground" class="nav-link" id="nav-playground">Playground</a>
+                    <a href="#/record" class="nav-link" id="nav-record">Record</a>
                 </nav>
                 <div class="header-actions">
                     <a href="#app-section" class="btn" data-variant="primary" data-size="sm">Try Now</a>
@@ -972,6 +974,11 @@
             <div class="section-container"></div>
         </section>
 
+        <!-- Record View -->
+        <section id="record-view" class="app-section hidden" aria-label="Record Lecture" inert>
+            <div class="record-container"></div>
+        </section>
+
         <!-- Footer -->
         <footer class="footer-landing">
             <div class="footer-container">
@@ -1028,6 +1035,7 @@
     <script type="module" src="flashcards.js"></script>
     <script type="module" src="library.js"></script>
     <script type="module" src="analytics.js"></script>
+    <script type="module" src="recorder.js"></script>
     <script>
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js').catch(function() {});

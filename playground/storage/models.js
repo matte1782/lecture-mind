@@ -69,6 +69,27 @@ export const SYNC_STATUS = {
   COMPLETED: 'completed'
 };
 
+/**
+ * Valid recording statuses
+ * @enum {string}
+ */
+export const RECORDING_STATUS = {
+  RECORDING: 'recording',
+  STOPPED: 'stopped',
+  TRANSCRIBING: 'transcribing',
+  COMPLETED: 'completed',
+  FAILED: 'failed'
+};
+
+/**
+ * Valid auto note sources
+ * @enum {string}
+ */
+export const AUTO_NOTE_SOURCE = {
+  EXTRACTIVE: 'extractive',
+  LLM: 'llm'
+};
+
 // ============================================================================
 // Utility Functions
 // ============================================================================
@@ -510,6 +531,110 @@ export function createSyncQueueItem({
   };
 }
 
+/**
+ * Create a recording session record
+ * @param {Object} data
+ * @param {string} [data.id] - Custom ID
+ * @param {string} [data.lectureId] - Parent lecture ID
+ * @param {string} [data.status='recording'] - Recording status
+ * @param {number} [data.startedAt] - Start timestamp (default: Date.now())
+ * @param {number|null} [data.stoppedAt=null] - Stop timestamp
+ * @param {number} [data.duration=0] - Duration in ms
+ * @param {string} [data.codec=''] - Audio codec
+ * @returns {Object}
+ */
+export function createRecordingSession({ id, lectureId = null, title = '', status = RECORDING_STATUS.RECORDING, duration = 0, sampleRate = 44100, mimeType = '', transcript = null, error = null } = {}) {
+  const timestamp = now();
+  return {
+    id: id || generateUUID(),
+    lectureId,
+    title: title || `Recording ${new Date(timestamp).toLocaleString()}`,
+    status,
+    duration,
+    sampleRate,
+    mimeType,
+    transcript,
+    error,
+    createdAt: timestamp,
+    updatedAt: timestamp
+  };
+}
+
+/**
+ * Create an audio data record
+ * @param {Object} data
+ * @param {string} [data.id] - Custom ID
+ * @param {string} data.recordingSessionId - Parent recording session ID (required)
+ * @param {Blob|null} [data.blob=null] - Audio blob
+ * @param {number} [data.size=0] - Blob size in bytes
+ * @returns {Object}
+ * @throws {Error} If recordingSessionId is missing
+ */
+export function createAudioData({ id, blob = null, size = 0 }) {
+  if (!id) {
+    throw new Error('id is required (must match RecordingSession.id)');
+  }
+  return {
+    id,
+    blob,
+    size
+  };
+}
+
+/**
+ * Create a photo capture record
+ * @param {Object} data
+ * @param {string} [data.id] - Custom ID
+ * @param {string} data.recordingSessionId - Parent recording session ID (required)
+ * @param {number} [data.timestampMs=0] - Capture timestamp relative to recording start
+ * @param {Blob|null} [data.blob=null] - Image blob
+ * @param {number} [data.size=0] - Blob size in bytes
+ * @param {string} [data.caption=''] - Optional caption
+ * @returns {Object}
+ * @throws {Error} If recordingSessionId is missing
+ */
+export function createPhotoCapture({ id, recordingSessionId, timestampMs = 0, blob = null, size = 0, caption = '' }) {
+  if (!recordingSessionId) {
+    throw new Error('recordingSessionId is required');
+  }
+  return {
+    id: id || generateUUID(),
+    recordingSessionId,
+    timestampMs,
+    blob,
+    size,
+    caption,
+    createdAt: now()
+  };
+}
+
+/**
+ * Create an auto note record
+ * @param {Object} data
+ * @param {string} [data.id] - Custom ID
+ * @param {string} data.lectureId - Parent lecture ID (required)
+ * @param {string} [data.content=''] - Note content
+ * @param {string} [data.source='extractive'] - Note source
+ * @param {number} [data.generatedAt] - Generation timestamp (default: Date.now())
+ * @param {number|null} [data.editedAt=null] - Last edit timestamp
+ * @returns {Object}
+ * @throws {Error} If lectureId is missing
+ */
+export function createAutoNote({ id, lectureId, content = '', source = AUTO_NOTE_SOURCE.EXTRACTIVE, model = null, generatedAt, editedAt = null }) {
+  if (!lectureId) {
+    throw new Error('lectureId is required');
+  }
+  return {
+    id: id || generateUUID(),
+    lectureId,
+    content,
+    source,
+    model,
+    generatedAt: generatedAt !== undefined ? generatedAt : now(),
+    editedAt
+  };
+}
+
 // ============================================================================
 // Validation Functions
 // ============================================================================
@@ -698,6 +823,58 @@ export function validateSyncQueueItem(item) {
   return { valid: errors.length === 0, errors };
 }
 
+/**
+ * Validate a recording session
+ * @param {Object} session
+ * @returns {{ valid: boolean, errors: string[] }}
+ */
+export function validateRecordingSession(session) {
+  const errors = [];
+  if (!session.id) errors.push('id is required');
+  if (session.status && !Object.values(RECORDING_STATUS).includes(session.status)) {
+    errors.push(`status must be one of: ${Object.values(RECORDING_STATUS).join(', ')}`);
+  }
+  return { valid: errors.length === 0, errors };
+}
+
+/**
+ * Validate an audio data record
+ * @param {Object} audio
+ * @returns {{ valid: boolean, errors: string[] }}
+ */
+export function validateAudioData(audio) {
+  const errors = [];
+  if (!audio.id) errors.push('id is required (must match RecordingSession.id)');
+  return { valid: errors.length === 0, errors };
+}
+
+/**
+ * Validate a photo capture record
+ * @param {Object} photo
+ * @returns {{ valid: boolean, errors: string[] }}
+ */
+export function validatePhotoCapture(photo) {
+  const errors = [];
+  if (!photo.id) errors.push('id is required');
+  if (!photo.recordingSessionId) errors.push('recordingSessionId is required');
+  return { valid: errors.length === 0, errors };
+}
+
+/**
+ * Validate an auto note record
+ * @param {Object} note
+ * @returns {{ valid: boolean, errors: string[] }}
+ */
+export function validateAutoNote(note) {
+  const errors = [];
+  if (!note.id) errors.push('id is required');
+  if (!note.lectureId) errors.push('lectureId is required');
+  if (note.source && !Object.values(AUTO_NOTE_SOURCE).includes(note.source)) {
+    errors.push(`source must be one of: ${Object.values(AUTO_NOTE_SOURCE).join(', ')}`);
+  }
+  return { valid: errors.length === 0, errors };
+}
+
 export default {
   // Constants
   LECTURE_STATUS,
@@ -705,6 +882,8 @@ export default {
   EVENT_TYPES,
   SYNC_OPERATION,
   SYNC_STATUS,
+  RECORDING_STATUS,
+  AUTO_NOTE_SOURCE,
   // Factory functions
   createSetting,
   createCourse,
@@ -716,6 +895,10 @@ export default {
   createBookmark,
   createConfusionVote,
   createSyncQueueItem,
+  createRecordingSession,
+  createAudioData,
+  createPhotoCapture,
+  createAutoNote,
   // Validation functions
   validateSetting,
   validateCourse,
@@ -726,5 +909,9 @@ export default {
   validateFlashcard,
   validateBookmark,
   validateConfusionVote,
-  validateSyncQueueItem
+  validateSyncQueueItem,
+  validateRecordingSession,
+  validateAudioData,
+  validatePhotoCapture,
+  validateAutoNote
 };

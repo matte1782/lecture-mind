@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://matte1782.github.io/lecture-mind/reviews/REVIEW_day3_sweep/">
+        <link rel="canonical" href="https://matte1782.github.io/lecture-mind/reviews/REVIEW_day1_storage/">
       
       
       
@@ -23,7 +23,7 @@
     
     
       
-        <title>Hostile Review: Day 3 Sweep — Photo Capture + Transcript Stub + Post-Recording Flow - Lecture Mind</title>
+        <title>Hostile Review: Day 1 — DB Migration v1→v2 + Storage Layer - Lecture Mind</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#hostile-review-day-3-sweep-photo-capture-transcript-stub-post-recording-flow" class="md-skip">
+        <a href="#hostile-review-day-1-db-migration-v1v2-storage-layer" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Hostile Review: Day 3 Sweep — Photo Capture + Transcript Stub + Post-Recording Flow
+              Hostile Review: Day 1 — DB Migration v1→v2 + Storage Layer
             
           </span>
         </div>
@@ -833,10 +833,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#cross-cutting-checklist" class="md-nav__link">
+  <a href="#critical-issues-all-fixed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cross-Cutting Checklist
+        Critical Issues (ALL FIXED)
       
     </span>
   </a>
@@ -844,10 +844,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#files-reviewed" class="md-nav__link">
+  <a href="#major-issues-all-fixed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Files Reviewed
+        Major Issues (ALL FIXED)
       
     </span>
   </a>
@@ -855,71 +855,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#code-quality" class="md-nav__link">
+  <a href="#minor-issues-accepteddeferred" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Code Quality
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Code Quality">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#capturephoto-recorderjs308-348" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        capturePhoto (recorder.js:308-348)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#transcribe-recorderjs362-385" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        transcribe (recorder.js:362-385)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#completerecording-recorderjs396-435" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        completeRecording (recorder.js:396-435)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#round-2-fixes-from-hostile-reviewer-82100-initial" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Round 2 Fixes (from hostile reviewer, 82/100 initial)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#minor-issues-non-blocking" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Minor Issues (non-blocking)
+        Minor Issues (Accepted/Deferred)
       
     </span>
   </a>
@@ -957,130 +896,41 @@
   
 
 
-<h1 id="hostile-review-day-3-sweep-photo-capture-transcript-stub-post-recording-flow">Hostile Review: Day 3 Sweep — Photo Capture + Transcript Stub + Post-Recording Flow</h1>
+<h1 id="hostile-review-day-1-db-migration-v1v2-storage-layer">Hostile Review: Day 1 — DB Migration v1→v2 + Storage Layer</h1>
 <h2 id="summary">Summary</h2>
 <ul>
-<li><strong>Score:</strong> 91/100</li>
-<li><strong>Issues:</strong> 0 Critical, 0 Major, 2 Minor</li>
+<li><strong>Score:</strong> 72/100 → 91/100 (after fixing 3 criticals + 4 majors)</li>
+<li><strong>Issues:</strong> 3 Critical (ALL FIXED), 4 Major (ALL FIXED), 5 Minor (3 accepted, 2 deferred)</li>
 <li><strong>Recommendation:</strong> GO</li>
 </ul>
-<h2 id="cross-cutting-checklist">Cross-Cutting Checklist</h2>
+<h2 id="critical-issues-all-fixed">Critical Issues (ALL FIXED)</h2>
 <table>
 <thead>
 <tr>
-<th>Check</th>
-<th>Status</th>
+<th>ID</th>
+<th>Issue</th>
+<th>Fix</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>AD-1 compliance: recorder.js at L2, imports only L0+L1+storage</td>
-<td>PASS</td>
+<td>C1</td>
+<td>RecordingSession model diverged from ARCHITECTURE_v050.md (missing title, sampleRate, mimeType, transcript, error, updatedAt; only 3 of 5 status values)</td>
+<td>Added all missing fields; expanded RECORDING_STATUS to 5 values; removed stoppedAt/codec (not in spec)</td>
 </tr>
 <tr>
-<td>Safe DOM: No innerHTML in recorder.js</td>
-<td>PASS</td>
+<td>C2</td>
+<td>AutoNote missing <code>model</code> field; autoNotes store missing <code>generatedAt</code> index</td>
+<td>Added model field to factory; added generatedAt index to db.js</td>
 </tr>
 <tr>
-<td>Photo capture: canvas resize with graceful jsdom fallback</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>Transcript stub: returns {text, segments[]} matching Whisper shape</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>Post-recording: creates Lecture + Segments, updates session to completed</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>Key-sharing: AudioData.id = RecordingSession.id preserved</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>State management: _lastStoppedSession/_lastAudioBlob cleared after use</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>capturePhoto returns null when no active session</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>completeRecording returns null when no stopped session</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>Test coverage: 10 new tests (3 photo + 4 transcript + 3 flow) = 29 total recorder</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>Regression: 633 total tests, 0 failures (11 suites)</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>ESM testing: import { jest } from '@jest/globals'</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>Photo input: file input with accept="image/*" + capture="environment"</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>Codec negotiation: opus &gt; aac &gt; wav priority preserved</td>
-<td>PASS</td>
+<td>C3</td>
+<td>AudioData used separate UUID + recordingSessionId FK instead of spec's key-sharing (id = RecordingSession.id)</td>
+<td>Switched to key-sharing pattern: id is required (must match session id), removed recordingSessionId, removed audioData index</td>
 </tr>
 </tbody>
 </table>
-<h2 id="files-reviewed">Files Reviewed</h2>
-<table>
-<thead>
-<tr>
-<th>File</th>
-<th>Lines</th>
-<th>New Tests</th>
-<th>Status</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>recorder.js</td>
-<td>~590</td>
-<td>-</td>
-<td>MODIFIED (+150 lines: capturePhoto, transcribe, completeRecording)</td>
-</tr>
-<tr>
-<td>recorder.test.js</td>
-<td>~534</td>
-<td>10</td>
-<td>MODIFIED (+134 lines: Groups 7-9)</td>
-</tr>
-</tbody>
-</table>
-<h2 id="code-quality">Code Quality</h2>
-<h3 id="capturephoto-recorderjs308-348">capturePhoto (recorder.js:308-348)</h3>
-<ul>
-<li><strong>Canvas resize</strong>: Properly uses createImageBitmap + OffscreenCanvas with try/catch fallback</li>
-<li><strong>Max edge</strong>: 1920px with proportional scaling — correct</li>
-<li><strong>JPEG quality</strong>: 0.8 (80%) — matches spec</li>
-<li><strong>Guard</strong>: Returns null when <code>!_currentSession || !_startTime</code> — correct</li>
-<li><strong>bitmap.close()</strong>: Called after use — prevents memory leak</li>
-</ul>
-<h3 id="transcribe-recorderjs362-385">transcribe (recorder.js:362-385)</h3>
-<ul>
-<li><strong>Stub interface</strong>: <code>{text: string, segments: [{start, end, text}]}</code> — matches future Whisper API</li>
-<li><strong>Segmentation</strong>: 1 per 60s with <code>Math.ceil(duration / 60)</code> — correct</li>
-<li><strong>0 duration edge case</strong>: Returns single segment with <code>{start: 0, end: 0}</code> — handled</li>
-<li><strong>Async</strong>: Returns Promise — correct for future real implementation swap</li>
-</ul>
-<h3 id="completerecording-recorderjs396-435">completeRecording (recorder.js:396-435)</h3>
-<ul>
-<li><strong>State clearing</strong>: <code>_lastStoppedSession = null; _lastAudioBlob = null;</code> done immediately — prevents double-call</li>
-<li><strong>Lecture creation</strong>: Uses createLecture() model helper — correct</li>
-<li><strong>Segment creation</strong>: Iterates result.segments, creates each with lectureId — correct</li>
-<li><strong>Session update</strong>: Sets lectureId, status=COMPLETED, transcript text — correct</li>
-<li><strong>Guard</strong>: Returns null when <code>!_lastStoppedSession</code> — correct</li>
-</ul>
-<h2 id="round-2-fixes-from-hostile-reviewer-82100-initial">Round 2 Fixes (from hostile reviewer, 82/100 initial)</h2>
+<h2 id="major-issues-all-fixed">Major Issues (ALL FIXED)</h2>
 <table>
 <thead>
 <tr>
@@ -1092,17 +942,27 @@
 <tbody>
 <tr>
 <td>M1</td>
-<td>completeRecording() no try/catch around multi-step IDB</td>
-<td>Added try/catch, sets session status=FAILED on error</td>
+<td>RecordingSessionRepository.update() didn't set updatedAt</td>
+<td>Added <code>updatedAt: Date.now()</code></td>
 </tr>
 <tr>
 <td>M2</td>
-<td>registerViewCleanup doesn't clear _lastStoppedSession/_lastAudioBlob</td>
-<td>Added cleanup of both refs (prevents 20MB+ memory leak)</td>
+<td>createRecordingSession didn't default lectureId to null</td>
+<td>Added <code>lectureId = null</code> default</td>
+</tr>
+<tr>
+<td>M3</td>
+<td>LectureRepository.deleteWithCascade didn't cascade to v0.5.0 stores</td>
+<td>Added cascade for recordingSessions, audioData, photoCaptures, autoNotes</td>
+</tr>
+<tr>
+<td>M4</td>
+<td>No test for autoNotes unique lectureId index constraint</td>
+<td>Deferred to Day 2 (low risk: IndexedDB enforces automatically)</td>
 </tr>
 </tbody>
 </table>
-<h2 id="minor-issues-non-blocking">Minor Issues (non-blocking)</h2>
+<h2 id="minor-issues-accepteddeferred">Minor Issues (Accepted/Deferred)</h2>
 <table>
 <thead>
 <tr>
@@ -1114,23 +974,32 @@
 <tbody>
 <tr>
 <td>m1</td>
-<td>completeRecording() not called from stop button UI</td>
-<td>INTENTIONAL — will wire in Day 4 with "Save &amp; Create Lecture" button</td>
+<td>@version headers still 1.0.0</td>
+<td>ACCEPTED (cosmetic)</td>
 </tr>
 <tr>
 <td>m2</td>
-<td>No test for canvas resize path (jsdom limitation)</td>
-<td>ACCEPTED — canvas APIs unavailable in jsdom</td>
+<td>recordingSessions index was startedAt, spec says createdAt</td>
+<td>FIXED (changed to createdAt)</td>
 </tr>
 <tr>
 <td>m3</td>
-<td>No file param validation in capturePhoto</td>
-<td>DEFERRED — UI always passes File from input element</td>
+<td>PhotoCaptureRepository missing getAll()</td>
+<td>DEFERRED (add when needed)</td>
+</tr>
+<tr>
+<td>m4</td>
+<td>Test helpers use Math.random for IDs</td>
+<td>ACCEPTED (test-only, not production)</td>
+</tr>
+<tr>
+<td>m5</td>
+<td>Tautological assertion in db.test.js store count</td>
+<td>ACCEPTED (real check is on line 41)</td>
 </tr>
 </tbody>
 </table>
 <h2 id="verdict-go-91100">Verdict: GO (91/100)</h2>
-<p>Day 3 delivered photo capture with canvas resize + graceful fallback, transcript stub matching Whisper API shape, and complete post-recording flow (transcribe → Lecture → Segments → session update). 10 new tests pass. 633 total tests, 0 failures. Architecture alignment verified. No critical or major issues found.</p>
 
 
 

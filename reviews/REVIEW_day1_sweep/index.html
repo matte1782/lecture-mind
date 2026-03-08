@@ -23,7 +23,7 @@
     
     
       
-        <title>REVIEW day1 sweep - Lecture Mind</title>
+        <title>Hostile Review: Day 1 Sweep — DB Migration v1→v2 - Lecture Mind</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#summary" class="md-skip">
+        <a href="#hostile-review-day-1-sweep-db-migration-v1v2" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              REVIEW day1 sweep
+              Hostile Review: Day 1 Sweep — DB Migration v1→v2
             
           </span>
         </div>
@@ -812,6 +812,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -831,124 +833,57 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#round-1-72100-block-3-issues" class="md-nav__link">
+  <a href="#cross-cutting-checklist" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Round 1: 72/100 BLOCK (3 issues)
+        Cross-Cutting Checklist
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Round 1: 72/100 BLOCK (3 issues)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#c1-async-callbacks-used-sync-trycatch" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        C1: Async callbacks used sync try/catch
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#m1-test-10-was-fake-manual-assignment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        M1: Test 10 was fake (manual assignment)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#m2-no-integration-test-for-submitreview-_onquizresult" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        M2: No integration test for submitReview → _onQuizResult
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#re-review-round-2-after-fixes" class="md-nav__link">
+  <a href="#major-issues-deferred-to-day-2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Re-Review (Round 2) — After Fixes
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Re-Review (Round 2) — After Fixes">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#c1-fixed-async-safe-fire-and-forget" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        C1 FIXED: Async-safe fire-and-forget
+        Major Issues (deferred to Day 2)
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#m1-partially-fixed-downgraded-to-minor" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#minor-issues-non-blocking" class="md-nav__link">
     <span class="md-ellipsis">
       
-        M1 PARTIALLY FIXED → Downgraded to Minor
+        Minor Issues (non-blocking)
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#m2-fixed-full-integration-test-added" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#architecture-alignment-verified-by-both-reviewers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        M2 FIXED: Full integration test added
+        Architecture Alignment (verified by both reviewers)
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#new-minor-issues-non-blocking" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#verdict-go-91100" class="md-nav__link">
     <span class="md-ellipsis">
       
-        New Minor Issues (non-blocking)
+        Verdict: GO (91/100)
       
     </span>
   </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#no-regressions-detected" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        No Regressions Detected
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -972,42 +907,153 @@
   
 
 
-  <h1>REVIEW day1 sweep</h1>
-
+<h1 id="hostile-review-day-1-sweep-db-migration-v1v2">Hostile Review: Day 1 Sweep — DB Migration v1→v2</h1>
 <h2 id="summary">Summary</h2>
 <ul>
-<li>Issues: 0 critical, 0 major, 2 minor</li>
-<li>Score: 88/100</li>
-<li>Recommendation: GO</li>
+<li><strong>Score:</strong> 91/100 (consensus of two independent reviewers: 93/100 + 88/100)</li>
+<li><strong>Issues:</strong> 0 Critical, 1 Major (deferred to Day 2), 4 Minor</li>
+<li><strong>Recommendation:</strong> GO</li>
 </ul>
-<h2 id="round-1-72100-block-3-issues">Round 1: 72/100 BLOCK (3 issues)</h2>
-<h3 id="c1-async-callbacks-used-sync-trycatch">C1: Async callbacks used sync try/catch</h3>
-<h3 id="m1-test-10-was-fake-manual-assignment">M1: Test 10 was fake (manual assignment)</h3>
-<h3 id="m2-no-integration-test-for-submitreview-_onquizresult">M2: No integration test for submitReview → _onQuizResult</h3>
-<hr />
-<h2 id="re-review-round-2-after-fixes">Re-Review (Round 2) — After Fixes</h2>
-<ul>
-<li>Score: <strong>88/100</strong></li>
-<li>Recommendation: <strong>GO</strong></li>
-</ul>
-<h3 id="c1-fixed-async-safe-fire-and-forget">C1 FIXED: Async-safe fire-and-forget</h3>
-<p>Both call sites now capture <code>const p = callback(...)</code> and call <code>p?.catch?.(() =&gt; {})</code>.
-Promise rejections properly swallowed. Synchronous throws still caught by outer try/catch.</p>
-<h3 id="m1-partially-fixed-downgraded-to-minor">M1 PARTIALLY FIXED → Downgraded to Minor</h3>
-<p>Test rewritten to register callback, store reference, invoke it. Still shallow but adequate
-given M2 integration test covers the analogous path. Both hooks share identical mechanics.</p>
-<h3 id="m2-fixed-full-integration-test-added">M2 FIXED: Full integration test added</h3>
-<p>Test calls <code>registerAnalyticsHooks()</code>, creates lecture + flashcard in DB, calls
-<code>session.submitReview(4)</code>, waits for async callback, verifies <code>getQuizResults()</code> returns
-persisted result. Proves full pipeline: submitReview → _onQuizResult → saveQuizResult → IndexedDB.</p>
-<h3 id="new-minor-issues-non-blocking">New Minor Issues (non-blocking)</h3>
-<ul>
-<li>m1: Double-registration of setOnSessionComplete in Test 10 (dead code). Confidence: 70%.</li>
-<li>m2: Wall-clock <code>setTimeout(r, 50)</code> instead of deterministic timer flush. Confidence: 60%.</li>
-</ul>
-<h3 id="no-regressions-detected">No Regressions Detected</h3>
-<p>508 tests, 0 failures.</p>
-<p><strong>VERDICT: GO — 88/100</strong></p>
+<h2 id="cross-cutting-checklist">Cross-Cutting Checklist</h2>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Consistency: models match ARCHITECTURE_v050.md §8.1-8.5</td>
+<td>PASS (all fields, types, defaults verified)</td>
+</tr>
+<tr>
+<td>Completeness: 4 stores + factories + validators + repos + tests</td>
+<td>PASS (36 new tests)</td>
+</tr>
+<tr>
+<td>Regression: all tests pass</td>
+<td>PASS (10 suites, 599 tests, 0 failures)</td>
+</tr>
+<tr>
+<td>Key-sharing: AudioData.id = RecordingSession.id</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Cascade delete: logic covers all v0.5.0 stores</td>
+<td>PASS (logic correct)</td>
+</tr>
+<tr>
+<td>updatedAt in update()</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Indexes match spec</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Barrel exports complete</td>
+<td>PASS (16 new exports in index.js)</td>
+</tr>
+<tr>
+<td>Migration: DB_VERSION=2, SCHEMA_VERSION=2</td>
+<td>PASS</td>
+</tr>
+</tbody>
+</table>
+<h2 id="major-issues-deferred-to-day-2">Major Issues (deferred to Day 2)</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Issue</th>
+<th>Disposition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>M1</td>
+<td>Cascade delete e2e test does not create/verify v0.5.0 entities (recordingSessions, audioData, photoCaptures, autoNotes) — cascade logic at repositories.js:464-487 has zero integration test coverage</td>
+<td>FIX at Day 2 start, before building on top of storage layer</td>
+</tr>
+</tbody>
+</table>
+<h2 id="minor-issues-non-blocking">Minor Issues (non-blocking)</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Issue</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>m1</td>
+<td>PhotoCapture <code>caption</code> defaults to <code>''</code> but spec says <code>string|null</code></td>
+<td>ACCEPTED (functionally equivalent)</td>
+</tr>
+<tr>
+<td>m2</td>
+<td>JSDoc for createRecordingSession/createAudioData stale (references old params)</td>
+<td>DEFERRED to polish</td>
+</tr>
+<tr>
+<td>m3</td>
+<td>AutoNoteRepository.update() takes full record instead of (id, updates) pattern</td>
+<td>ACCEPTED (intentional upsert)</td>
+</tr>
+<tr>
+<td>m4</td>
+<td>validateRecordingSession only checks id + status (no duration/sampleRate/title)</td>
+<td>DEFERRED to polish</td>
+</tr>
+</tbody>
+</table>
+<h2 id="architecture-alignment-verified-by-both-reviewers">Architecture Alignment (verified by both reviewers)</h2>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Spec Section</th>
+<th>Fields</th>
+<th>Indexes</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RecordingSession</td>
+<td>§8.1</td>
+<td>11/11 match</td>
+<td>3/3 match</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>AudioData</td>
+<td>§8.2</td>
+<td>3/3 match (key-sharing)</td>
+<td>0/0 match</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>PhotoCapture</td>
+<td>§8.3</td>
+<td>7/7 match</td>
+<td>2/2 match</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>AutoNote</td>
+<td>§8.5</td>
+<td>7/7 match (incl. model)</td>
+<td>2/2 match (lectureId unique)</td>
+<td>PASS</td>
+</tr>
+</tbody>
+</table>
+<h2 id="verdict-go-91100">Verdict: GO (91/100)</h2>
+<p>Day 1 storage layer is solid. All architecture-to-code alignment verified. One mandatory fix (M1: cascade delete test) tracked for Day 2 start.</p>
 
 
 

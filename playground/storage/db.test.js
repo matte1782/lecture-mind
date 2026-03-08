@@ -31,20 +31,22 @@ describe('Database Configuration', () => {
   });
 
   test('DB_VERSION is defined', () => {
-    expect(DB_VERSION).toBe(1);
+    expect(DB_VERSION).toBe(2);
   });
 
   test('STORES has correct number of object stores', () => {
     const expectedStoreCount = Object.keys(STORES).length;
     expect(Object.keys(STORES)).toHaveLength(expectedStoreCount);
     // Verify we have all required stores (this test ensures no stores are accidentally removed)
-    expect(expectedStoreCount).toBe(10);
+    expect(expectedStoreCount).toBe(14);
   });
 
   test('STORES contains all required stores', () => {
     const requiredStores = [
       'settings', 'courses', 'lectures', 'segments', 'events',
-      'progress', 'flashcards', 'bookmarks', 'confusionVotes', 'syncQueue'
+      'progress', 'flashcards', 'bookmarks', 'confusionVotes',
+      'recordingSessions', 'audioData', 'photoCaptures', 'autoNotes',
+      'syncQueue'
     ];
     for (const store of requiredStores) {
       expect(STORES).toHaveProperty(store);

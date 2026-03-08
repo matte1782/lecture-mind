@@ -87,12 +87,14 @@ function showToast(variant, title, message) {
 let _libraryRenderer = null;
 let _lectureDetailRenderer = null;
 let _dashboardRenderer = null;
+let _recordRenderer = null;
 let _onQuizResult = null;
 let _onSessionComplete = null;
 
 function setLibraryRenderer(fn) { _libraryRenderer = fn; }
 function setLectureDetailRenderer(fn) { _lectureDetailRenderer = fn; }
 function setDashboardRenderer(fn) { _dashboardRenderer = fn; }
+function setRecordRenderer(fn) { _recordRenderer = fn; }
 function setOnQuizResult(fn) { _onQuizResult = fn; }
 function setOnSessionComplete(fn) { _onSessionComplete = fn; }
 
@@ -124,7 +126,8 @@ const VIEWS = {
   PLAYGROUND: 'playground',
   STUDY: 'study',
   LECTURE_DETAIL: 'lecture-detail',
-  DASHBOARD: 'dashboard'
+  DASHBOARD: 'dashboard',
+  RECORD: 'record'
 };
 
 function parseHash(hash) {
@@ -154,6 +157,10 @@ function parseHash(hash) {
 
   if (raw === 'dashboard') {
     return { view: VIEWS.DASHBOARD, params: {} };
+  }
+
+  if (raw === 'record') {
+    return { view: VIEWS.RECORD, params: {} };
   }
 
   return { view: VIEWS.LANDING, params: {} };
@@ -204,7 +211,8 @@ function getViewSections() {
     playground: document.getElementById('playground-view'),
     study: document.getElementById('study-view'),
     lectureDetail: document.getElementById('lecture-detail-view'),
-    dashboard: document.getElementById('dashboard-view')
+    dashboard: document.getElementById('dashboard-view'),
+    record: document.getElementById('record-view')
   };
 }
 
@@ -270,6 +278,19 @@ function mountView(view, params = {}) {
             const p = _dashboardRenderer(dashContainer);
             if (p && typeof p.catch === 'function') p.catch(() => {});
           } catch (_e) { /* dashboard render must not crash router */ }
+        }
+      }
+      break;
+
+    case VIEWS.RECORD:
+      if (sections.record) {
+        showElement(sections.record);
+        if (_recordRenderer) {
+          const container = sections.record.querySelector('.record-container') || sections.record;
+          try {
+            const p = _recordRenderer(container);
+            if (p && typeof p.catch === 'function') p.catch(() => {});
+          } catch (_e) { /* recorder render must not crash router */ }
         }
       }
       break;
@@ -1572,6 +1593,7 @@ export {
   setLibraryRenderer,
   setLectureDetailRenderer,
   setDashboardRenderer,
+  setRecordRenderer,
 
   // Analytics hooks (for analytics.js registration — AD-9)
   setOnQuizResult,
