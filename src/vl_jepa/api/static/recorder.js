@@ -12,8 +12,13 @@ import { createElement, clearElement } from './dom-utils.js';
 import {
   RecordingSessionRepository,
   AudioDataRepository,
+  PhotoCaptureRepository,
+  LectureRepository,
+  SegmentRepository,
   createRecordingSession,
   createAudioData,
+  createPhotoCapture,
+  createLecture,
   RECORDING_STATUS
 } from './storage/index.js';
 
@@ -33,6 +38,8 @@ let _transcriptEl = null;
 let _recordBtn = null;
 let _stopBtn = null;
 let _photoBtn = null;
+let _lastStoppedSession = null;
+let _lastAudioBlob = null;
 
 // ============================================================================
 // CODEC NEGOTIATION
@@ -141,6 +148,10 @@ export async function stopRecording() {
           status: RECORDING_STATUS.STOPPED,
           duration
         });
+
+        // Save for completeRecording() to use
+        _lastStoppedSession = updatedSession;
+        _lastAudioBlob = audioBlob;
 
         // Clean up resources
         _cleanup();
@@ -283,6 +294,153 @@ export function formatTime(seconds) {
   const m = Math.floor((seconds % 3600) / 60);
   const s = Math.floor(seconds % 60);
   return [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
+}
+
+// ============================================================================
+// PHOTO CAPTURE
+// ============================================================================
+
+/**
+ * Capture a photo during recording, resize via canvas, store in IDB.
+ * @param {Blob|File} file - Image file from file input
+ * @returns {Promise<Object|null>} PhotoCapture record or null if no active session
+ */
+export async function capturePhoto(file) {
+  if (!_currentSession || !_startTime) return null;
+
+  const timestampMs = Date.now() - _startTime;
+
+  // In jsdom, canvas/Image won't work — store the blob directly
+  // In real browser, this would resize via canvas to 1920px max edge + 80% JPEG
+  let outputBlob = file;
+  let outputSize = file.size;
+
+  // Attempt canvas resize (gracefully skip in jsdom/test environments)
+  try {
+    if (typeof createImageBitmap === 'function') {
+      const bitmap = await createImageBitmap(file);
+      const maxEdge = 1920;
+      let { width, height } = bitmap;
+      if (width > maxEdge || height > maxEdge) {
+        const scale = maxEdge / Math.max(width, height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+      const canvas = new OffscreenCanvas(width, height);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(bitmap, 0, 0, width, height);
+      outputBlob = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.8 });
+      outputSize = outputBlob.size;
+      bitmap.close();
+    }
+  } catch (_e) {
+    // Canvas APIs not available (jsdom) — use original blob
+  }
+
+  const photo = createPhotoCapture({
+    recordingSessionId: _currentSession.id,
+    timestampMs,
+    blob: outputBlob,
+    size: outputSize
+  });
+
+  await PhotoCaptureRepository.create(photo);
+  return photo;
+}
+
+// ============================================================================
+// TRANSCRIPT STUB SERVICE
+// ============================================================================
+
+/**
+ * Stub transcription service. Generates placeholder transcript + segments.
+ * Interface matches future Whisper integration.
+ * @param {Blob} _audioBlob - Audio data (unused in stub)
+ * @param {number} duration - Duration in seconds
+ * @returns {Promise<{text: string, segments: Array<{start: number, end: number, text: string}>}>}
+ */
+export async function transcribe(_audioBlob, duration) {
+  const segmentDuration = 60; // 1 segment per 60 seconds
+  const segments = [];
+
+  if (duration <= 0) {
+    return {
+      text: 'No audio content detected.',
+      segments: [{ start: 0, end: 0, text: 'No audio content detected.' }]
+    };
+  }
+
+  const segCount = Math.max(1, Math.ceil(duration / segmentDuration));
+  const texts = [];
+
+  for (let i = 0; i < segCount; i++) {
+    const start = i * segmentDuration;
+    const end = Math.min((i + 1) * segmentDuration, duration);
+    const text = `[Segment ${i + 1}] Placeholder transcript for ${start}s - ${end}s. Real transcription will be available in v1.0.0.`;
+    segments.push({ start, end, text });
+    texts.push(text);
+  }
+
+  return { text: texts.join(' '), segments };
+}
+
+// ============================================================================
+// POST-RECORDING FLOW
+// ============================================================================
+
+/**
+ * Complete the recording: transcribe, create Lecture + Segments, update session.
+ * Call after stopRecording().
+ * @returns {Promise<string|null>} Created lecture ID, or null if no stopped session
+ */
+export async function completeRecording() {
+  if (!_lastStoppedSession) return null;
+
+  const session = _lastStoppedSession;
+  const audioBlob = _lastAudioBlob;
+  _lastStoppedSession = null;
+  _lastAudioBlob = null;
+
+  try {
+    // Transcribe (stub)
+    const duration = session.duration || 0;
+    const result = await transcribe(audioBlob, duration);
+
+    // Create Lecture
+    const lecture = await LectureRepository.create(
+      createLecture({
+        title: session.title || `Recording ${new Date(session.createdAt).toLocaleString()}`,
+        duration
+      })
+    );
+
+    // Create Segments
+    for (const seg of result.segments) {
+      await SegmentRepository.create({
+        lectureId: lecture.id,
+        startTime: seg.start,
+        endTime: seg.end,
+        type: 'transcript',
+        metadata: { text: seg.text }
+      });
+    }
+
+    // Update session: link to lecture + mark completed
+    await RecordingSessionRepository.update(session.id, {
+      lectureId: lecture.id,
+      status: RECORDING_STATUS.COMPLETED,
+      transcript: result.text
+    });
+
+    return lecture.id;
+  } catch (err) {
+    // Mark session as failed so it doesn't stay in STOPPED limbo
+    await RecordingSessionRepository.update(session.id, {
+      status: RECORDING_STATUS.FAILED,
+      error: err.message || 'Post-recording processing failed'
+    }).catch(() => { /* best effort */ });
+    throw err;
+  }
 }
 
 // ============================================================================
@@ -431,6 +589,9 @@ setRecordRenderer(renderRecordView);
 registerViewCleanup('record', () => {
   // Stop active recording and release microphone
   _cleanup();
+  // Release post-recording state (can hold 20MB+ audio blob)
+  _lastStoppedSession = null;
+  _lastAudioBlob = null;
   // Null DOM refs
   _timerEl = null;
   _transcriptEl = null;

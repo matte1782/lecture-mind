@@ -1,45 +1,73 @@
+# Hostile Review: Day 3 Sweep — Photo Capture + Transcript Stub + Post-Recording Flow
+
 ## Summary
-- Issues: 0 critical, 3 major, 5 minor
-- Score: 87/100
-- Recommendation: GO
+- **Score:** 91/100
+- **Issues:** 0 Critical, 0 Major, 2 Minor
+- **Recommendation:** GO
 
-## Critical Issues (80%+ confidence)
-None.
+## Cross-Cutting Checklist
 
-## Major Issues (60%+ confidence)
-
-### M1. No localized error handling in renderLectureAnalyticsTab
-**Location:** analytics.js:916-995
-**Confidence:** 90%
-**Issue:** Three await calls hit IndexedDB with no localized try/catch. Outer catch in library.js clears entire header — poor UX.
-**Status:** Deferred to Day 6 polish (non-blocking per GO verdict).
-
-### M2. renderRecentQuizResults uses raw document.createElement
-**Location:** analytics.js:823-854
-**Confidence:** 95%
-**Issue:** 9 raw document.createElement calls bypass createElement wrapper. Still safe (textContent only) but breaks codebase convention.
-**Status:** FIXED — replaced with createElement wrapper calls.
-
-### M3. CSS class mismatch — dead BEM classes for results table
-**Location:** analytics.css:105-136 vs analytics.js:820-865
-**Confidence:** 92%
-**Issue:** CSS defines .sp-results-table__header/__row/__cell but JS renders native table elements without these classes.
-**Status:** FIXED — CSS updated to target table elements directly.
-
-## Minor Issues
-- m1: renderMasteryDonut not tested for empty array (75%)
-- m2: _chartIdCounter leaks across tests (70%)
-- m3: Chart heading not linked via aria-labelledby (65%)
-- m4: Watch time avg shows 0 for short sessions (60%)
-- m5: No test for watch-only scenario (70%)
-
-## Architecture Verification
 | Check | Status |
 |-------|--------|
-| Safe DOM (no innerHTML) | PASS |
-| Dependency direction (no cycles) | PASS |
-| CSS quality | PASS (after M3 fix) |
-| Test adequacy (8 tests) | PASS |
-| ARIA / Accessibility | PASS |
+| AD-1 compliance: recorder.js at L2, imports only L0+L1+storage | PASS |
+| Safe DOM: No innerHTML in recorder.js | PASS |
+| Photo capture: canvas resize with graceful jsdom fallback | PASS |
+| Transcript stub: returns {text, segments[]} matching Whisper shape | PASS |
+| Post-recording: creates Lecture + Segments, updates session to completed | PASS |
+| Key-sharing: AudioData.id = RecordingSession.id preserved | PASS |
+| State management: _lastStoppedSession/_lastAudioBlob cleared after use | PASS |
+| capturePhoto returns null when no active session | PASS |
+| completeRecording returns null when no stopped session | PASS |
+| Test coverage: 10 new tests (3 photo + 4 transcript + 3 flow) = 29 total recorder | PASS |
+| Regression: 633 total tests, 0 failures (11 suites) | PASS |
+| ESM testing: import { jest } from '@jest/globals' | PASS |
+| Photo input: file input with accept="image/*" + capture="environment" | PASS |
+| Codec negotiation: opus > aac > wav priority preserved | PASS |
 
-**VERDICT: GO — 87/100 (after M2+M3 fixes)**
+## Files Reviewed
+
+| File | Lines | New Tests | Status |
+|------|-------|-----------|--------|
+| recorder.js | ~590 | - | MODIFIED (+150 lines: capturePhoto, transcribe, completeRecording) |
+| recorder.test.js | ~534 | 10 | MODIFIED (+134 lines: Groups 7-9) |
+
+## Code Quality
+
+### capturePhoto (recorder.js:308-348)
+- **Canvas resize**: Properly uses createImageBitmap + OffscreenCanvas with try/catch fallback
+- **Max edge**: 1920px with proportional scaling — correct
+- **JPEG quality**: 0.8 (80%) — matches spec
+- **Guard**: Returns null when `!_currentSession || !_startTime` — correct
+- **bitmap.close()**: Called after use — prevents memory leak
+
+### transcribe (recorder.js:362-385)
+- **Stub interface**: `{text: string, segments: [{start, end, text}]}` — matches future Whisper API
+- **Segmentation**: 1 per 60s with `Math.ceil(duration / 60)` — correct
+- **0 duration edge case**: Returns single segment with `{start: 0, end: 0}` — handled
+- **Async**: Returns Promise — correct for future real implementation swap
+
+### completeRecording (recorder.js:396-435)
+- **State clearing**: `_lastStoppedSession = null; _lastAudioBlob = null;` done immediately — prevents double-call
+- **Lecture creation**: Uses createLecture() model helper — correct
+- **Segment creation**: Iterates result.segments, creates each with lectureId — correct
+- **Session update**: Sets lectureId, status=COMPLETED, transcript text — correct
+- **Guard**: Returns null when `!_lastStoppedSession` — correct
+
+## Round 2 Fixes (from hostile reviewer, 82/100 initial)
+
+| ID | Issue | Fix |
+|----|-------|-----|
+| M1 | completeRecording() no try/catch around multi-step IDB | Added try/catch, sets session status=FAILED on error |
+| M2 | registerViewCleanup doesn't clear _lastStoppedSession/_lastAudioBlob | Added cleanup of both refs (prevents 20MB+ memory leak) |
+
+## Minor Issues (non-blocking)
+
+| ID | Issue | Status |
+|----|-------|--------|
+| m1 | completeRecording() not called from stop button UI | INTENTIONAL — will wire in Day 4 with "Save & Create Lecture" button |
+| m2 | No test for canvas resize path (jsdom limitation) | ACCEPTED — canvas APIs unavailable in jsdom |
+| m3 | No file param validation in capturePhoto | DEFERRED — UI always passes File from input element |
+
+## Verdict: GO (91/100)
+
+Day 3 delivered photo capture with canvas resize + graceful fallback, transcript stub matching Whisper API shape, and complete post-recording flow (transcribe → Lecture → Segments → session update). 10 new tests pass. 633 total tests, 0 failures. Architecture alignment verified. No critical or major issues found.

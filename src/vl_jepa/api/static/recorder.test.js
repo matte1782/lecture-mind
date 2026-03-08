@@ -10,6 +10,9 @@ import { closeDatabase, deleteDatabase, put, openDatabase } from './storage/db.j
 import {
   RecordingSessionRepository,
   AudioDataRepository,
+  PhotoCaptureRepository,
+  LectureRepository,
+  SegmentRepository,
   createRecordingSession,
   RECORDING_STATUS
 } from './storage/index.js';
@@ -21,7 +24,10 @@ import {
   recoverOrphanedSessions,
   formatTime,
   renderRecordView,
-  createSpeechRecognition
+  createSpeechRecognition,
+  capturePhoto,
+  transcribe,
+  completeRecording
 } from './recorder.js';
 
 // ============================================================================
@@ -389,5 +395,139 @@ describe('renderRecordView', () => {
       // Either inline style >= 56px or has a class that guarantees it
       expect(minWidth >= 56 || minHeight >= 56 || hasTargetClass).toBe(true);
     }
+  });
+});
+
+// ============================================================================
+// GROUP 7: PHOTO CAPTURE
+// ============================================================================
+
+describe('capturePhoto', () => {
+  it('creates a PhotoCapture in IDB with correct timestampMs', async () => {
+    // Start a recording so _currentSession and _startTime exist
+    const session = await startRecording();
+    expect(session).not.toBeNull();
+
+    // Create a mock file (small 1x1 PNG as data URL won't work in jsdom canvas)
+    const mockFile = new Blob(['fake-image-data'], { type: 'image/jpeg' });
+
+    const photo = await capturePhoto(mockFile);
+    expect(photo).not.toBeNull();
+    expect(photo.recordingSessionId).toBe(session.id);
+    expect(typeof photo.timestampMs).toBe('number');
+    expect(photo.timestampMs).toBeGreaterThanOrEqual(0);
+
+    // Verify persisted
+    const stored = await PhotoCaptureRepository.getById(photo.id);
+    expect(stored).toBeDefined();
+    expect(stored.recordingSessionId).toBe(session.id);
+
+    await stopRecording();
+  });
+
+  it('returns null when no recording is active', async () => {
+    const mockFile = new Blob(['fake-image-data'], { type: 'image/jpeg' });
+    const result = await capturePhoto(mockFile);
+    expect(result).toBeNull();
+  });
+
+  it('stores the blob with a size value', async () => {
+    const session = await startRecording();
+    const mockFile = new Blob(['fake-image-data'], { type: 'image/jpeg' });
+
+    const photo = await capturePhoto(mockFile);
+    expect(photo).not.toBeNull();
+    expect(typeof photo.size).toBe('number');
+    expect(photo.size).toBeGreaterThan(0);
+
+    await stopRecording();
+  });
+});
+
+// ============================================================================
+// GROUP 8: TRANSCRIPT STUB SERVICE
+// ============================================================================
+
+describe('transcribe', () => {
+  it('returns object with text and segments array', async () => {
+    const blob = new Blob(['audio'], { type: 'audio/webm' });
+    const result = await transcribe(blob, 120);
+    expect(result).toBeDefined();
+    expect(typeof result.text).toBe('string');
+    expect(Array.isArray(result.segments)).toBe(true);
+  });
+
+  it('segments have start, end, and text fields', async () => {
+    const blob = new Blob(['audio'], { type: 'audio/webm' });
+    const result = await transcribe(blob, 120);
+    expect(result.segments.length).toBeGreaterThan(0);
+    for (const seg of result.segments) {
+      expect(typeof seg.start).toBe('number');
+      expect(typeof seg.end).toBe('number');
+      expect(typeof seg.text).toBe('string');
+      expect(seg.end).toBeGreaterThan(seg.start);
+    }
+  });
+
+  it('generates approximately 1 segment per 60 seconds', async () => {
+    const blob = new Blob(['audio'], { type: 'audio/webm' });
+    const result = await transcribe(blob, 180); // 3 minutes
+    // Should generate ~3 segments (1 per 60s)
+    expect(result.segments.length).toBeGreaterThanOrEqual(2);
+    expect(result.segments.length).toBeLessThanOrEqual(4);
+  });
+
+  it('handles 0 duration gracefully', async () => {
+    const blob = new Blob(['audio'], { type: 'audio/webm' });
+    const result = await transcribe(blob, 0);
+    expect(result).toBeDefined();
+    expect(typeof result.text).toBe('string');
+    expect(Array.isArray(result.segments)).toBe(true);
+    // 0 duration should produce at most 1 segment
+    expect(result.segments.length).toBeLessThanOrEqual(1);
+  });
+});
+
+// ============================================================================
+// GROUP 9: POST-RECORDING FLOW
+// ============================================================================
+
+describe('completeRecording', () => {
+  it('creates Lecture and Segments in IDB after stopping', async () => {
+    const session = await startRecording({ title: 'Test Lecture' });
+    expect(session).not.toBeNull();
+
+    const result = await stopRecording();
+    expect(result).not.toBeNull();
+
+    const lectureId = await completeRecording();
+    expect(lectureId).toBeDefined();
+    expect(typeof lectureId).toBe('string');
+
+    // Verify lecture was created
+    const lecture = await LectureRepository.getById(lectureId);
+    expect(lecture).toBeDefined();
+    expect(lecture.title).toBe('Test Lecture');
+
+    // Verify segments were created
+    const segments = await SegmentRepository.getByLecture(lectureId);
+    expect(segments.length).toBeGreaterThan(0);
+  });
+
+  it('updates session status to completed and sets lectureId', async () => {
+    const session = await startRecording({ title: 'Flow Test' });
+    const result = await stopRecording();
+
+    const lectureId = await completeRecording();
+
+    // Session should be updated
+    const updatedSession = await RecordingSessionRepository.getById(session.id);
+    expect(updatedSession.status).toBe(RECORDING_STATUS.COMPLETED);
+    expect(updatedSession.lectureId).toBe(lectureId);
+  });
+
+  it('returns null when no stopped session exists', async () => {
+    const result = await completeRecording();
+    expect(result).toBeNull();
   });
 });
