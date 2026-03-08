@@ -16,12 +16,17 @@ import {
   FlashcardRepository,
   BookmarkRepository,
   ProgressRepository,
+  RecordingSessionRepository,
+  PhotoCaptureRepository,
   createCourse,
   createLecture,
   createSegment,
   createFlashcard,
   createBookmark,
-  FLASHCARD_STATUS
+  createRecordingSession,
+  createPhotoCapture,
+  FLASHCARD_STATUS,
+  RECORDING_STATUS
 } from './storage/index.js';
 
 import {
@@ -78,7 +83,9 @@ import {
   renderCourseEmptyState,
   renderSearchEmptyState,
   renderFavoritesEmptyState,
-  enhancedRenderLibraryView
+  enhancedRenderLibraryView,
+  // Day 4 v0.5.0: Photo gallery
+  renderPhotoGallery
 } from './library.js';
 
 // ============================================================================
@@ -1857,5 +1864,84 @@ describe('Library — Week 14 Day 1: Skeleton Loading', () => {
       expect(container.querySelector('.sp-skeleton')).toBeNull();
       expect(container.querySelector('.sp-library-card')).not.toBeNull();
     });
+  });
+});
+
+// ============================================================================
+// PHOTO GALLERY (v0.5.0 Day 4)
+// ============================================================================
+
+describe('renderPhotoGallery', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  test('renders photo thumbnails with timestamps for a lecture', async () => {
+    // Create a lecture
+    const lecture = await LectureRepository.create(createLecture({ title: 'Photo Test' }));
+
+    // Create a recording session linked to the lecture
+    const session = await RecordingSessionRepository.create(
+      createRecordingSession({ lectureId: lecture.id, status: RECORDING_STATUS.COMPLETED })
+    );
+
+    // Create photo captures for the session
+    await PhotoCaptureRepository.create(
+      createPhotoCapture({ recordingSessionId: session.id, timestampMs: 15000, blob: new Blob(['img1']), size: 100 })
+    );
+    await PhotoCaptureRepository.create(
+      createPhotoCapture({ recordingSessionId: session.id, timestampMs: 60000, blob: new Blob(['img2']), size: 200 })
+    );
+
+    await renderPhotoGallery(container, lecture.id);
+
+    const thumbs = container.querySelectorAll('.photo-thumb');
+    expect(thumbs.length).toBe(2);
+
+    // Each should show a timestamp
+    const timestamps = container.querySelectorAll('.photo-timestamp');
+    expect(timestamps.length).toBe(2);
+  });
+
+  test('shows empty state when lecture has no photos', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'No Photos' }));
+
+    await renderPhotoGallery(container, lecture.id);
+
+    const emptyState = container.querySelector('.sp-empty-state');
+    expect(emptyState).not.toBeNull();
+    expect(emptyState.textContent).toContain('No photos');
+  });
+
+  test('renders Photos tab in lecture detail tabs', () => {
+    const tabContainer = document.createElement('div');
+    document.body.appendChild(tabContainer);
+
+    renderDetailTabs(tabContainer, 'segments', () => {});
+
+    const tabs = tabContainer.querySelectorAll('[role="tab"]');
+    const tabTexts = Array.from(tabs).map(t => t.textContent);
+    expect(tabTexts).toContain('Photos');
+  });
+
+  test('photo thumbnails have alt text with timestamp', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'Alt Test' }));
+    const session = await RecordingSessionRepository.create(
+      createRecordingSession({ lectureId: lecture.id, status: RECORDING_STATUS.COMPLETED })
+    );
+    await PhotoCaptureRepository.create(
+      createPhotoCapture({ recordingSessionId: session.id, timestampMs: 30000, blob: new Blob(['img']), size: 50 })
+    );
+
+    await renderPhotoGallery(container, lecture.id);
+
+    const img = container.querySelector('img');
+    expect(img).not.toBeNull();
+    if (img) {
+      expect(img.getAttribute('alt')).toBeTruthy();
+    }
   });
 });

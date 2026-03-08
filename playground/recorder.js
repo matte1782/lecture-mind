@@ -522,9 +522,10 @@ export function renderRecordView(container) {
       _recordBtn.style.display = '';
       _stopBtn.style.display = 'none';
       _photoBtn.disabled = true;
-      statusEl.textContent = 'Recording saved';
+      statusEl.textContent = 'Recording saved — click Save to create lecture';
       if (result && result.session) {
         showToast('Recording saved');
+        saveBtn.disabled = false;
       }
     } catch (err) {
       statusEl.textContent = 'Error saving recording';
@@ -549,9 +550,31 @@ export function renderRecordView(container) {
     photoInput.click();
   });
 
+  // Save & Create Lecture button (disabled until recording is stopped)
+  const saveBtn = createElement('button', 'save-btn');
+  saveBtn.setAttribute('aria-label', 'Save and create lecture');
+  saveBtn.textContent = 'Save & Create Lecture';
+  saveBtn.disabled = true;
+  saveBtn.addEventListener('click', async () => {
+    try {
+      saveBtn.disabled = true;
+      statusEl.textContent = 'Creating lecture...';
+      const lectureId = await completeRecording();
+      if (lectureId) {
+        showToast('Lecture created');
+        navigateTo(`#/lecture/${lectureId}`);
+      }
+    } catch (err) {
+      statusEl.textContent = 'Error creating lecture';
+      showToast('Error creating lecture');
+      saveBtn.disabled = false;
+    }
+  });
+
   btnRow.appendChild(_recordBtn);
   btnRow.appendChild(_stopBtn);
   btnRow.appendChild(_photoBtn);
+  btnRow.appendChild(saveBtn);
 
   // Assemble
   container.appendChild(titleRow);
