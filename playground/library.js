@@ -30,6 +30,7 @@ import {
   FLASHCARD_STATUS,
   RecordingSessionRepository,
   PhotoCaptureRepository,
+  ConfusionVoteRepository,
   createCourse,
   createLecture,
   createSegment,
@@ -1722,6 +1723,14 @@ async function renderSegmentsList(container, lectureId) {
   const progress = await ProgressRepository.getOrCreate(lectureId);
   const completedSet = new Set(progress.completedSegments);
 
+  // Batch-fetch confusion votes for all segments
+  const allVotes = await ConfusionVoteRepository.getByLecture(lectureId);
+  const votesBySegment = new Map();
+  allVotes.forEach(v => {
+    if (!votesBySegment.has(v.segmentId)) votesBySegment.set(v.segmentId, []);
+    votesBySegment.get(v.segmentId).push(v);
+  });
+
   clearElement(container);
 
   segments.forEach(segment => {
@@ -1750,6 +1759,42 @@ async function renderSegmentsList(container, lectureId) {
       item.appendChild(text);
     }
 
+    // Confusion vote button
+    const segVotes = votesBySegment.get(segment.id) || [];
+    const hasVote = segVotes.length > 0;
+    const confusedBtn = createElement('span', `sp-segment-item__confused-btn${hasVote ? ' sp-segment-item__confused-btn--active' : ''}`);
+    confusedBtn.setAttribute('role', 'button');
+    confusedBtn.setAttribute('tabindex', '0');
+    confusedBtn.setAttribute('aria-pressed', hasVote ? 'true' : 'false');
+    confusedBtn.textContent = hasVote ? `Confused (${segVotes.length})` : 'I\'m confused';
+
+    const handleToggle = async () => {
+      try {
+        const created = await ConfusionVoteRepository.toggle(segment.id, lectureId);
+        confusedBtn.setAttribute('aria-pressed', created ? 'true' : 'false');
+        if (created) {
+          confusedBtn.classList.add('sp-segment-item__confused-btn--active');
+          const count = await ConfusionVoteRepository.countBySegment(segment.id);
+          confusedBtn.textContent = `Confused (${count})`;
+        } else {
+          confusedBtn.classList.remove('sp-segment-item__confused-btn--active');
+          const count = await ConfusionVoteRepository.countBySegment(segment.id);
+          confusedBtn.textContent = count > 0 ? `Confused (${count})` : 'I\'m confused';
+        }
+      } catch (err) {
+        console.warn('Failed to toggle confusion vote:', err);
+      }
+    };
+
+    confusedBtn.addEventListener('click', handleToggle);
+    confusedBtn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleToggle();
+      }
+    });
+
+    item.appendChild(confusedBtn);
     container.appendChild(item);
   });
 

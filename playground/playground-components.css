@@ -825,6 +825,28 @@
 .sp-segment-item__time { font-size: var(--text-sm); color: var(--foreground-muted); white-space: nowrap; }
 .sp-segment-item__type { font-size: var(--text-xs); background: var(--surface); padding: 2px 6px; border-radius: var(--radius-sm); }
 .sp-segment-item__text { font-size: var(--text-sm); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-segment-item__confused-btn {
+  font-size: var(--text-xs);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface);
+  color: var(--foreground-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.sp-segment-item__confused-btn:hover,
+.sp-segment-item__confused-btn:focus-visible {
+  background: var(--surface-hover, var(--surface));
+  outline: 2px solid var(--ring, currentColor);
+  outline-offset: 1px;
+}
+.sp-segment-item__confused-btn--active {
+  background: var(--warning-bg, #fef3c7);
+  color: var(--warning-text, #92400e);
+  border-color: var(--warning-border, #f59e0b);
+}
 
 .sp-flashcard-item {
   display: flex;

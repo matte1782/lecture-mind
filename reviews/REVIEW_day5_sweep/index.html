@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://matte1782.github.io/lecture-mind/reviews/REVIEW_day4_sweep/">
+        <link rel="canonical" href="https://matte1782.github.io/lecture-mind/reviews/REVIEW_day5_sweep/">
       
       
       
@@ -23,7 +23,7 @@
     
     
       
-        <title>Hostile Review: Day 4 Sweep — Photo Gallery + Save Button + CSS - Lecture Mind</title>
+        <title>HOSTILE_REVIEWER: Week 15 Day 5 — SP4-lite Confusion Voting - Lecture Mind</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#hostile-review-day-4-sweep-photo-gallery-save-button-css" class="md-skip">
+        <a href="#hostile_reviewer-week-15-day-5-sp4-lite-confusion-voting" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Hostile Review: Day 4 Sweep — Photo Gallery + Save Button + CSS
+              HOSTILE_REVIEWER: Week 15 Day 5 — SP4-lite Confusion Voting
             
           </span>
         </div>
@@ -822,10 +822,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#summary" class="md-nav__link">
+  <a href="#review-intake" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Summary
+        Review Intake
       
     </span>
   </a>
@@ -833,57 +833,80 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#cross-cutting-checklist" class="md-nav__link">
+  <a href="#findings" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cross-Cutting Checklist
+        Findings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Findings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#critical-blocking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Critical (BLOCKING)
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#files-reviewed" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#major-must-fix" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Files Reviewed
+        Major (MUST FIX)
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#major-issues-from-hostile-reviewer-82100" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#minor-should-fix" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Major Issues (from hostile reviewer, 82/100)
+        Minor (SHOULD FIX)
       
     </span>
   </a>
   
 </li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
         <li class="md-nav__item">
-  <a href="#minor-issues-non-blocking" class="md-nav__link">
+  <a href="#verdict" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Minor Issues (non-blocking)
+        VERDICT
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="VERDICT">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#deferred-to-w19-polish" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deferred to W19 Polish
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#verdict-go-82100-hostile-90100-self-review" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verdict: GO (82/100 hostile, 90/100 self-review)
-      
-    </span>
-  </a>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -907,197 +930,60 @@
   
 
 
-<h1 id="hostile-review-day-4-sweep-photo-gallery-save-button-css">Hostile Review: Day 4 Sweep — Photo Gallery + Save Button + CSS</h1>
-<h2 id="summary">Summary</h2>
+<h1 id="hostile_reviewer-week-15-day-5-sp4-lite-confusion-voting">HOSTILE_REVIEWER: Week 15 Day 5 — SP4-lite Confusion Voting</h1>
+<h2 id="review-intake">Review Intake</h2>
 <ul>
-<li><strong>Score:</strong> 90/100</li>
-<li><strong>Issues:</strong> 0 Critical, 1 Major, 3 Minor</li>
-<li><strong>Recommendation:</strong> GO</li>
+<li><strong>Artifact:</strong> Week 15 Day 5 changes (toggle(), confusion button UI, tests, CSS)</li>
+<li><strong>Type:</strong> Code</li>
+<li><strong>Author:</strong> Human + AI</li>
+<li><strong>Date:</strong> 2026-03-08</li>
+<li><strong>Files reviewed:</strong></li>
+<li><code>src/vl_jepa/api/static/storage/repositories.js</code> (lines 919-945)</li>
+<li><code>src/vl_jepa/api/static/storage/repositories.test.js</code> (lines 749-785)</li>
+<li><code>src/vl_jepa/api/static/library.js</code> (lines 1721-1800)</li>
+<li><code>src/vl_jepa/api/static/library.test.js</code> (lines 1181-1297)</li>
+<li><code>src/vl_jepa/api/static/playground-components.css</code> (lines 828-849)</li>
 </ul>
-<h2 id="cross-cutting-checklist">Cross-Cutting Checklist</h2>
-<table>
-<thead>
-<tr>
-<th>Check</th>
-<th>Status</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>AD-1 compliance: library.js (L3) imports from storage (L0) only</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>AD-1 compliance: recorder.js (L2) imports from flashcards.js (L1) + storage (L0)</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>Safe DOM: No innerHTML in any changed file</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>Photo gallery: RecordingSessionRepository.getByLecture → PhotoCaptureRepository.getBySession</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>Photo gallery: createObjectURL with try/catch for jsdom</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>Photo gallery: alt text on all images</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>Photo gallery: empty state when no photos</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>Save button: disabled initially, enabled after stopRecording</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>Save button: calls completeRecording() + navigateTo lecture detail</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>Save button: aria-label present</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>CSS: Variable fallbacks on all custom properties</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>CSS: focus-visible on save-btn</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>CSS: Responsive photo-gallery grid</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>Tab count: 6 tabs (Segments, Flashcards, Bookmarks, Photos, Info, Analytics)</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>Analytics test fixed: tab count assertion 5→6</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>Test coverage: +7 new tests (4 library + 3 recorder)</td>
-<td>PASS</td>
-</tr>
-<tr>
-<td>Regression: 640 total tests, 0 failures, 11 suites</td>
-<td>PASS</td>
-</tr>
-</tbody>
-</table>
-<h2 id="files-reviewed">Files Reviewed</h2>
-<table>
-<thead>
-<tr>
-<th>File</th>
-<th>Lines Changed</th>
-<th>New Tests</th>
-<th>Status</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>library.js</td>
-<td>+60 (renderPhotoGallery, imports, tab additions)</td>
-<td>-</td>
-<td>MODIFIED</td>
-</tr>
-<tr>
-<td>library.test.js</td>
-<td>+70 (4 photo gallery tests)</td>
-<td>4</td>
-<td>MODIFIED</td>
-</tr>
-<tr>
-<td>recorder.js</td>
-<td>+20 (save button in renderRecordView)</td>
-<td>-</td>
-<td>MODIFIED</td>
-</tr>
-<tr>
-<td>recorder.test.js</td>
-<td>+40 (3 save button tests)</td>
-<td>3</td>
-<td>MODIFIED</td>
-</tr>
-<tr>
-<td>recorder.css</td>
-<td>+50 (save-btn, photo-gallery, photo-thumb)</td>
-<td>-</td>
-<td>MODIFIED</td>
-</tr>
-<tr>
-<td>analytics.test.js</td>
-<td>+1 (tab count fix)</td>
-<td>-</td>
-<td>MODIFIED</td>
-</tr>
-</tbody>
-</table>
-<h2 id="major-issues-from-hostile-reviewer-82100">Major Issues (from hostile reviewer, 82/100)</h2>
-<table>
-<thead>
-<tr>
-<th>ID</th>
-<th>Issue</th>
-<th>Status</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>M1</td>
-<td>URL.createObjectURL blobs never revoked — memory leak with many photos</td>
-<td>DEFERRED to W19 polish (bounded to Photos tab, acceptable for MVP)</td>
-</tr>
-<tr>
-<td>M2</td>
-<td>Save button click handler untested (only DOM presence tested)</td>
-<td>DEFERRED to W19 — core logic tested via completeRecording unit tests (Group 9)</td>
-</tr>
-</tbody>
-</table>
-<h2 id="minor-issues-non-blocking">Minor Issues (non-blocking)</h2>
-<table>
-<thead>
-<tr>
-<th>ID</th>
-<th>Issue</th>
-<th>Status</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>m1</td>
-<td>renderDetailTabs JSDoc stale — doesn't list 'photos'</td>
-<td>LOW — docs only</td>
-</tr>
-<tr>
-<td>m2</td>
-<td>Two formatTime functions (library m:ss vs recorder HH:MM:SS)</td>
-<td>ACCEPTABLE — gallery matches existing segment timestamp format</td>
-</tr>
-<tr>
-<td>m3</td>
-<td>Alt text test only asserts truthy, not format</td>
-<td>LOW — regression risk minimal</td>
-</tr>
-<tr>
-<td>m4</td>
-<td>.record-container CSS class never applied in JS</td>
-<td>PRE-EXISTING from Day 2 — container passed from outside</td>
-</tr>
-</tbody>
-</table>
-<h2 id="verdict-go-82100-hostile-90100-self-review">Verdict: GO (82/100 hostile, 90/100 self-review)</h2>
-<p>Day 4 delivered photo gallery tab in lecture detail with thumbnail grid and timestamps, "Save &amp; Create Lecture" button wired to completeRecording + navigation, responsive CSS with focus-visible, and 7 new tests. 640 total tests pass. Architecture alignment verified. Two majors deferred to polish week — acceptable for MVP. Hostile reviewer approved conditionally.</p>
+<hr />
+<h2 id="findings">Findings</h2>
+<h3 id="critical-blocking">Critical (BLOCKING)</h3>
+<p>None.</p>
+<h3 id="major-must-fix">Major (MUST FIX)</h3>
+<p><strong>[M1] <code>_toggleLocks</code> Map entries never cleaned up — unbounded memory growth (85% confidence)</strong>
+- <strong>Location:</strong> <code>repositories.js:920,943</code>
+- <strong>Issue:</strong> <code>_toggleLocks</code> entries are set on every <code>toggle()</code> call but never deleted. Over a long session with many segments, this Map grows without bound.
+- <strong>Status:</strong> FIXED — added <code>finally()</code> cleanup that deletes key when no longer active.</p>
+<p><strong>[M2] <code>handleToggle</code> has zero error handling — unhandled rejection on IDB failure (90% confidence)</strong>
+- <strong>Location:</strong> <code>library.js:1771-1783</code>
+- <strong>Issue:</strong> <code>handleToggle</code> is an async function called from click/keydown handlers. If IDB throws, the rejection is unhandled and button UI may be inconsistent.
+- <strong>Status:</strong> FIXED — wrapped in try/catch with console.warn.</p>
+<h3 id="minor-should-fix">Minor (SHOULD FIX)</h3>
+<p><strong>[m1] Redundant <code>countBySegment</code> call in both branches of <code>handleToggle</code> (75% confidence)</strong>
+- Deferred to W19. Minor perf hit, no correctness issue.</p>
+<p><strong>[m2] No <code>aria-label</code> on the confusion button (70% confidence)</strong>
+- textContent provides adequate accessible name per WCAG. Minor improvement deferred.</p>
+<p><strong>[m3] <code>_toggleLocks</code> is a mutable property on object literal (60% confidence)</strong>
+- Style concern, no bug. Deferred.</p>
+<hr />
+<h2 id="verdict">VERDICT</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>+---------------------------------------------------+
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>|   HOSTILE_REVIEWER: APPROVE                       |
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>|                                                   |
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>|   Score: 87/100 → 91/100 (after M1+M2 fix)       |
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>|                                                   |
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>|   Critical Issues: 0                              |
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>|   Major Issues: 2 (both FIXED)                    |
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>|   Minor Issues: 3 (deferred to W19)              |
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>|                                                   |
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>|   Disposition: GO                                 |
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>+---------------------------------------------------+
+</code></pre></div>
+<h3 id="deferred-to-w19-polish">Deferred to W19 Polish</h3>
+<ul>
+<li>Day 5 m1: Redundant countBySegment call in handleToggle</li>
+<li>Day 5 m2: aria-label on confusion button</li>
+<li>Day 5 m3: _toggleLocks as module-level const instead of object property</li>
+</ul>
 
 
 
