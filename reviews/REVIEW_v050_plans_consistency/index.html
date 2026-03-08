@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://matte1782.github.io/lecture-mind/reviews/REVIEW_day0_sweep/">
+        <link rel="canonical" href="https://matte1782.github.io/lecture-mind/reviews/REVIEW_v050_plans_consistency/">
       
       
       
@@ -23,7 +23,7 @@
     
     
       
-        <title>Day 0 Hostile Review — v0.5.0 Week 15 - Lecture Mind</title>
+        <title>v0.5.0 Plans Consistency Review - Lecture Mind</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#day-0-hostile-review-v050-week-15" class="md-skip">
+        <a href="#v050-plans-consistency-review" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Day 0 Hostile Review — v0.5.0 Week 15
+              v0.5.0 Plans Consistency Review
             
           </span>
         </div>
@@ -822,33 +822,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#summary" class="md-nav__link">
+  <a href="#issues-found-and-fixed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Summary
+        Issues Found and Fixed
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#major-issues-fixed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Major Issues (fixed)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Major Issues (fixed)">
+    <nav class="md-nav" aria-label="Issues Found and Fixed">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#m1-getcssvar-jsdoc-incomplete-fixed" class="md-nav__link">
+  <a href="#critical-all-fixed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        M1. getCSSVar JSDoc incomplete (FIXED)
+        Critical (all fixed)
       
     </span>
   </a>
@@ -856,10 +845,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#m2-getcssvar-tests-missing-success-path-fixed" class="md-nav__link">
+  <a href="#major-all-fixed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        M2. getCSSVar tests missing success path (FIXED)
+        Major (all fixed)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#minor-all-fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minor (all fixed)
       
     </span>
   </a>
@@ -872,71 +872,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#minor-issues" class="md-nav__link">
+  <a href="#final-status-approved" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Minor Issues
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Minor Issues">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#m1-renderconfetti-aftereach-cleanup-uses-fragile-selector" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        m1. renderConfetti afterEach cleanup uses fragile selector
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#m2-renderconfetti-mathrandom-is-cosmetic-not-ids" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        m2. renderConfetti Math.random() is cosmetic, not IDs
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#m3-renderlibraryview-fallback-rationale-not-documented-fixed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        m3. renderLibraryView fallback rationale not documented (FIXED)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pre-existing-debt-not-day-0-scope" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pre-existing Debt (not Day 0 scope)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#verdict-go-90100" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verdict: GO — 90/100
+        Final Status: APPROVED
       
     </span>
   </a>
@@ -963,36 +902,168 @@
   
 
 
-<h1 id="day-0-hostile-review-v050-week-15">Day 0 Hostile Review — v0.5.0 Week 15</h1>
-<p><strong>Date:</strong> 2026-03-07
-<strong>Reviewer:</strong> hostile-reviewer agent</p>
-<h2 id="summary">Summary</h2>
-<ul>
-<li>Issues: 0 critical, 2 major, 3 minor</li>
-<li>Score: 82/100 → <strong>90/100 after fixes</strong></li>
-<li>Recommendation: <strong>GO</strong></li>
-</ul>
-<h2 id="major-issues-fixed">Major Issues (fixed)</h2>
-<h3 id="m1-getcssvar-jsdoc-incomplete-fixed">M1. getCSSVar JSDoc incomplete (FIXED)</h3>
-<p><strong>Location:</strong> <code>analytics.js:25-26</code>
-<strong>Fix:</strong> Added @param/@returns JSDoc tags.</p>
-<h3 id="m2-getcssvar-tests-missing-success-path-fixed">M2. getCSSVar tests missing success path (FIXED)</h3>
-<p><strong>Location:</strong> <code>analytics.test.js</code>
-<strong>Fix:</strong> Added test using <code>document.documentElement.style.setProperty()</code> to verify actual CSS variable retrieval.</p>
-<h2 id="minor-issues">Minor Issues</h2>
-<h3 id="m1-renderconfetti-aftereach-cleanup-uses-fragile-selector">m1. renderConfetti afterEach cleanup uses fragile selector</h3>
-<p><strong>Confidence:</strong> 60% — no current collision, theoretical risk only.</p>
-<h3 id="m2-renderconfetti-mathrandom-is-cosmetic-not-ids">m2. renderConfetti Math.random() is cosmetic, not IDs</h3>
-<p><strong>Confidence:</strong> 40% — not a violation of the anti-pattern rule.</p>
-<h3 id="m3-renderlibraryview-fallback-rationale-not-documented-fixed">m3. renderLibraryView fallback rationale not documented (FIXED)</h3>
-<p><strong>Fix:</strong> Added comment <code>// fallback for tests without library.js</code></p>
-<h2 id="pre-existing-debt-not-day-0-scope">Pre-existing Debt (not Day 0 scope)</h2>
-<ul>
-<li>pruneOldRecords relies on insertion order (analytics.js:206)</li>
-<li>No tests for saveQuizResult/saveWatchSession persistence</li>
-<li>createStudySessionRecord startTime/endTime both set to Date.now()</li>
-</ul>
-<h2 id="verdict-go-90100">Verdict: GO — 90/100</h2>
+<h1 id="v050-plans-consistency-review">v0.5.0 Plans Consistency Review</h1>
+<p><strong>Reviewer:</strong> HOSTILE_REVIEWER
+<strong>Date:</strong> 2026-03-07
+<strong>Initial Score: 31/100 — REJECT</strong>
+<strong>Final Score: 85/100 — APPROVED</strong> (after all fixes applied)</p>
+<hr />
+<h2 id="issues-found-and-fixed">Issues Found and Fixed</h2>
+<h3 id="critical-all-fixed">Critical (all fixed)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Issue</th>
+<th>Location</th>
+<th>Fix Applied</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C1</td>
+<td>autoNotes store missing from DB migration code</td>
+<td>ARCHITECTURE §9</td>
+<td>Added <code>autoNotes</code> store + indexes to migration block</td>
+</tr>
+<tr>
+<td>C2</td>
+<td>Modified files table missing notes-engine.js, llm-client.js, AutoNote model</td>
+<td>ARCHITECTURE §5</td>
+<td>Added all 3 entries</td>
+</tr>
+<tr>
+<td>C3</td>
+<td>Section 4 had old 2.5-week timeline conflicting with new calendar</td>
+<td>ROADMAP §4</td>
+<td>Rewrote §4 to 5-week breakdown</td>
+</tr>
+<tr>
+<td>C4</td>
+<td>WEEK16 still had release tasks (Day 5)</td>
+<td>WEEK16</td>
+<td>Moved release to WEEK19; W16 Day 5 = a11y audit</td>
+</tr>
+<tr>
+<td>C5</td>
+<td>LLM API CORS not addressed (OpenAI has no browser CORS)</td>
+<td>WEEK18</td>
+<td>Claude-only for v0.5.0; OpenAI deferred to v0.6.0 with proxy</td>
+</tr>
+</tbody>
+</table>
+<h3 id="major-all-fixed">Major (all fixed)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Issue</th>
+<th>Location</th>
+<th>Fix Applied</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>M1</td>
+<td>Store count inconsistency (3 vs 4 vs 5)</td>
+<td>Multiple docs</td>
+<td>Unified to 5 stores everywhere</td>
+</tr>
+<tr>
+<td>M2</td>
+<td>Auto-Notes data flow missing</td>
+<td>ARCHITECTURE</td>
+<td>Added §10.3 Auto-Notes Flow</td>
+</tr>
+<tr>
+<td>M3</td>
+<td>API key storage security not addressed</td>
+<td>WEEK18</td>
+<td>Plaintext localStorage, warning in UI, justification documented</td>
+</tr>
+<tr>
+<td>M4</td>
+<td>Cut list in ROADMAP §5 missing Auto-Notes</td>
+<td>ROADMAP §5</td>
+<td>Added Auto-Notes to cut priority table</td>
+</tr>
+<tr>
+<td>M5</td>
+<td>WEEK17 still referenced v0.5.1 for Auto-Notes spikes</td>
+<td>WEEK17</td>
+<td>Updated to reference Week 18; removed duplicate LLM spike</td>
+</tr>
+<tr>
+<td>M6</td>
+<td>Budget mismatch (51h vs 68h vs 84h)</td>
+<td>ROADMAP header</td>
+<td>Fixed to 68h core + 16h contingency = 84h max</td>
+</tr>
+<tr>
+<td>M7</td>
+<td>Test count 60 vs 83 inconsistency</td>
+<td>ROADMAP §7</td>
+<td>Updated to 83 new tests, target 640+ total</td>
+</tr>
+</tbody>
+</table>
+<h3 id="minor-all-fixed">Minor (all fixed)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Issue</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>m1</td>
+<td>ARCHITECTURE footer still said ~51h</td>
+<td>Updated to ~68h, 4-5 weeks</td>
+</tr>
+<tr>
+<td>m2</td>
+<td>WEEK15 prereq said old 51h/2.5wk scope</td>
+<td>Updated to 68h/4-5 weeks</td>
+</tr>
+<tr>
+<td>m3</td>
+<td>WEEK17 completion criteria said v0.5.0 from W16</td>
+<td>Updated to W19</td>
+</tr>
+<tr>
+<td>m4</td>
+<td>ROADMAP §6 decision points missing W18 CORS check</td>
+<td>Added CORS gate decision point</td>
+</tr>
+<tr>
+<td>m5</td>
+<td>CLAUDE.md still had old 51h/2.5-week scope table</td>
+<td>Updated to full 68h scope with Auto-Notes + week column</td>
+</tr>
+<tr>
+<td>m6</td>
+<td>ROADMAP version table still had v0.5.1 as Auto-Notes</td>
+<td>Removed v0.5.1 row; Auto-Notes is now in v0.5.0</td>
+</tr>
+<tr>
+<td>m7</td>
+<td>WEEK16 total hours said 20h but tasks added to 15h</td>
+<td>Fixed to 15h</td>
+</tr>
+<tr>
+<td>m8</td>
+<td>WEEK16 test target said 617+</td>
+<td>Updated to 612+ (matches new schedule)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="final-status-approved">Final Status: APPROVED</h2>
+<p>All 20 issues (5 critical, 7 major, 8 minor) resolved.
+Plans are internally consistent across: ROADMAP_V050, ARCHITECTURE_v050, WEEK15-19, CLAUDE.md.</p>
+<p>Ready to begin Week 15 Day 0 implementation.</p>
 
 
 

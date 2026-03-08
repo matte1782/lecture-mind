@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://matte1782.github.io/lecture-mind/reviews/REVIEW_day0_sweep/">
+        <link rel="canonical" href="https://matte1782.github.io/lecture-mind/reviews/REVIEW_day0.5_ui_polish/">
       
       
       
@@ -23,7 +23,7 @@
     
     
       
-        <title>Day 0 Hostile Review — v0.5.0 Week 15 - Lecture Mind</title>
+        <title>Hostile Review: iOS Spike UI/UX Polish - Lecture Mind</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#day-0-hostile-review-v050-week-15" class="md-skip">
+        <a href="#hostile-review-ios-spike-uiux-polish" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Day 0 Hostile Review — v0.5.0 Week 15
+              Hostile Review: iOS Spike UI/UX Polish
             
           </span>
         </div>
@@ -833,99 +833,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#major-issues-fixed" class="md-nav__link">
+  <a href="#all-17-improvements-verified" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Major Issues (fixed)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Major Issues (fixed)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#m1-getcssvar-jsdoc-incomplete-fixed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        M1. getCSSVar JSDoc incomplete (FIXED)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#m2-getcssvar-tests-missing-success-path-fixed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        M2. getCSSVar tests missing success path (FIXED)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#minor-issues" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Minor Issues
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Minor Issues">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#m1-renderconfetti-aftereach-cleanup-uses-fragile-selector" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        m1. renderConfetti afterEach cleanup uses fragile selector
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#m2-renderconfetti-mathrandom-is-cosmetic-not-ids" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        m2. renderConfetti Math.random() is cosmetic, not IDs
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#m3-renderlibraryview-fallback-rationale-not-documented-fixed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        m3. renderLibraryView fallback rationale not documented (FIXED)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pre-existing-debt-not-day-0-scope" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pre-existing Debt (not Day 0 scope)
+        All 17 Improvements Verified
       
     </span>
   </a>
@@ -933,10 +844,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#verdict-go-90100" class="md-nav__link">
+  <a href="#minor-issues-all-fixed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Verdict: GO — 90/100
+        Minor Issues (ALL FIXED)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verdict-go-97100" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verdict: GO (97/100)
       
     </span>
   </a>
@@ -963,36 +885,138 @@
   
 
 
-<h1 id="day-0-hostile-review-v050-week-15">Day 0 Hostile Review — v0.5.0 Week 15</h1>
-<p><strong>Date:</strong> 2026-03-07
-<strong>Reviewer:</strong> hostile-reviewer agent</p>
+<h1 id="hostile-review-ios-spike-uiux-polish">Hostile Review: iOS Spike UI/UX Polish</h1>
 <h2 id="summary">Summary</h2>
 <ul>
-<li>Issues: 0 critical, 2 major, 3 minor</li>
-<li>Score: 82/100 → <strong>90/100 after fixes</strong></li>
-<li>Recommendation: <strong>GO</strong></li>
+<li><strong>Score:</strong> 93/100 -&gt; 97/100 (after fixing 3 minors)</li>
+<li><strong>Issues:</strong> 0 Critical, 0 Major, 3 Minor (ALL FIXED)</li>
+<li><strong>Recommendation:</strong> GO</li>
 </ul>
-<h2 id="major-issues-fixed">Major Issues (fixed)</h2>
-<h3 id="m1-getcssvar-jsdoc-incomplete-fixed">M1. getCSSVar JSDoc incomplete (FIXED)</h3>
-<p><strong>Location:</strong> <code>analytics.js:25-26</code>
-<strong>Fix:</strong> Added @param/@returns JSDoc tags.</p>
-<h3 id="m2-getcssvar-tests-missing-success-path-fixed">M2. getCSSVar tests missing success path (FIXED)</h3>
-<p><strong>Location:</strong> <code>analytics.test.js</code>
-<strong>Fix:</strong> Added test using <code>document.documentElement.style.setProperty()</code> to verify actual CSS variable retrieval.</p>
-<h2 id="minor-issues">Minor Issues</h2>
-<h3 id="m1-renderconfetti-aftereach-cleanup-uses-fragile-selector">m1. renderConfetti afterEach cleanup uses fragile selector</h3>
-<p><strong>Confidence:</strong> 60% — no current collision, theoretical risk only.</p>
-<h3 id="m2-renderconfetti-mathrandom-is-cosmetic-not-ids">m2. renderConfetti Math.random() is cosmetic, not IDs</h3>
-<p><strong>Confidence:</strong> 40% — not a violation of the anti-pattern rule.</p>
-<h3 id="m3-renderlibraryview-fallback-rationale-not-documented-fixed">m3. renderLibraryView fallback rationale not documented (FIXED)</h3>
-<p><strong>Fix:</strong> Added comment <code>// fallback for tests without library.js</code></p>
-<h2 id="pre-existing-debt-not-day-0-scope">Pre-existing Debt (not Day 0 scope)</h2>
-<ul>
-<li>pruneOldRecords relies on insertion order (analytics.js:206)</li>
-<li>No tests for saveQuizResult/saveWatchSession persistence</li>
-<li>createStudySessionRecord startTime/endTime both set to Date.now()</li>
-</ul>
-<h2 id="verdict-go-90100">Verdict: GO — 90/100</h2>
+<h2 id="all-17-improvements-verified">All 17 Improvements Verified</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Improvement</th>
+<th>Verified</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>*:focus-visible</code> outline</td>
+<td>YES</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Log header ARIA + keyboard</td>
+<td>YES</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Reset <code>aria-label</code></td>
+<td>YES</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>--text-tertiary</code> 0.50 (5.2:1 contrast)</td>
+<td>YES</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>--text-secondary</code> 0.65 (7.5:1 contrast)</td>
+<td>YES</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Result card <code>role="status"</code> + <code>aria-live</code></td>
+<td>YES</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Button <code>min-height: 48px</code> + <code>touch-action</code></td>
+<td>YES</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>user-scalable=no</code> removed</td>
+<td>YES</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>viewport-fit=cover</code> added</td>
+<td>YES</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Photo button dynamic <code>aria-label</code></td>
+<td>YES</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Pulse with box-shadow ring</td>
+<td>YES</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Spring easing on button press</td>
+<td>YES</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Result card entry animation</td>
+<td>YES</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Waveform idle varied heights</td>
+<td>YES</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Scroll-to-result</td>
+<td>YES</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Loading state "Requesting..."</td>
+<td>YES</td>
+</tr>
+<tr>
+<td>17</td>
+<td>Wake Lock inline styles to CSS</td>
+<td>YES</td>
+</tr>
+</tbody>
+</table>
+<h2 id="minor-issues-all-fixed">Minor Issues (ALL FIXED)</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Issue</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>m1</td>
+<td>Waveform <code>height</code> animation triggers layout</td>
+<td>Changed to <code>transform: scaleY()</code> with <code>will-change: transform</code></td>
+</tr>
+<tr>
+<td>m2</td>
+<td>Remaining inline <code>style="margin-bottom:24px;"</code></td>
+<td>Extracted to <code>.section-last</code> CSS class</td>
+</tr>
+<tr>
+<td>m3</td>
+<td>6 uncached <code>getElementById</code> calls</td>
+<td>Cached all refs in top-level block</td>
+</tr>
+</tbody>
+</table>
+<h2 id="verdict-go-97100">Verdict: GO (97/100)</h2>
 
 
 

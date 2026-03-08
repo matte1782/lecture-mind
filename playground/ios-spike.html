@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Lecture Mind — iOS Compatibility Test</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #16161f;
+    --surface-raised: #1e1e2a;
+    --surface-glass: rgba(255, 255, 255, 0.04);
+    --border: rgba(255, 255, 255, 0.06);
+    --border-focus: rgba(255, 255, 255, 0.12);
+    --text-primary: #f0f0f5;
+    --text-secondary: rgba(240, 240, 245, 0.65);
+    --text-tertiary: rgba(240, 240, 245, 0.50);
+    --accent: #6366f1;
+    --accent-glow: rgba(99, 102, 241, 0.25);
+    --red: #ef4444;
+    --red-glow: rgba(239, 68, 68, 0.2);
+    --green: #22c55e;
+    --green-glow: rgba(34, 197, 94, 0.2);
+    --amber: #f59e0b;
+    --amber-glow: rgba(245, 158, 11, 0.15);
+    --blue: #3b82f6;
+    --blue-glow: rgba(59, 130, 246, 0.2);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-full: 999px;
+    --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --spring: 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'SF Mono', 'Menlo', 'Consolas', monospace;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  *:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  html {
+    background: var(--bg);
+    color: var(--text-primary);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    font-family: var(--font);
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 0 16px calc(16px + var(--safe-bottom));
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Header */
+  .header {
+    padding: 20px 0 24px;
+    text-align: center;
+    position: relative;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: -16px;
+    right: -16px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-focus), transparent);
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    margin-bottom: 12px;
+  }
+  .brand-dot {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+    margin-bottom: 6px;
+  }
+  .header p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  /* Section */
+  .section { margin-top: 20px; }
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    margin-bottom: 10px;
+    padding-left: 4px;
+  }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card + .card { margin-top: 10px; }
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  /* Recording Hero */
+  .rec-hero {
+    text-align: center;
+    padding: 32px 20px;
+    border-radius: var(--radius);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    transition: border-color var(--transition), box-shadow var(--transition);
+  }
+  .rec-hero.is-recording {
+    border-color: rgba(239, 68, 68, 0.3);
+    box-shadow: 0 0 40px var(--red-glow), inset 0 0 40px rgba(239, 68, 68, 0.03);
+  }
+  .rec-hero.is-recording .rec-hero-bg { opacity: 1; }
+  .rec-hero-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(239, 68, 68, 0.06) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    pointer-events: none;
+  }
+  .timer {
+    font-size: 48px;
+    font-weight: 200;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    margin-bottom: 8px;
+    position: relative;
+    color: var(--text-primary);
+    transition: color var(--transition);
+  }
+  .is-recording .timer { color: #fff; }
+  .rec-label {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: relative;
+    transition: color var(--transition);
+  }
+  .is-recording .rec-label { color: var(--red); }
+  .rec-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--text-tertiary);
+    transition: background var(--transition);
+  }
+  .is-recording .rec-dot {
+    background: var(--red);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+    50% { opacity: 0.4; transform: scale(0.85); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  }
+
+  /* Waveform */
+  .waveform {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 32px;
+    margin: 16px 0 4px;
+    position: relative;
+  }
+  .waveform-bar {
+    width: 3px;
+    background: var(--text-tertiary);
+    border-radius: 2px;
+    height: 8px;
+    transform-origin: center;
+    will-change: transform;
+    transition: background 0.3s ease;
+  }
+  /* Idle-state hint: varied heights suggest waveform potential */
+  .waveform-bar:nth-child(odd)  { height: 6px; }
+  .waveform-bar:nth-child(3n)   { height: 10px; }
+  .waveform-bar:nth-child(5n+2) { height: 12px; }
+  .waveform-bar:nth-child(7)    { height: 14px; }
+  .is-recording .waveform-bar {
+    background: var(--red);
+    animation: wave 1.2s ease-in-out infinite;
+  }
+  @keyframes wave {
+    0%, 100% { transform: scaleY(1); opacity: 0.4; }
+    50% { transform: scaleY(3.5); opacity: 1; }
+  }
+  .waveform-bar:nth-child(1)  { animation-delay: 0s; }
+  .waveform-bar:nth-child(2)  { animation-delay: 0.1s; }
+  .waveform-bar:nth-child(3)  { animation-delay: 0.2s; }
+  .waveform-bar:nth-child(4)  { animation-delay: 0.15s; }
+  .waveform-bar:nth-child(5)  { animation-delay: 0.3s; }
+  .waveform-bar:nth-child(6)  { animation-delay: 0.05s; }
+  .waveform-bar:nth-child(7)  { animation-delay: 0.25s; }
+  .waveform-bar:nth-child(8)  { animation-delay: 0.12s; }
+  .waveform-bar:nth-child(9)  { animation-delay: 0.22s; }
+  .waveform-bar:nth-child(10) { animation-delay: 0.08s; }
+  .waveform-bar:nth-child(11) { animation-delay: 0.18s; }
+  .waveform-bar:nth-child(12) { animation-delay: 0.28s; }
+  .waveform-bar:nth-child(13) { animation-delay: 0.03s; }
+  .waveform-bar:nth-child(14) { animation-delay: 0.2s; }
+  .waveform-bar:nth-child(15) { animation-delay: 0.13s; }
+
+  /* Buttons */
+  .btn-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 16px;
+    min-height: 48px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn:active { transform: scale(0.97); transition: transform var(--spring); }
+
+  .btn-record {
+    background: var(--red);
+    color: #fff;
+    box-shadow: 0 4px 16px var(--red-glow);
+  }
+  .btn-record:active { background: #dc2626; }
+  .btn-record.is-stop {
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    border: 1px solid var(--border-focus);
+    box-shadow: none;
+  }
+
+  /* Icon swap: record circle vs stop square */
+  .btn-record .icon-record { display: inline; }
+  .btn-record .icon-stop { display: none; }
+  .btn-record.is-stop .icon-record { display: none; }
+  .btn-record.is-stop .icon-stop { display: inline; }
+
+  .btn-photo {
+    background: var(--blue);
+    color: #fff;
+    box-shadow: 0 4px 16px var(--blue-glow);
+  }
+  .btn-photo:active { background: #2563eb; }
+  .btn-photo:disabled {
+    background: var(--surface-raised);
+    color: var(--text-tertiary);
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-subtle {
+    background: var(--surface-raised);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    flex: 0;
+    padding: 14px;
+    min-width: 48px;
+  }
+  .btn-subtle:active { background: var(--surface); }
+
+  .btn-wakelock {
+    background: linear-gradient(135deg, var(--amber), #d97706);
+    color: #000;
+    font-weight: 700;
+    box-shadow: 0 4px 16px var(--amber-glow);
+  }
+  .btn-wakelock:active { opacity: 0.9; }
+  .btn-wakelock:disabled { opacity: 0.6; cursor: default; transform: none; }
+
+  .btn-icon {
+    width: 18px; height: 18px;
+    flex-shrink: 0;
+  }
+
+  /* Status Pills */
+  .status-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    font-family: var(--font-mono);
+    letter-spacing: -0.01em;
+    border: 1px solid transparent;
+    transition: all var(--transition);
+  }
+  .pill-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .pill-neutral {
+    background: var(--surface-glass);
+    border-color: var(--border);
+    color: var(--text-secondary);
+  }
+  .pill-neutral .pill-dot { background: var(--text-tertiary); }
+  .pill-ok {
+    background: rgba(34, 197, 94, 0.08);
+    border-color: rgba(34, 197, 94, 0.15);
+    color: var(--green);
+  }
+  .pill-ok .pill-dot { background: var(--green); }
+  .pill-warn {
+    background: rgba(245, 158, 11, 0.08);
+    border-color: rgba(245, 158, 11, 0.15);
+    color: var(--amber);
+  }
+  .pill-warn .pill-dot { background: var(--amber); }
+  .pill-fail {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.15);
+    color: var(--red);
+  }
+  .pill-fail .pill-dot { background: var(--red); }
+
+  /* Result Card */
+  .result-card {
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    transform: scale(1);
+  }
+  .result-pass, .result-fail {
+    animation: resultEntry 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes resultEntry {
+    0% { transform: scale(0.95); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .result-card .result-icon {
+    font-size: 36px;
+    margin-bottom: 8px;
+    line-height: 1;
+  }
+  .result-card .result-title {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .result-card .result-detail {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+  .result-pending { border-color: var(--border); }
+  .result-pending .result-title { color: var(--text-tertiary); }
+  .result-pass {
+    border-color: rgba(34, 197, 94, 0.25);
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.06), var(--surface));
+    box-shadow: 0 0 40px var(--green-glow);
+  }
+  .result-pass .result-title { color: var(--green); }
+  .result-fail {
+    border-color: rgba(239, 68, 68, 0.25);
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.06), var(--surface));
+    box-shadow: 0 0 40px var(--red-glow);
+  }
+  .result-fail .result-title { color: var(--red); }
+
+  /* Event Log */
+  .log-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .log-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .log-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+  .log-count {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    background: var(--surface-raised);
+    color: var(--text-tertiary);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border);
+  }
+  .log-chevron {
+    width: 16px; height: 16px;
+    color: var(--text-tertiary);
+    transition: transform var(--transition);
+  }
+  .log-container.is-open .log-chevron { transform: rotate(180deg); }
+  .log-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+  }
+  .log-container.is-open .log-body { max-height: 400px; }
+  #log {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--green);
+    padding: 12px 16px;
+    max-height: 380px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Wake Lock layout */
+  .wakelock-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .wakelock-info { flex: 1; }
+  .wakelock-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .wakelock-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .wakelock-btn {
+    flex: 0;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  /* Utility */
+  .section-last { margin-bottom: 24px; }
+  #photoInput { display: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  #log::-webkit-scrollbar { width: 4px; }
+  #log::-webkit-scrollbar-track { background: transparent; }
+  #log::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="brand">
+    <span class="brand-dot"></span>
+    <span>Lecture Mind</span>
+  </div>
+  <h1>iOS Compatibility Test</h1>
+  <p>Does capturing a photo interrupt audio recording on iOS Safari?</p>
+</header>
+
+<!-- Recording Hero -->
+<div class="section">
+  <div class="rec-hero" id="recHero">
+    <div class="rec-hero-bg"></div>
+    <div class="timer" id="timer">00:00</div>
+    <div class="waveform" id="waveform">
+      <div class="waveform-bar"></div><div class="waveform-bar"></div>
+      <div class="waveform-bar"></div><div class="waveform-bar"></div>
+      <div class="waveform-bar"></div><div class="waveform-bar"></div>
+      <div class="waveform-bar"></div><div class="waveform-bar"></div>
+      <div class="waveform-bar"></div><div class="waveform-bar"></div>
+      <div class="waveform-bar"></div><div class="waveform-bar"></div>
+      <div class="waveform-bar"></div><div class="waveform-bar"></div>
+      <div class="waveform-bar"></div>
+    </div>
+    <div class="rec-label" id="recLabel">
+      <span class="rec-dot" id="recDot"></span>
+      <span id="recLabelText">Ready to record</span>
+    </div>
+  </div>
+
+  <!-- Status Pills -->
+  <div class="status-row">
+    <span class="pill pill-neutral" id="pillRecorder">
+      <span class="pill-dot"></span>
+      <span id="pillRecorderText">Idle</span>
+    </span>
+    <span class="pill pill-neutral" id="pillCodec">
+      <span class="pill-dot"></span>
+      <span id="pillCodecText">Detecting...</span>
+    </span>
+    <span class="pill pill-neutral" id="pillWakeLock">
+      <span class="pill-dot"></span>
+      <span id="pillWakeLockText">Wake Lock</span>
+    </span>
+  </div>
+
+  <!-- Controls -->
+  <div class="btn-group">
+    <button class="btn btn-record" id="btnRecord" onclick="toggleRecording()">
+      <svg class="btn-icon icon-record" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <circle cx="12" cy="12" r="6"/>
+      </svg>
+      <svg class="btn-icon icon-stop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="6" y="6" width="12" height="12" rx="1"/>
+      </svg>
+      <span id="btnRecordText">Record</span>
+    </button>
+    <button class="btn btn-photo" id="btnPhoto" onclick="triggerPhoto()" disabled title="Start recording first" aria-label="Take photo — start recording first">
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+        <circle cx="12" cy="13" r="4"/>
+      </svg>
+      <span>Photo</span>
+    </button>
+    <button class="btn btn-subtle" onclick="resetAll()" title="Reset all" aria-label="Reset all">
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+      </svg>
+    </button>
+  </div>
+  <input type="file" id="photoInput" accept="image/*" capture="environment" onchange="onPhotoTaken(event)">
+</div>
+
+<!-- Result -->
+<div class="section">
+  <div class="section-label">Spike Result</div>
+  <div class="result-card result-pending" id="resultCard" role="status" aria-live="polite">
+    <div class="result-icon" id="resultIcon" aria-hidden="true">&#8212;</div>
+    <div class="result-title" id="resultTitle">Awaiting test</div>
+    <div class="result-detail" id="resultDetail">Record audio, then tap Photo to begin the test</div>
+  </div>
+</div>
+
+<!-- Wake Lock -->
+<div class="section">
+  <div class="section-label">Screen Wake Lock</div>
+  <div class="card">
+    <div class="wakelock-row">
+      <div class="wakelock-info">
+        <div class="wakelock-title">Prevent Screen Dimming</div>
+        <div class="wakelock-desc" id="wakeLockDesc">Keeps the screen on during recording</div>
+      </div>
+      <button class="btn btn-wakelock wakelock-btn" onclick="testWakeLock()" id="btnWakeLock">
+        Enable
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Event Log -->
+<div class="section section-last">
+  <div class="section-label">Diagnostics</div>
+  <div class="log-container" id="logContainer">
+    <div class="log-header" role="button" tabindex="0" aria-expanded="false" id="logHeader" onclick="toggleLog()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleLog();}">
+      <div class="log-header-left">
+        <span>Event Log</span>
+        <span class="log-count" id="logCount">0</span>
+      </div>
+      <svg class="log-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </div>
+    <div class="log-body">
+      <div id="log"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // State
+  var mediaRecorder = null;
+  var audioChunks = [];
+  var stream = null;
+  var timerInterval = null;
+  var startTime = null;
+  var stateBeforePhoto = null;
+  var photoTakenAt = null;
+  var wakeLockSentinel = null;
+  var recorderDiedDuringPhoto = false;
+  var logEntryCount = 0;
+
+  // DOM refs
+  var logEl = document.getElementById('log');
+  var timerEl = document.getElementById('timer');
+  var btnRecord = document.getElementById('btnRecord');
+  var btnRecordText = document.getElementById('btnRecordText');
+  var btnPhoto = document.getElementById('btnPhoto');
+  var recHero = document.getElementById('recHero');
+  var recLabelText = document.getElementById('recLabelText');
+  var resultCard = document.getElementById('resultCard');
+  var resultIcon = document.getElementById('resultIcon');
+  var resultTitle = document.getElementById('resultTitle');
+  var resultDetail = document.getElementById('resultDetail');
+  var pillRecorder = document.getElementById('pillRecorder');
+  var pillRecorderText = document.getElementById('pillRecorderText');
+  var pillCodec = document.getElementById('pillCodec');
+  var pillCodecText = document.getElementById('pillCodecText');
+  var pillWakeLock = document.getElementById('pillWakeLock');
+  var pillWakeLockText = document.getElementById('pillWakeLockText');
+  var logCountEl = document.getElementById('logCount');
+  var logContainerEl = document.getElementById('logContainer');
+  var logHeaderEl = document.getElementById('logHeader');
+  var photoInputEl = document.getElementById('photoInput');
+  var btnWakeLockEl = document.getElementById('btnWakeLock');
+  var wakeLockDescEl = document.getElementById('wakeLockDesc');
+
+  // Logging
+  function log(msg) {
+    logEntryCount++;
+    var ts = new Date().toLocaleTimeString('en-GB', { hour12: false });
+    logEl.textContent += '[' + ts + '] ' + msg + '\n';
+    logEl.scrollTop = logEl.scrollHeight;
+    logCountEl.textContent = logEntryCount;
+  }
+
+  function toggleLog() {
+    var container = logContainerEl;
+    var header = logHeaderEl;
+    container.classList.toggle('is-open');
+    header.setAttribute('aria-expanded', container.classList.contains('is-open'));
+  }
+
+  // Timer
+  function updateTimer() {
+    if (!startTime) return;
+    var elapsed = Math.floor((Date.now() - startTime) / 1000);
+    var m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+    var s = String(elapsed % 60).padStart(2, '0');
+    timerEl.textContent = m + ':' + s;
+  }
+
+  // Status Pills
+  function setPill(el, textEl, text, level) {
+    textEl.textContent = text;
+    el.className = 'pill pill-' + level;
+  }
+
+  function updateRecorderPill() {
+    var state = mediaRecorder ? mediaRecorder.state : 'none';
+    if (state === 'recording') {
+      setPill(pillRecorder, pillRecorderText, 'Recording', 'ok');
+    } else if (state === 'paused') {
+      setPill(pillRecorder, pillRecorderText, 'Paused', 'warn');
+    } else if (state === 'inactive') {
+      setPill(pillRecorder, pillRecorderText, 'Stopped', 'fail');
+    } else {
+      setPill(pillRecorder, pillRecorderText, 'Idle', 'neutral');
+    }
+  }
+
+  // Codec Detection
+  function detectCodec() {
+    if (typeof MediaRecorder === 'undefined') {
+      setPill(pillCodec, pillCodecText, 'Unsupported', 'fail');
+      log('ERROR: MediaRecorder API not available');
+      return null;
+    }
+    var codecs = [
+      { mimeType: 'audio/webm;codecs=opus', label: 'Opus/WebM' },
+      { mimeType: 'audio/mp4;codecs=aac', label: 'AAC/MP4' },
+      { mimeType: 'audio/mp4', label: 'MP4' },
+      { mimeType: 'audio/webm', label: 'WebM' }
+    ];
+    for (var i = 0; i < codecs.length; i++) {
+      if (MediaRecorder.isTypeSupported(codecs[i].mimeType)) {
+        setPill(pillCodec, pillCodecText, codecs[i].label, 'ok');
+        log('Selected codec: ' + codecs[i].label + ' (' + codecs[i].mimeType + ')');
+        return codecs[i].mimeType;
+      }
+    }
+    setPill(pillCodec, pillCodecText, 'Default', 'warn');
+    log('No preferred codec supported, using default');
+    return '';
+  }
+
+  var selectedCodec = detectCodec();
+
+  // Recording
+  function toggleRecording() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  }
+
+  function startRecording() {
+    if (selectedCodec === null) {
+      log('Cannot start: MediaRecorder not supported');
+      return;
+    }
+    log('Requesting microphone access...');
+    btnRecordText.textContent = 'Requesting...';
+    btnRecord.disabled = true;
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(function(s) {
+        btnRecord.disabled = false;
+        stream = s;
+        log('Microphone access granted');
+        var options = {};
+        if (selectedCodec) {
+          options.mimeType = selectedCodec;
+        }
+        try {
+          mediaRecorder = new MediaRecorder(stream, options);
+        } catch (e) {
+          log('MediaRecorder constructor error: ' + e.message);
+          mediaRecorder = new MediaRecorder(stream);
+        }
+        audioChunks = [];
+        recorderDiedDuringPhoto = false;
+
+        mediaRecorder.ondataavailable = function(e) {
+          if (e.data && e.data.size > 0) {
+            audioChunks.push(e.data);
+            log('Chunk: ' + e.data.size + ' bytes (total: ' + audioChunks.length + ')');
+          }
+        };
+
+        mediaRecorder.onstart = function() {
+          log('MediaRecorder STARTED (state: ' + mediaRecorder.state + ')');
+          updateRecorderPill();
+        };
+
+        mediaRecorder.onstop = function() {
+          log('MediaRecorder STOPPED (state: ' + mediaRecorder.state + ')');
+          updateRecorderPill();
+          if (photoTakenAt && !recorderDiedDuringPhoto) {
+            recorderDiedDuringPhoto = true;
+            var elapsed = Date.now() - photoTakenAt;
+            log('RECORDER DIED ' + elapsed + 'ms after photo trigger!');
+          }
+        };
+
+        mediaRecorder.onerror = function(e) {
+          log('MediaRecorder ERROR: ' + (e.error ? e.error.name + ': ' + e.error.message : 'unknown'));
+          updateRecorderPill();
+        };
+
+        mediaRecorder.onpause = function() {
+          log('MediaRecorder PAUSED');
+          updateRecorderPill();
+        };
+
+        mediaRecorder.onresume = function() {
+          log('MediaRecorder RESUMED');
+          updateRecorderPill();
+        };
+
+        mediaRecorder.start(2000);
+        startTime = Date.now();
+        timerInterval = setInterval(function() {
+          updateTimer();
+          updateRecorderPill();
+        }, 500);
+
+        // UI: switch to recording state
+        recHero.classList.add('is-recording');
+        btnRecordText.textContent = 'Stop';
+        btnRecord.classList.add('is-stop');
+        btnPhoto.disabled = false;
+        btnPhoto.setAttribute('aria-label', 'Take photo');
+        btnPhoto.removeAttribute('title');
+        recLabelText.textContent = 'Recording audio';
+        log('Recording started with 2s timeslice');
+      })
+      .catch(function(err) {
+        log('Microphone error: ' + err.name + ': ' + err.message);
+        btnRecordText.textContent = 'Record';
+        btnRecord.disabled = false;
+      });
+  }
+
+  function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+    }
+    if (stream) {
+      stream.getTracks().forEach(function(t) { t.stop(); });
+    }
+    clearInterval(timerInterval);
+
+    // UI: switch to idle state
+    recHero.classList.remove('is-recording');
+    btnRecordText.textContent = 'Record';
+    btnRecord.classList.remove('is-stop');
+    btnPhoto.disabled = true;
+    btnPhoto.setAttribute('aria-label', 'Take photo — start recording first');
+    btnPhoto.setAttribute('title', 'Start recording first');
+    recLabelText.textContent = 'Recording stopped';
+    log('Recording stopped by user');
+    updateRecorderPill();
+  }
+
+  // Photo Capture
+  function triggerPhoto() {
+    if (!mediaRecorder || mediaRecorder.state !== 'recording') {
+      log('Not recording — photo test skipped');
+      return;
+    }
+    stateBeforePhoto = mediaRecorder.state;
+    photoTakenAt = Date.now();
+    recorderDiedDuringPhoto = false;
+    log('--- PHOTO TEST START ---');
+    log('MediaRecorder state BEFORE photo: ' + stateBeforePhoto);
+    log('Opening native camera...');
+    photoInputEl.click();
+
+    var checks = 0;
+    var monitorInterval = setInterval(function() {
+      checks++;
+      var state = mediaRecorder ? mediaRecorder.state : 'destroyed';
+      log('  [monitor ' + (checks * 200) + 'ms] state: ' + state);
+      updateRecorderPill();
+      if (state === 'inactive' || state === 'destroyed') {
+        log('  RECORDER STOPPED during photo flow!');
+        clearInterval(monitorInterval);
+        showResult(false, 'MediaRecorder went ' + state + ' after ' + (checks * 200) + 'ms');
+      }
+      if (checks >= 50) {
+        clearInterval(monitorInterval);
+        log('  [monitor complete — 10s elapsed]');
+      }
+    }, 200);
+  }
+
+  function onPhotoTaken(event) {
+    var elapsed = photoTakenAt ? (Date.now() - photoTakenAt) : 0;
+    var file = event.target.files && event.target.files[0];
+    log('--- PHOTO CAPTURED ---');
+    log('Time in camera: ' + elapsed + 'ms');
+
+    if (file) {
+      log('File: ' + file.name + ' (' + Math.round(file.size / 1024) + 'KB, ' + file.type + ')');
+    } else {
+      log('No file selected (user cancelled)');
+    }
+
+    var stateAfter = mediaRecorder ? mediaRecorder.state : 'destroyed';
+    log('MediaRecorder state AFTER photo: ' + stateAfter);
+    updateRecorderPill();
+
+    if (stateAfter === 'recording') {
+      log('PASS: MediaRecorder survived photo capture!');
+      showResult(true, 'Before: ' + stateBeforePhoto + ' | After: ' + stateAfter + ' | Camera: ' + elapsed + 'ms');
+
+      setTimeout(function() {
+        var finalState = mediaRecorder ? mediaRecorder.state : 'destroyed';
+        log('  [+3s verify] state: ' + finalState);
+        if (finalState !== 'recording') {
+          log('  DELAYED FAILURE: recorder died 3s after photo return');
+          showResult(false, 'Delayed death — state: ' + finalState + ' after returning from camera');
+        } else {
+          log('  [+3s verify] STILL RECORDING — confirmed PASS');
+        }
+      }, 3000);
+    } else {
+      log('FAIL: MediaRecorder died during photo capture');
+      showResult(false, 'Before: ' + stateBeforePhoto + ' | After: ' + stateAfter + ' | Camera: ' + elapsed + 'ms');
+    }
+
+    event.target.value = '';
+  }
+
+  function showResult(passed, detail) {
+    if (passed) {
+      resultCard.className = 'result-card result-pass';
+      resultIcon.textContent = '\u2713';
+      resultTitle.textContent = 'PASS — Photo does not kill recording';
+    } else {
+      resultCard.className = 'result-card result-fail';
+      resultIcon.textContent = '\u2717';
+      resultTitle.textContent = 'FAIL — Photo kills recording';
+    }
+    resultDetail.textContent = detail;
+    resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // Wake Lock
+  function testWakeLock() {
+    if (!('wakeLock' in navigator)) {
+      log('Wake Lock API: NOT SUPPORTED');
+      setPill(pillWakeLock, pillWakeLockText, 'Unsupported', 'fail');
+      wakeLockDescEl.textContent = 'Not available on this browser';
+      return;
+    }
+
+    log('Requesting Screen Wake Lock...');
+    navigator.wakeLock.request('screen')
+      .then(function(sentinel) {
+        wakeLockSentinel = sentinel;
+        log('Wake Lock ACQUIRED');
+        setPill(pillWakeLock, pillWakeLockText, 'Active', 'ok');
+        wakeLockDescEl.textContent = 'Screen will stay on during recording';
+        btnWakeLockEl.textContent = 'Active';
+        btnWakeLockEl.disabled = true;
+
+        sentinel.addEventListener('release', function() {
+          log('Wake Lock RELEASED');
+          setPill(pillWakeLock, pillWakeLockText, 'Released', 'warn');
+          wakeLockDescEl.textContent = 'Released — tab may have been backgrounded';
+          btnWakeLockEl.textContent = 'Enable';
+          btnWakeLockEl.disabled = false;
+        });
+      })
+      .catch(function(err) {
+        log('Wake Lock FAILED: ' + err.name + ': ' + err.message);
+        setPill(pillWakeLock, pillWakeLockText, 'Failed', 'fail');
+        wakeLockDescEl.textContent = 'Error: ' + err.message;
+      });
+  }
+
+  // Reset
+  function resetAll() {
+    stopRecording();
+    startTime = null;
+    timerEl.textContent = '00:00';
+    stateBeforePhoto = null;
+    photoTakenAt = null;
+    recorderDiedDuringPhoto = false;
+
+    // Result
+    resultCard.className = 'result-card result-pending';
+    resultIcon.textContent = '\u2014';
+    resultTitle.textContent = 'Awaiting test';
+    resultDetail.textContent = 'Record audio, then tap Photo to begin the test';
+
+    // Log
+    logEl.textContent = '';
+    logEntryCount = 0;
+    document.getElementById('logCount').textContent = '0';
+
+    // Pills
+    updateRecorderPill();
+    setPill(pillWakeLock, pillWakeLockText, 'Wake Lock', 'neutral');
+    wakeLockDescEl.textContent = 'Keeps the screen on during recording';
+    btnWakeLockEl.textContent = 'Enable';
+    btnWakeLockEl.disabled = false;
+
+    // Recording hero
+    recLabelText.textContent = 'Ready to record';
+
+    if (wakeLockSentinel) {
+      wakeLockSentinel.release();
+      wakeLockSentinel = null;
+    }
+
+    selectedCodec = detectCodec();
+    log('Reset complete');
+  }
+
+  // Init
+  log('iOS Spike test page loaded');
+  log('User Agent: ' + navigator.userAgent);
+  log('MediaRecorder: ' + (typeof MediaRecorder !== 'undefined'));
+  log('Wake Lock: ' + ('wakeLock' in navigator));
+  log('Secure context: ' + window.isSecureContext);
+  log('---');
+
+  if (!window.isSecureContext) {
+    log('WARNING: Not a secure context — getUserMedia will fail');
+    log('Serve via HTTPS (GitHub Pages or ngrok) for iPhone testing');
+  }
+</script>
+
+</body>
+</html>

@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://matte1782.github.io/lecture-mind/reviews/REVIEW_day0_sweep/">
+        <link rel="canonical" href="https://matte1782.github.io/lecture-mind/reviews/REVIEW_day0.5_spike/">
       
       
       
@@ -23,7 +23,7 @@
     
     
       
-        <title>Day 0 Hostile Review — v0.5.0 Week 15 - Lecture Mind</title>
+        <title>Hostile Review: iOS Spike (Day 0.5) - Lecture Mind</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#day-0-hostile-review-v050-week-15" class="md-skip">
+        <a href="#hostile-review-ios-spike-day-05" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Day 0 Hostile Review — v0.5.0 Week 15
+              Hostile Review: iOS Spike (Day 0.5)
             
           </span>
         </div>
@@ -836,19 +836,19 @@
   <a href="#major-issues-fixed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Major Issues (fixed)
+        Major Issues (FIXED)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Major Issues (fixed)">
+    <nav class="md-nav" aria-label="Major Issues (FIXED)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#m1-getcssvar-jsdoc-incomplete-fixed" class="md-nav__link">
+  <a href="#m1-getusermedia-requires-https-local-http-wont-work-on-iphone" class="md-nav__link">
     <span class="md-ellipsis">
       
-        M1. getCSSVar JSDoc incomplete (FIXED)
+        M1: getUserMedia requires HTTPS — local HTTP won't work on iPhone
       
     </span>
   </a>
@@ -856,10 +856,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#m2-getcssvar-tests-missing-success-path-fixed" class="md-nav__link">
+  <a href="#m2-ios-detection-snippet-misses-ipados-desktop-mode-ua" class="md-nav__link">
     <span class="md-ellipsis">
       
-        M2. getCSSVar tests missing success path (FIXED)
+        M2: iOS detection snippet misses iPadOS desktop-mode UA
       
     </span>
   </a>
@@ -880,63 +880,13 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Minor Issues">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#m1-renderconfetti-aftereach-cleanup-uses-fragile-selector" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        m1. renderConfetti afterEach cleanup uses fragile selector
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#m2-renderconfetti-mathrandom-is-cosmetic-not-ids" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        m2. renderConfetti Math.random() is cosmetic, not IDs
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#m3-renderlibraryview-fallback-rationale-not-documented-fixed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        m3. renderLibraryView fallback rationale not documented (FIXED)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
-  <a href="#pre-existing-debt-not-day-0-scope" class="md-nav__link">
+  <a href="#verdict-go" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pre-existing Debt (not Day 0 scope)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#verdict-go-90100" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verdict: GO — 90/100
+        Verdict: GO
       
     </span>
   </a>
@@ -963,36 +913,62 @@
   
 
 
-<h1 id="day-0-hostile-review-v050-week-15">Day 0 Hostile Review — v0.5.0 Week 15</h1>
-<p><strong>Date:</strong> 2026-03-07
-<strong>Reviewer:</strong> hostile-reviewer agent</p>
+<h1 id="hostile-review-ios-spike-day-05">Hostile Review: iOS Spike (Day 0.5)</h1>
 <h2 id="summary">Summary</h2>
 <ul>
-<li>Issues: 0 critical, 2 major, 3 minor</li>
-<li>Score: 82/100 → <strong>90/100 after fixes</strong></li>
-<li>Recommendation: <strong>GO</strong></li>
+<li><strong>Score:</strong> 85/100 → 92/100 (after fixes)</li>
+<li><strong>Issues:</strong> 0 Critical, 2 Major (FIXED), 5 Minor (3 FIXED, 2 accepted)</li>
+<li><strong>Recommendation:</strong> GO</li>
 </ul>
-<h2 id="major-issues-fixed">Major Issues (fixed)</h2>
-<h3 id="m1-getcssvar-jsdoc-incomplete-fixed">M1. getCSSVar JSDoc incomplete (FIXED)</h3>
-<p><strong>Location:</strong> <code>analytics.js:25-26</code>
-<strong>Fix:</strong> Added @param/@returns JSDoc tags.</p>
-<h3 id="m2-getcssvar-tests-missing-success-path-fixed">M2. getCSSVar tests missing success path (FIXED)</h3>
-<p><strong>Location:</strong> <code>analytics.test.js</code>
-<strong>Fix:</strong> Added test using <code>document.documentElement.style.setProperty()</code> to verify actual CSS variable retrieval.</p>
+<h2 id="major-issues-fixed">Major Issues (FIXED)</h2>
+<h3 id="m1-getusermedia-requires-https-local-http-wont-work-on-iphone">M1: getUserMedia requires HTTPS — local HTTP won't work on iPhone</h3>
+<p><strong>Location:</strong> <code>docs/spikes/IOS_PHOTO_SPIKE.md:36-41</code>
+<strong>Issue:</strong> <code>getUserMedia</code> requires secure context. Phone accessing <code>http://&lt;laptop-ip&gt;:8903</code> will fail.
+<strong>Fix:</strong> Reordered options — GitHub Pages primary, ngrok secondary, local HTTP marked desktop-only.
+<strong>Status:</strong> FIXED</p>
+<h3 id="m2-ios-detection-snippet-misses-ipados-desktop-mode-ua">M2: iOS detection snippet misses iPadOS desktop-mode UA</h3>
+<p><strong>Location:</strong> <code>docs/spikes/IOS_PHOTO_SPIKE.md:131-134</code>
+<strong>Issue:</strong> iPadOS 13+ reports desktop UA — <code>/iPad|iPhone|iPod/</code> won't match.
+<strong>Fix:</strong> Added <code>navigator.maxTouchPoints &gt; 0 &amp;&amp; /Macintosh/</code> fallback.
+<strong>Status:</strong> FIXED</p>
 <h2 id="minor-issues">Minor Issues</h2>
-<h3 id="m1-renderconfetti-aftereach-cleanup-uses-fragile-selector">m1. renderConfetti afterEach cleanup uses fragile selector</h3>
-<p><strong>Confidence:</strong> 60% — no current collision, theoretical risk only.</p>
-<h3 id="m2-renderconfetti-mathrandom-is-cosmetic-not-ids">m2. renderConfetti Math.random() is cosmetic, not IDs</h3>
-<p><strong>Confidence:</strong> 40% — not a violation of the anti-pattern rule.</p>
-<h3 id="m3-renderlibraryview-fallback-rationale-not-documented-fixed">m3. renderLibraryView fallback rationale not documented (FIXED)</h3>
-<p><strong>Fix:</strong> Added comment <code>// fallback for tests without library.js</code></p>
-<h2 id="pre-existing-debt-not-day-0-scope">Pre-existing Debt (not Day 0 scope)</h2>
-<ul>
-<li>pruneOldRecords relies on insertion order (analytics.js:206)</li>
-<li>No tests for saveQuizResult/saveWatchSession persistence</li>
-<li>createStudySessionRecord startTime/endTime both set to Date.now()</li>
-</ul>
-<h2 id="verdict-go-90100">Verdict: GO — 90/100</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Issue</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>m1</td>
+<td>200ms monitor suspended during camera — misleading timestamps</td>
+<td>FIXED (added protocol note)</td>
+</tr>
+<tr>
+<td>m2</td>
+<td>iOS Safari may ignore timeslice — zero chunks normal</td>
+<td>FIXED (added protocol note)</td>
+</tr>
+<tr>
+<td>m3</td>
+<td>iOS version note (14.5+ for MediaRecorder, 18.4+ for Opus)</td>
+<td>FIXED (updated requirements)</td>
+</tr>
+<tr>
+<td>m4</td>
+<td>No multi-photo consecutive test</td>
+<td>ACCEPTED (nice-to-have, tester can do ad-hoc)</td>
+</tr>
+<tr>
+<td>m5</td>
+<td>Wake Lock status stale after reset</td>
+<td>FIXED (reset handler updated)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="verdict-go">Verdict: GO</h2>
 
 
 

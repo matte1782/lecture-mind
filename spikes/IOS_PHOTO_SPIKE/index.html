@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://matte1782.github.io/lecture-mind/reviews/REVIEW_day0_sweep/">
+        <link rel="canonical" href="https://matte1782.github.io/lecture-mind/spikes/IOS_PHOTO_SPIKE/">
       
       
       
@@ -23,7 +23,7 @@
     
     
       
-        <title>Day 0 Hostile Review — v0.5.0 Week 15 - Lecture Mind</title>
+        <title>Spike: Photo Capture During MediaRecorder on iOS Safari - Lecture Mind</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#day-0-hostile-review-v050-week-15" class="md-skip">
+        <a href="#spike-photo-capture-during-mediarecorder-on-ios-safari" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Day 0 Hostile Review — v0.5.0 Week 15
+              Spike: Photo Capture During MediaRecorder on iOS Safari
             
           </span>
         </div>
@@ -822,10 +822,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#summary" class="md-nav__link">
+  <a href="#question" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Summary
+        Question
       
     </span>
   </a>
@@ -833,22 +833,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#major-issues-fixed" class="md-nav__link">
+  <a href="#background" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Major Issues (fixed)
+        Background
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Major Issues (fixed)">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Setup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test Setup">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#m1-getcssvar-jsdoc-incomplete-fixed" class="md-nav__link">
+  <a href="#requirements" class="md-nav__link">
     <span class="md-ellipsis">
       
-        M1. getCSSVar JSDoc incomplete (FIXED)
+        Requirements
       
     </span>
   </a>
@@ -856,10 +867,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#m2-getcssvar-tests-missing-success-path-fixed" class="md-nav__link">
+  <a href="#serving-the-test-page" class="md-nav__link">
     <span class="md-ellipsis">
       
-        M2. getCSSVar tests missing success path (FIXED)
+        Serving the Test Page
       
     </span>
   </a>
@@ -872,22 +883,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#minor-issues" class="md-nav__link">
+  <a href="#test-protocol" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Minor Issues
+        Test Protocol
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Minor Issues">
+    <nav class="md-nav" aria-label="Test Protocol">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#m1-renderconfetti-aftereach-cleanup-uses-fragile-selector" class="md-nav__link">
+  <a href="#test-1-basic-photo-during-recording" class="md-nav__link">
     <span class="md-ellipsis">
       
-        m1. renderConfetti afterEach cleanup uses fragile selector
+        Test 1: Basic Photo During Recording
       
     </span>
   </a>
@@ -895,10 +906,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#m2-renderconfetti-mathrandom-is-cosmetic-not-ids" class="md-nav__link">
+  <a href="#test-2-quick-photo-3-seconds-in-camera" class="md-nav__link">
     <span class="md-ellipsis">
       
-        m2. renderConfetti Math.random() is cosmetic, not IDs
+        Test 2: Quick Photo (&lt; 3 seconds in camera)
       
     </span>
   </a>
@@ -906,10 +917,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#m3-renderlibraryview-fallback-rationale-not-documented-fixed" class="md-nav__link">
+  <a href="#test-3-long-photo-30-seconds-in-camera" class="md-nav__link">
     <span class="md-ellipsis">
       
-        m3. renderLibraryView fallback rationale not documented (FIXED)
+        Test 3: Long Photo (&gt; 30 seconds in camera)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-4-photo-cancel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test 4: Photo Cancel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-5-wake-lock-photo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test 5: Wake Lock + Photo
       
     </span>
   </a>
@@ -922,10 +955,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pre-existing-debt-not-day-0-scope" class="md-nav__link">
+  <a href="#what-to-record" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pre-existing Debt (not Day 0 scope)
+        What to Record
       
     </span>
   </a>
@@ -933,10 +966,99 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#verdict-go-90100" class="md-nav__link">
+  <a href="#decision-matrix" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Verdict: GO — 90/100
+        Decision Matrix
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision Matrix">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#implementation-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Impact
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Results
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Results">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#device-info" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Device Info
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Results
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conclusion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implications-for-recorderjs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implications for recorder.js
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#follow-up" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Follow-up
       
     </span>
   </a>
@@ -963,36 +1085,268 @@
   
 
 
-<h1 id="day-0-hostile-review-v050-week-15">Day 0 Hostile Review — v0.5.0 Week 15</h1>
-<p><strong>Date:</strong> 2026-03-07
-<strong>Reviewer:</strong> hostile-reviewer agent</p>
-<h2 id="summary">Summary</h2>
+<h1 id="spike-photo-capture-during-mediarecorder-on-ios-safari">Spike: Photo Capture During MediaRecorder on iOS Safari</h1>
+<p><strong>Date:</strong> 2026-03-08
+<strong>Sprint:</strong> v0.5.0 Week 15 Day 0.5
+<strong>Status:</strong> PENDING
+<strong>Time budget:</strong> 2h</p>
+<hr />
+<h2 id="question">Question</h2>
+<blockquote>
+<p>Does triggering <code>&lt;input type="file" accept="image/*" capture="environment"&gt;</code> during an active MediaRecorder audio session kill the recording on iOS Safari?</p>
+</blockquote>
+<p>This determines whether photo capture is enabled during recording on iOS, or only before/after.</p>
+<hr />
+<h2 id="background">Background</h2>
 <ul>
-<li>Issues: 0 critical, 2 major, 3 minor</li>
-<li>Score: 82/100 → <strong>90/100 after fixes</strong></li>
-<li>Recommendation: <strong>GO</strong></li>
+<li>iOS Safari aggressively suspends background tabs and web audio contexts</li>
+<li>Opening the native camera via file input may cause the browser tab to be suspended</li>
+<li>MediaRecorder state could transition to <code>inactive</code> when the tab loses focus</li>
+<li>See: <code>docs/research/TECHNICAL_VALIDATION.md</code> Risk #1</li>
 </ul>
-<h2 id="major-issues-fixed">Major Issues (fixed)</h2>
-<h3 id="m1-getcssvar-jsdoc-incomplete-fixed">M1. getCSSVar JSDoc incomplete (FIXED)</h3>
-<p><strong>Location:</strong> <code>analytics.js:25-26</code>
-<strong>Fix:</strong> Added @param/@returns JSDoc tags.</p>
-<h3 id="m2-getcssvar-tests-missing-success-path-fixed">M2. getCSSVar tests missing success path (FIXED)</h3>
-<p><strong>Location:</strong> <code>analytics.test.js</code>
-<strong>Fix:</strong> Added test using <code>document.documentElement.style.setProperty()</code> to verify actual CSS variable retrieval.</p>
-<h2 id="minor-issues">Minor Issues</h2>
-<h3 id="m1-renderconfetti-aftereach-cleanup-uses-fragile-selector">m1. renderConfetti afterEach cleanup uses fragile selector</h3>
-<p><strong>Confidence:</strong> 60% — no current collision, theoretical risk only.</p>
-<h3 id="m2-renderconfetti-mathrandom-is-cosmetic-not-ids">m2. renderConfetti Math.random() is cosmetic, not IDs</h3>
-<p><strong>Confidence:</strong> 40% — not a violation of the anti-pattern rule.</p>
-<h3 id="m3-renderlibraryview-fallback-rationale-not-documented-fixed">m3. renderLibraryView fallback rationale not documented (FIXED)</h3>
-<p><strong>Fix:</strong> Added comment <code>// fallback for tests without library.js</code></p>
-<h2 id="pre-existing-debt-not-day-0-scope">Pre-existing Debt (not Day 0 scope)</h2>
+<hr />
+<h2 id="test-setup">Test Setup</h2>
+<h3 id="requirements">Requirements</h3>
 <ul>
-<li>pruneOldRecords relies on insertion order (analytics.js:206)</li>
-<li>No tests for saveQuizResult/saveWatchSession persistence</li>
-<li>createStudySessionRecord startTime/endTime both set to Date.now()</li>
+<li>iPhone (any model with iOS 14.5+ for MediaRecorder; iOS 18.4+ for Opus/WebM codec parity)</li>
+<li>Safari browser (not Chrome on iOS — all iOS browsers use WebKit)</li>
+<li>WiFi connection to access the test page</li>
 </ul>
-<h2 id="verdict-go-90100">Verdict: GO — 90/100</h2>
+<blockquote>
+<p><strong>IMPORTANT</strong>: <code>getUserMedia</code> requires a <strong>secure context</strong> (HTTPS or localhost).
+A phone accessing <code>http://&lt;laptop-ip&gt;:8903</code> is plain HTTP — microphone access will be blocked.
+Use Option A (GitHub Pages) or Option B (ngrok HTTPS tunnel).</p>
+</blockquote>
+<h3 id="serving-the-test-page">Serving the Test Page</h3>
+<p><strong>Option A — GitHub Pages (recommended):</strong>
+Push the branch, then open:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>https://matte1782.github.io/lecture-mind/playground/ios-spike.html
+</code></pre></div></p>
+<p><strong>Option B — ngrok HTTPS tunnel (local dev):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">cd</span><span class="w"> </span>src/vl_jepa/api/static
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>python<span class="w"> </span>-m<span class="w"> </span>http.server<span class="w"> </span><span class="m">8903</span><span class="w"> </span>--bind<span class="w"> </span><span class="m">0</span>.0.0.0
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># In another terminal:</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>ngrok<span class="w"> </span>http<span class="w"> </span><span class="m">8903</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># Open the https://xxxx.ngrok-free.app/ios-spike.html URL on iPhone</span>
+</code></pre></div></p>
+<p><strong>Option C — Local HTTP (desktop testing only, NOT for iPhone):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">cd</span><span class="w"> </span>src/vl_jepa/api/static
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>python<span class="w"> </span>-m<span class="w"> </span>http.server<span class="w"> </span><span class="m">8903</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># http://localhost:8903/ios-spike.html — works on same machine only</span>
+</code></pre></div></p>
+<hr />
+<h2 id="test-protocol">Test Protocol</h2>
+<blockquote>
+<p><strong>Notes on iOS Safari behavior:</strong>
+- Zero chunks during recording may be normal — iOS Safari may ignore the <code>timeslice</code> parameter and only fire <code>ondataavailable</code> on <code>stop()</code>. The definitive check is <code>MediaRecorder.state</code>, not chunk count.
+- The 200ms monitor interval in the harness will be suspended while the native camera is open. All queued checks fire in rapid succession on return — timestamps in the monitor log may be misleading. The <code>onPhotoTaken</code> handler is the authoritative check.</p>
+</blockquote>
+<h3 id="test-1-basic-photo-during-recording">Test 1: Basic Photo During Recording</h3>
+<ol>
+<li>Open <code>ios-spike.html</code> on iPhone Safari</li>
+<li>Check the <strong>Codec</strong> status — note which codec was selected</li>
+<li>Tap <strong>"Start Recording"</strong> — allow microphone when prompted</li>
+<li>Wait 5 seconds (verify timer is counting and chunks are arriving in log)</li>
+<li>Tap <strong>"Take Photo"</strong> — this opens the native camera</li>
+<li>Take a photo and tap <strong>"Use Photo"</strong></li>
+<li>Observe:</li>
+<li>Does the app return to the browser?</li>
+<li>What is the <strong>MediaRecorder state</strong> shown?</li>
+<li>Did the PASS/FAIL indicator update?</li>
+<li>Check the event log for any <code>STOPPED</code> or <code>ERROR</code> events</li>
+<li>If PASS: wait 30 more seconds recording, verify chunks still arriving</li>
+</ol>
+<h3 id="test-2-quick-photo-3-seconds-in-camera">Test 2: Quick Photo (&lt; 3 seconds in camera)</h3>
+<ol>
+<li>Reset and start recording again</li>
+<li>Quickly take a photo (&lt; 3 seconds in camera app)</li>
+<li>Return and check state</li>
+<li>Compare with Test 1</li>
+</ol>
+<h3 id="test-3-long-photo-30-seconds-in-camera">Test 3: Long Photo (&gt; 30 seconds in camera)</h3>
+<ol>
+<li>Reset and start recording again</li>
+<li>Open camera via the button</li>
+<li>Wait 30+ seconds before taking the photo</li>
+<li>Return and check state</li>
+<li>This tests whether extended time away kills the recording</li>
+</ol>
+<h3 id="test-4-photo-cancel">Test 4: Photo Cancel</h3>
+<ol>
+<li>Reset and start recording again</li>
+<li>Open camera via the button</li>
+<li>Cancel (don't take a photo)</li>
+<li>Return and check state</li>
+</ol>
+<h3 id="test-5-wake-lock-photo">Test 5: Wake Lock + Photo</h3>
+<ol>
+<li>Reset</li>
+<li>Tap <strong>"Request Wake Lock"</strong> first</li>
+<li>Start recording</li>
+<li>Take a photo</li>
+<li>Check if Wake Lock helped preserve the recording</li>
+</ol>
+<hr />
+<h2 id="what-to-record">What to Record</h2>
+<p>For each test, note:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>iPhone model</td>
+<td></td>
+</tr>
+<tr>
+<td>iOS version</td>
+<td></td>
+</tr>
+<tr>
+<td>Safari version</td>
+<td></td>
+</tr>
+<tr>
+<td>Codec selected</td>
+<td></td>
+</tr>
+<tr>
+<td>MediaRecorder state BEFORE photo</td>
+<td></td>
+</tr>
+<tr>
+<td>Time spent in camera app</td>
+<td></td>
+</tr>
+<tr>
+<td>MediaRecorder state AFTER photo</td>
+<td></td>
+</tr>
+<tr>
+<td>Chunks received after return?</td>
+<td></td>
+</tr>
+<tr>
+<td>Any error events?</td>
+<td></td>
+</tr>
+<tr>
+<td>Wake Lock status (if tested)</td>
+<td></td>
+</tr>
+<tr>
+<td>PASS / FAIL</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="decision-matrix">Decision Matrix</h2>
+<table>
+<thead>
+<tr>
+<th>Result</th>
+<th>Action for v0.5.0</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>All tests PASS</strong></td>
+<td>Enable photo capture during recording on all platforms</td>
+</tr>
+<tr>
+<td><strong>Quick photo PASS, long photo FAIL</strong></td>
+<td>Enable with warning: "Take photos quickly to avoid interrupting recording"</td>
+</tr>
+<tr>
+<td><strong>All tests FAIL</strong></td>
+<td>Disable photo button during active recording on iOS; show "Stop recording to take photos" message. Photos only available before/after recording.</td>
+</tr>
+<tr>
+<td><strong>Inconsistent results</strong></td>
+<td>Disable by default on iOS with a user toggle: "Enable photo during recording (may interrupt audio)"</td>
+</tr>
+</tbody>
+</table>
+<h3 id="implementation-impact">Implementation Impact</h3>
+<ul>
+<li><strong>PASS path</strong>: <code>btnPhoto.disabled = false</code> during recording (all platforms)</li>
+<li><strong>FAIL path</strong>: Detect iOS/iPadOS and conditionally disable:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1">// iPadOS 13+ reports desktop UA, so check maxTouchPoints + Macintosh</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kd">const</span><span class="w"> </span><span class="nx">isIOS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sr">/iPad|iPhone|iPod/</span><span class="p">.</span><span class="nx">test</span><span class="p">(</span><span class="nx">navigator</span><span class="p">.</span><span class="nx">userAgent</span><span class="p">)</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="o">||</span><span class="w"> </span><span class="p">(</span><span class="nx">navigator</span><span class="p">.</span><span class="nx">maxTouchPoints</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="sr">/Macintosh/</span><span class="p">.</span><span class="nx">test</span><span class="p">(</span><span class="nx">navigator</span><span class="p">.</span><span class="nx">userAgent</span><span class="p">));</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="nx">btnPhoto</span><span class="p">.</span><span class="nx">disabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">isRecording</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">isIOS</span><span class="p">;</span>
+</code></pre></div></li>
+<li><strong>Wake Lock result</strong>: If works on iOS, add to recorder.js startup flow</li>
+</ul>
+<hr />
+<h2 id="results">Results</h2>
+<blockquote>
+<p><strong>Fill in after testing on real device</strong></p>
+</blockquote>
+<h3 id="device-info">Device Info</h3>
+<ul>
+<li>iPhone model:</li>
+<li>iOS version:</li>
+<li>Safari version:</li>
+</ul>
+<h3 id="test-results">Test Results</h3>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>PASS/FAIL</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Test 1: Basic photo</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Test 2: Quick photo</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Test 3: Long photo (30s+)</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Test 4: Photo cancel</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Test 5: Wake Lock + photo</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="conclusion">Conclusion</h3>
+<p><strong>Spike result:</strong> <em>(PASS / FAIL / PARTIAL)</em></p>
+<p><strong>Decision:</strong> <em>(Enable everywhere / Disable on iOS during recording / Enable with warning)</em></p>
+<p><strong>Wake Lock on iOS Safari:</strong> <em>(Works / Does not work / Partial)</em></p>
+<h3 id="implications-for-recorderjs">Implications for recorder.js</h3>
+<ul>
+<li>[ ] Photo button behavior during recording: ___</li>
+<li>[ ] Wake Lock integration: ___</li>
+<li>[ ] Any additional mitigations needed: ___</li>
+</ul>
+<hr />
+<h2 id="follow-up">Follow-up</h2>
+<ul>
+<li>Update <code>docs/architecture/ARCHITECTURE_v050.md</code> with spike result</li>
+<li>Update <code>memory/MEMORY.md</code> with finding</li>
+<li>Apply decision in Week 15 Days 3-4 (photo capture implementation)</li>
+</ul>
 
 
 

@@ -22,7 +22,12 @@ import { createSVGElement, createElement, clearElement } from './dom-utils.js';
 // CONSTANTS
 // ============================================================================
 
-/** Read a CSS custom property from :root, with fallback. */
+/**
+ * Read a CSS custom property from :root, with fallback.
+ * @param {string} name - CSS variable name (e.g. '--color-primary-500')
+ * @param {string} fallback - Value returned if variable is unset or unreadable
+ * @returns {string} The CSS variable value, or fallback
+ */
 function getCSSVar(name, fallback) {
   try {
     const val = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -1261,6 +1266,9 @@ export {
   renderRecentQuizResults,
   renderWatchTimeStats,
   renderAnalyticsTabEmptyState,
+
+  // Utilities
+  getCSSVar,
 
   // Global Dashboard UI
   renderDashboardEmptyState,
