@@ -1,39 +1,48 @@
+# Hostile Review: Day 1 Sweep — DB Migration v1→v2
+
 ## Summary
-- Issues: 0 critical, 0 major, 2 minor
-- Score: 88/100
-- Recommendation: GO
+- **Score:** 91/100 (consensus of two independent reviewers: 93/100 + 88/100)
+- **Issues:** 0 Critical, 1 Major (deferred to Day 2), 4 Minor
+- **Recommendation:** GO
 
-## Round 1: 72/100 BLOCK (3 issues)
+## Cross-Cutting Checklist
 
-### C1: Async callbacks used sync try/catch
-### M1: Test 10 was fake (manual assignment)
-### M2: No integration test for submitReview → _onQuizResult
+| Check | Status |
+|-------|--------|
+| Consistency: models match ARCHITECTURE_v050.md §8.1-8.5 | PASS (all fields, types, defaults verified) |
+| Completeness: 4 stores + factories + validators + repos + tests | PASS (36 new tests) |
+| Regression: all tests pass | PASS (10 suites, 599 tests, 0 failures) |
+| Key-sharing: AudioData.id = RecordingSession.id | PASS |
+| Cascade delete: logic covers all v0.5.0 stores | PASS (logic correct) |
+| updatedAt in update() | PASS |
+| Indexes match spec | PASS |
+| Barrel exports complete | PASS (16 new exports in index.js) |
+| Migration: DB_VERSION=2, SCHEMA_VERSION=2 | PASS |
 
----
+## Major Issues (deferred to Day 2)
 
-## Re-Review (Round 2) — After Fixes
+| ID | Issue | Disposition |
+|----|-------|-------------|
+| M1 | Cascade delete e2e test does not create/verify v0.5.0 entities (recordingSessions, audioData, photoCaptures, autoNotes) — cascade logic at repositories.js:464-487 has zero integration test coverage | FIX at Day 2 start, before building on top of storage layer |
 
-- Score: **88/100**
-- Recommendation: **GO**
+## Minor Issues (non-blocking)
 
-### C1 FIXED: Async-safe fire-and-forget
-Both call sites now capture `const p = callback(...)` and call `p?.catch?.(() => {})`.
-Promise rejections properly swallowed. Synchronous throws still caught by outer try/catch.
+| ID | Issue | Status |
+|----|-------|--------|
+| m1 | PhotoCapture `caption` defaults to `''` but spec says `string|null` | ACCEPTED (functionally equivalent) |
+| m2 | JSDoc for createRecordingSession/createAudioData stale (references old params) | DEFERRED to polish |
+| m3 | AutoNoteRepository.update() takes full record instead of (id, updates) pattern | ACCEPTED (intentional upsert) |
+| m4 | validateRecordingSession only checks id + status (no duration/sampleRate/title) | DEFERRED to polish |
 
-### M1 PARTIALLY FIXED → Downgraded to Minor
-Test rewritten to register callback, store reference, invoke it. Still shallow but adequate
-given M2 integration test covers the analogous path. Both hooks share identical mechanics.
+## Architecture Alignment (verified by both reviewers)
 
-### M2 FIXED: Full integration test added
-Test calls `registerAnalyticsHooks()`, creates lecture + flashcard in DB, calls
-`session.submitReview(4)`, waits for async callback, verifies `getQuizResults()` returns
-persisted result. Proves full pipeline: submitReview → _onQuizResult → saveQuizResult → IndexedDB.
+| Model | Spec Section | Fields | Indexes | Verdict |
+|-------|-------------|--------|---------|---------|
+| RecordingSession | §8.1 | 11/11 match | 3/3 match | PASS |
+| AudioData | §8.2 | 3/3 match (key-sharing) | 0/0 match | PASS |
+| PhotoCapture | §8.3 | 7/7 match | 2/2 match | PASS |
+| AutoNote | §8.5 | 7/7 match (incl. model) | 2/2 match (lectureId unique) | PASS |
 
-### New Minor Issues (non-blocking)
-- m1: Double-registration of setOnSessionComplete in Test 10 (dead code). Confidence: 70%.
-- m2: Wall-clock `setTimeout(r, 50)` instead of deterministic timer flush. Confidence: 60%.
+## Verdict: GO (91/100)
 
-### No Regressions Detected
-508 tests, 0 failures.
-
-**VERDICT: GO — 88/100**
+Day 1 storage layer is solid. All architecture-to-code alignment verified. One mandatory fix (M1: cascade delete test) tracked for Day 2 start.

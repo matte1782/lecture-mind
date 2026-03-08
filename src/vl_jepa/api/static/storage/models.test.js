@@ -31,7 +31,19 @@ import {
   FLASHCARD_STATUS,
   EVENT_TYPES,
   SYNC_OPERATION,
-  SYNC_STATUS
+  SYNC_STATUS,
+  RECORDING_STATUS,
+  AUTO_NOTE_SOURCE,
+  // v0.5.0 Factory functions
+  createRecordingSession,
+  createAudioData,
+  createPhotoCapture,
+  createAutoNote,
+  // v0.5.0 Validation functions
+  validateRecordingSession,
+  validateAudioData,
+  validatePhotoCapture,
+  validateAutoNote
 } from './models.js';
 
 // Helper to generate unique IDs for testing
@@ -713,5 +725,188 @@ describe('Timestamp Generation', () => {
   test('updatedAt equals createdAt on creation', () => {
     const course = createCourse({ name: 'Test' });
     expect(course.updatedAt).toBe(course.createdAt);
+  });
+});
+
+// ============================================================================
+// v0.5.0 Models
+// ============================================================================
+
+describe('RECORDING_STATUS constant', () => {
+  test('contains all valid recording statuses', () => {
+    expect(RECORDING_STATUS).toEqual({
+      RECORDING: 'recording',
+      STOPPED: 'stopped',
+      TRANSCRIBING: 'transcribing',
+      COMPLETED: 'completed',
+      FAILED: 'failed'
+    });
+  });
+});
+
+describe('AUTO_NOTE_SOURCE constant', () => {
+  test('contains all valid auto note sources', () => {
+    expect(AUTO_NOTE_SOURCE).toEqual({
+      EXTRACTIVE: 'extractive',
+      LLM: 'llm'
+    });
+  });
+});
+
+describe('RecordingSession Entity', () => {
+  describe('createRecordingSession factory', () => {
+    test('creates a recording session with defaults', () => {
+      const session = createRecordingSession({});
+      expect(session.id).toBeDefined();
+      expect(session.status).toBe(RECORDING_STATUS.RECORDING);
+      expect(session.lectureId).toBeNull();
+      expect(session.title).toBeDefined();
+      expect(session.duration).toBe(0);
+      expect(session.sampleRate).toBe(44100);
+      expect(session.mimeType).toBe('');
+      expect(session.transcript).toBeNull();
+      expect(session.error).toBeNull();
+      expect(session.createdAt).toBeDefined();
+      expect(session.updatedAt).toBeDefined();
+    });
+
+    test('creates with custom fields', () => {
+      const lectureId = generateId();
+      const session = createRecordingSession({
+        lectureId,
+        title: 'My Recording',
+        status: RECORDING_STATUS.STOPPED,
+        duration: 1000,
+        sampleRate: 48000,
+        mimeType: 'audio/webm;codecs=opus'
+      });
+      expect(session.lectureId).toBe(lectureId);
+      expect(session.title).toBe('My Recording');
+      expect(session.status).toBe(RECORDING_STATUS.STOPPED);
+      expect(session.duration).toBe(1000);
+      expect(session.sampleRate).toBe(48000);
+      expect(session.mimeType).toBe('audio/webm;codecs=opus');
+    });
+
+    test('auto-generates unique id', () => {
+      const s1 = createRecordingSession({});
+      const s2 = createRecordingSession({});
+      expect(s1.id).not.toBe(s2.id);
+    });
+  });
+
+  describe('validateRecordingSession', () => {
+    test('returns true for valid recording session', () => {
+      const session = createRecordingSession({});
+      expect(validateRecordingSession(session)).toEqual({ valid: true, errors: [] });
+    });
+
+    test('returns error for missing id', () => {
+      const result = validateRecordingSession({ status: 'recording', startedAt: Date.now() });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('id is required');
+    });
+  });
+});
+
+describe('AudioData Entity', () => {
+  describe('createAudioData factory', () => {
+    test('creates audio data with session id (key sharing)', () => {
+      const sessionId = generateId();
+      const audio = createAudioData({ id: sessionId });
+      expect(audio.id).toBe(sessionId);
+      expect(audio.blob).toBeNull();
+      expect(audio.size).toBe(0);
+    });
+
+    test('throws error if id is missing', () => {
+      expect(() => createAudioData({})).toThrow('id is required');
+    });
+  });
+
+  describe('validateAudioData', () => {
+    test('returns true for valid audio data', () => {
+      const audio = createAudioData({ id: generateId() });
+      expect(validateAudioData(audio)).toEqual({ valid: true, errors: [] });
+    });
+
+    test('returns error for missing id', () => {
+      const result = validateAudioData({ blob: null, size: 0 });
+      expect(result.valid).toBe(false);
+    });
+  });
+});
+
+describe('PhotoCapture Entity', () => {
+  describe('createPhotoCapture factory', () => {
+    test('creates photo capture with defaults', () => {
+      const recordingSessionId = generateId();
+      const photo = createPhotoCapture({ recordingSessionId });
+      expect(photo.id).toBeDefined();
+      expect(photo.recordingSessionId).toBe(recordingSessionId);
+      expect(photo.timestampMs).toBe(0);
+      expect(photo.blob).toBeNull();
+      expect(photo.size).toBe(0);
+      expect(photo.caption).toBe('');
+      expect(photo.createdAt).toBeDefined();
+    });
+
+    test('throws error if recordingSessionId is missing', () => {
+      expect(() => createPhotoCapture({})).toThrow('recordingSessionId is required');
+    });
+  });
+
+  describe('validatePhotoCapture', () => {
+    test('returns true for valid photo capture', () => {
+      const photo = createPhotoCapture({ recordingSessionId: generateId() });
+      expect(validatePhotoCapture(photo)).toEqual({ valid: true, errors: [] });
+    });
+
+    test('returns error for missing recordingSessionId', () => {
+      const result = validatePhotoCapture({ id: 'test', timestampMs: 0 });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('recordingSessionId is required');
+    });
+  });
+});
+
+describe('AutoNote Entity', () => {
+  describe('createAutoNote factory', () => {
+    test('creates auto note with defaults', () => {
+      const lectureId = generateId();
+      const note = createAutoNote({ lectureId });
+      expect(note.id).toBeDefined();
+      expect(note.lectureId).toBe(lectureId);
+      expect(note.content).toBe('');
+      expect(note.source).toBe(AUTO_NOTE_SOURCE.EXTRACTIVE);
+      expect(note.model).toBeNull();
+      expect(note.generatedAt).toBeDefined();
+      expect(note.editedAt).toBeNull();
+    });
+
+    test('throws error if lectureId is missing', () => {
+      expect(() => createAutoNote({})).toThrow('lectureId is required');
+    });
+  });
+
+  describe('validateAutoNote', () => {
+    test('returns true for valid auto note', () => {
+      const note = createAutoNote({ lectureId: generateId() });
+      expect(validateAutoNote(note)).toEqual({ valid: true, errors: [] });
+    });
+
+    test('returns error for missing lectureId', () => {
+      const result = validateAutoNote({ id: 'test', content: '', source: 'extractive' });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('lectureId is required');
+    });
+
+    test('returns error for invalid source', () => {
+      const note = createAutoNote({ lectureId: generateId() });
+      note.source = 'invalid';
+      const result = validateAutoNote(note);
+      expect(result.valid).toBe(false);
+      expect(result.errors[0]).toContain('source must be one of');
+    });
   });
 });

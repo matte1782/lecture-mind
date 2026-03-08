@@ -17,6 +17,10 @@ import {
   createBookmark,
   createConfusionVote,
   createSyncQueueItem,
+  createRecordingSession,
+  createAudioData,
+  createPhotoCapture,
+  createAutoNote,
   FLASHCARD_STATUS,
   SYNC_STATUS
 } from './models.js';
@@ -455,6 +459,27 @@ export const LectureRepository = {
     // Delete progress records
     if (progressRecords.length > 0) {
       await batch('progress', progressRecords.map(p => ({ type: 'delete', key: p.id })));
+    }
+
+    // Delete v0.5.0 related entities: recording sessions, audio data, photos, auto-notes
+    const recordingSessions = await queryByIndex('recordingSessions', 'lectureId', id);
+    for (const session of recordingSessions) {
+      // Delete audio data (key-shared with session id)
+      await remove('audioData', session.id);
+      // Delete photos for this session
+      const photos = await queryByIndex('photoCaptures', 'recordingSessionId', session.id);
+      if (photos.length > 0) {
+        await batch('photoCaptures', photos.map(p => ({ type: 'delete', key: p.id })));
+      }
+    }
+    if (recordingSessions.length > 0) {
+      await batch('recordingSessions', recordingSessions.map(s => ({ type: 'delete', key: s.id })));
+    }
+
+    // Delete auto-notes for this lecture
+    const autoNotes = await queryByIndex('autoNotes', 'lectureId', id);
+    if (autoNotes.length > 0) {
+      await batch('autoNotes', autoNotes.map(n => ({ type: 'delete', key: n.id })));
     }
 
     // Delete the lecture itself
@@ -1036,6 +1061,235 @@ export const SyncQueueRepository = {
   }
 };
 
+// ============================================================================
+// Recording Session Repository
+// ============================================================================
+
+/**
+ * Repository for recording sessions.
+ */
+export const RecordingSessionRepository = {
+  /**
+   * Create a new recording session.
+   * @param {Object} data - Session data
+   * @returns {Promise<Object>} Created session
+   */
+  async create(data) {
+    const session = createRecordingSession(data);
+    await put('recordingSessions', session);
+    return session;
+  },
+
+  /**
+   * Get a session by ID.
+   * @param {string} id - Session ID
+   * @returns {Promise<Object|undefined>} Session or undefined
+   */
+  async getById(id) {
+    return get('recordingSessions', id);
+  },
+
+  /**
+   * Update a session.
+   * @param {string} id - Session ID
+   * @param {Object} updates - Fields to update
+   * @returns {Promise<Object>} Updated session
+   */
+  async update(id, updates) {
+    const existing = await this.getById(id);
+    if (!existing) throw new Error('Recording session not found');
+    const updated = { ...existing, ...updates, updatedAt: Date.now() };
+    await put('recordingSessions', updated);
+    return updated;
+  },
+
+  /**
+   * Delete a session.
+   * @param {string} id - Session ID
+   * @returns {Promise<void>}
+   */
+  async delete(id) {
+    return remove('recordingSessions', id);
+  },
+
+  /**
+   * Get sessions by status.
+   * @param {string} status - Recording status
+   * @returns {Promise<Array>} Sessions with the status
+   */
+  async getByStatus(status) {
+    return queryByIndex('recordingSessions', 'status', status);
+  },
+
+  /**
+   * Get sessions by lecture.
+   * @param {string} lectureId - Lecture ID
+   * @returns {Promise<Array>} Sessions for the lecture
+   */
+  async getByLecture(lectureId) {
+    return queryByIndex('recordingSessions', 'lectureId', lectureId);
+  },
+
+  /**
+   * Get all sessions.
+   * @returns {Promise<Array>} All sessions
+   */
+  async getAll() {
+    return getAll('recordingSessions');
+  }
+};
+
+// ============================================================================
+// Audio Data Repository
+// ============================================================================
+
+/**
+ * Repository for audio data.
+ */
+export const AudioDataRepository = {
+  /**
+   * Store audio data. ID must match a RecordingSession.id (key-sharing).
+   * @param {Object} data - Audio data (id required, must match session id)
+   * @returns {Promise<Object>} Created audio data
+   */
+  async create(data) {
+    const audio = createAudioData(data);
+    await put('audioData', audio);
+    return audio;
+  },
+
+  /**
+   * Get audio data by session ID (direct key lookup, 1:1 with RecordingSession).
+   * @param {string} id - RecordingSession ID
+   * @returns {Promise<Object|undefined>} Audio data or undefined
+   */
+  async getById(id) {
+    return get('audioData', id);
+  },
+
+  /**
+   * Delete audio data.
+   * @param {string} id - RecordingSession ID
+   * @returns {Promise<void>}
+   */
+  async delete(id) {
+    return remove('audioData', id);
+  },
+
+  /**
+   * Get all audio data.
+   * @returns {Promise<Array>} All audio data
+   */
+  async getAll() {
+    return getAll('audioData');
+  }
+};
+
+// ============================================================================
+// Photo Capture Repository
+// ============================================================================
+
+/**
+ * Repository for photo captures.
+ */
+export const PhotoCaptureRepository = {
+  /**
+   * Create a new photo capture.
+   * @param {Object} data - Photo data
+   * @returns {Promise<Object>} Created photo capture
+   */
+  async create(data) {
+    const photo = createPhotoCapture(data);
+    await put('photoCaptures', photo);
+    return photo;
+  },
+
+  /**
+   * Get a photo capture by ID.
+   * @param {string} id - Photo capture ID
+   * @returns {Promise<Object|undefined>} Photo capture or undefined
+   */
+  async getById(id) {
+    return get('photoCaptures', id);
+  },
+
+  /**
+   * Delete a photo capture.
+   * @param {string} id - Photo capture ID
+   * @returns {Promise<void>}
+   */
+  async delete(id) {
+    return remove('photoCaptures', id);
+  },
+
+  /**
+   * Get photo captures by recording session.
+   * @param {string} recordingSessionId - Recording session ID
+   * @returns {Promise<Array>} Photo captures for the session
+   */
+  async getBySession(recordingSessionId) {
+    return queryByIndex('photoCaptures', 'recordingSessionId', recordingSessionId);
+  }
+};
+
+// ============================================================================
+// Auto Note Repository
+// ============================================================================
+
+/**
+ * Repository for auto notes.
+ */
+export const AutoNoteRepository = {
+  /**
+   * Create a new auto note.
+   * @param {Object} data - Note data
+   * @returns {Promise<Object>} Created auto note
+   */
+  async create(data) {
+    const note = createAutoNote(data);
+    await put('autoNotes', note);
+    return note;
+  },
+
+  /**
+   * Get an auto note by ID.
+   * @param {string} id - Note ID
+   * @returns {Promise<Object|undefined>} Auto note or undefined
+   */
+  async getById(id) {
+    return get('autoNotes', id);
+  },
+
+  /**
+   * Get auto note by lecture (unique — returns first match).
+   * @param {string} lectureId - Lecture ID
+   * @returns {Promise<Object|undefined>} Auto note or undefined
+   */
+  async getByLecture(lectureId) {
+    const notes = await queryByIndex('autoNotes', 'lectureId', lectureId);
+    return notes[0];
+  },
+
+  /**
+   * Delete an auto note.
+   * @param {string} id - Note ID
+   * @returns {Promise<void>}
+   */
+  async delete(id) {
+    return remove('autoNotes', id);
+  },
+
+  /**
+   * Update (overwrite) an auto note.
+   * @param {Object} record - Full note record to overwrite
+   * @returns {Promise<Object>} Updated auto note
+   */
+  async update(record) {
+    await put('autoNotes', record);
+    return record;
+  }
+};
+
 export default {
   calculateSM2,
   BaseRepository,
@@ -1048,5 +1302,9 @@ export default {
   FlashcardRepository,
   BookmarkRepository,
   ConfusionVoteRepository,
-  SyncQueueRepository
+  SyncQueueRepository,
+  RecordingSessionRepository,
+  AudioDataRepository,
+  PhotoCaptureRepository,
+  AutoNoteRepository
 };

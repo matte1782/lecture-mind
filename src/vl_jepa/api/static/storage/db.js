@@ -8,7 +8,7 @@
 
 /** Database configuration */
 export const DB_NAME = 'LectureMindDB';
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
 
 /**
  * Object store definitions with keyPath and indexes.
@@ -76,6 +76,32 @@ export const STORES = {
     indexes: [
       { name: 'lectureId', keyPath: 'lectureId', options: { unique: false } },
       { name: 'segmentId', keyPath: 'segmentId', options: { unique: false } }
+    ]
+  },
+  recordingSessions: {
+    keyPath: 'id',
+    indexes: [
+      { name: 'lectureId', keyPath: 'lectureId', options: { unique: false } },
+      { name: 'status', keyPath: 'status', options: { unique: false } },
+      { name: 'createdAt', keyPath: 'createdAt', options: { unique: false } }
+    ]
+  },
+  audioData: {
+    keyPath: 'id',
+    indexes: []
+  },
+  photoCaptures: {
+    keyPath: 'id',
+    indexes: [
+      { name: 'recordingSessionId', keyPath: 'recordingSessionId', options: { unique: false } },
+      { name: 'timestampMs', keyPath: 'timestampMs', options: { unique: false } }
+    ]
+  },
+  autoNotes: {
+    keyPath: 'id',
+    indexes: [
+      { name: 'lectureId', keyPath: 'lectureId', options: { unique: true } },
+      { name: 'generatedAt', keyPath: 'generatedAt', options: { unique: false } }
     ]
   },
   syncQueue: {
