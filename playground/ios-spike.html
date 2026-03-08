@@ -526,6 +526,126 @@
     background: rgba(255,255,255,0.1);
     border-radius: 2px;
   }
+
+  /* ============================================
+     Desktop Responsive (768px+)
+     ============================================ */
+  @media (min-width: 768px) {
+    html {
+      background: radial-gradient(ellipse at 50% 30%, rgba(99, 102, 241, 0.06) 0%, var(--bg) 60%);
+      min-height: 100vh;
+    }
+
+    body {
+      max-width: 520px;
+      padding: 32px 32px calc(32px + var(--safe-bottom));
+      margin-top: 24px;
+      margin-bottom: 24px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.03),
+        0 4px 24px rgba(0, 0, 0, 0.4),
+        0 12px 48px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Typography scale-up */
+    .header { padding: 28px 0 28px; }
+    .header h1 { font-size: 28px; }
+    .header p { font-size: 16px; }
+    .brand { font-size: 14px; }
+
+    /* Timer scale */
+    .timer { font-size: 56px; }
+
+    /* Section spacing */
+    .section { margin-top: 24px; }
+    .section-label { font-size: 12px; margin-bottom: 12px; }
+
+    /* Card + log-header transitions for hover */
+    .card,
+    .log-header {
+      transition: border-color var(--transition), background var(--transition);
+    }
+
+    /* Waveform wider bars */
+    .waveform {
+      gap: 4px;
+      height: 40px;
+    }
+    .waveform-bar { width: 4px; }
+
+    /* Log: taller on desktop */
+    #log { max-height: 480px; }
+
+    /* Recording hero breathe */
+    .rec-hero { padding: 40px 28px; }
+
+    /* Pill scale */
+    .pill { font-size: 13px; padding: 5px 12px; }
+
+    /* Button group spacing */
+    .btn-group { gap: 12px; }
+    .btn { font-size: 15px; padding: 16px; }
+  }
+
+  /* ============================================
+     Hover interactions (pointer devices only)
+     ============================================ */
+  @media (hover: hover) {
+    .btn-record:hover {
+      border-color: rgba(239, 68, 68, 0.35);
+      box-shadow: 0 0 20px var(--red-glow);
+    }
+    .btn-record.is-stop:hover {
+      border-color: rgba(239, 68, 68, 0.5);
+      box-shadow: 0 0 24px var(--red-glow);
+    }
+    .btn-photo:not(:disabled):hover {
+      border-color: rgba(59, 130, 246, 0.4);
+      box-shadow: 0 0 20px var(--blue-glow);
+    }
+    .btn-subtle:hover {
+      background: var(--surface-raised);
+      border-color: var(--border-focus);
+    }
+    .btn-wakelock:hover {
+      border-color: rgba(245, 158, 11, 0.5);
+      box-shadow: 0 0 16px var(--amber-glow);
+    }
+
+    .card:hover {
+      border-color: var(--border-focus);
+    }
+
+    .log-header:hover {
+      background: var(--surface-raised);
+    }
+  }
+
+  /* ============================================
+     Large desktop (1024px+) — ambient texture
+     ============================================ */
+  @media (min-width: 1024px) {
+    body {
+      margin-top: 48px;
+      margin-bottom: 48px;
+    }
+
+    /* Subtle dot grid behind card */
+    html::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 24px 24px;
+      pointer-events: none;
+      z-index: -1;
+      mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+      -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+    }
+  }
 </style>
 </head>
 <body>
