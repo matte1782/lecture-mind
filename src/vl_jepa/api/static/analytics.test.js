@@ -1176,7 +1176,7 @@ describe('Analytics — Day 3: Per-Lecture Analytics Tab', () => {
     expect(analyticsTab.textContent.toLowerCase()).toContain('analytics');
 
     const allTabs = container.querySelectorAll('[role="tab"]');
-    expect(allTabs.length).toBe(5);
+    expect(allTabs.length).toBe(6);
   });
 
 });

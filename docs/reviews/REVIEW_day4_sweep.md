@@ -1,40 +1,57 @@
-## Summary (Week 13 Day 4 — Aggregate Study Dashboard)
-- Issues: 0 critical, 0 major, 2 minor
-- Score: 90/100
-- Recommendation: GO
+# Hostile Review: Day 4 Sweep — Photo Gallery + Save Button + CSS
 
-## Round 1: 72/100 BLOCK (1 critical, 3 major)
+## Summary
+- **Score:** 90/100
+- **Issues:** 0 Critical, 1 Major, 3 Minor
+- **Recommendation:** GO
 
-### C1: setDashboardRenderer never called — dashboard route dead
-### M2: renderStudyDashboard never called renderGlobalMasteryBreakdown
-### M3: No error handling in async renderStudyDashboard
-### M4: Weak test assertions on dashboard integration test
+## Cross-Cutting Checklist
 
----
+| Check | Status |
+|-------|--------|
+| AD-1 compliance: library.js (L3) imports from storage (L0) only | PASS |
+| AD-1 compliance: recorder.js (L2) imports from flashcards.js (L1) + storage (L0) | PASS |
+| Safe DOM: No innerHTML in any changed file | PASS |
+| Photo gallery: RecordingSessionRepository.getByLecture → PhotoCaptureRepository.getBySession | PASS |
+| Photo gallery: createObjectURL with try/catch for jsdom | PASS |
+| Photo gallery: alt text on all images | PASS |
+| Photo gallery: empty state when no photos | PASS |
+| Save button: disabled initially, enabled after stopRecording | PASS |
+| Save button: calls completeRecording() + navigateTo lecture detail | PASS |
+| Save button: aria-label present | PASS |
+| CSS: Variable fallbacks on all custom properties | PASS |
+| CSS: focus-visible on save-btn | PASS |
+| CSS: Responsive photo-gallery grid | PASS |
+| Tab count: 6 tabs (Segments, Flashcards, Bookmarks, Photos, Info, Analytics) | PASS |
+| Analytics test fixed: tab count assertion 5→6 | PASS |
+| Test coverage: +7 new tests (4 library + 3 recorder) | PASS |
+| Regression: 640 total tests, 0 failures, 11 suites | PASS |
 
-## Re-Review (Round 2) — After Fixes
+## Files Reviewed
 
-- Score: **90/100**
-- Recommendation: **GO**
+| File | Lines Changed | New Tests | Status |
+|------|--------------|-----------|--------|
+| library.js | +60 (renderPhotoGallery, imports, tab additions) | - | MODIFIED |
+| library.test.js | +70 (4 photo gallery tests) | 4 | MODIFIED |
+| recorder.js | +20 (save button in renderRecordView) | - | MODIFIED |
+| recorder.test.js | +40 (3 save button tests) | 3 | MODIFIED |
+| recorder.css | +50 (save-btn, photo-gallery, photo-thumb) | - | MODIFIED |
+| analytics.test.js | +1 (tab count fix) | - | MODIFIED |
 
-### C1 FIXED: Dashboard route wired
-library.js:2178 registers renderStudyDashboard via setDashboardRenderer.
-Full chain: flashcards.js setter → library.js registers → router invokes.
+## Major Issues
 
-### M2 FIXED: Global mastery breakdown added
-analytics.js fetches FlashcardRepository.getAll() and calls renderGlobalMasteryBreakdown.
+| ID | Issue | Fix |
+|----|-------|-----|
+| M1 | URL.createObjectURL blobs never revoked — memory leak with many photos | DEFERRED to W17 photo gallery polish (acceptable for MVP with few photos) |
 
-### M3 FIXED: Error handling added
-Entire renderStudyDashboard wrapped in try/catch with sp-analytics-error element.
+## Minor Issues (non-blocking)
 
-### M4 FIXED: Structural test assertions
-Integration test asserts .sp-streak-card, svg, .sp-results-table, .sp-analytics-section.
+| ID | Issue | Status |
+|----|-------|--------|
+| m1 | No test for createObjectURL path (jsdom limitation) | ACCEPTED — jsdom doesn't support createObjectURL |
+| m2 | Save button doesn't re-disable after successful navigation | ACCEPTABLE — view is unmounted on navigation |
+| m3 | Photo gallery sorts by timestampMs but doesn't group by session | DEFERRED — single-session per lecture is the common case in v0.5.0 |
 
-### Remaining Minor Issues (non-blocking)
-- m1: Dashboard integration test doesn't seed flashcards (mastery donut untested in integration, covered by isolated test) — 75%
-- m2: Catch block discards error without logging — 60%
+## Verdict: GO (90/100)
 
-### No Regressions Detected
-535 tests, 0 failures.
-
-**VERDICT: GO — 90/100**
+Day 4 delivered photo gallery tab in lecture detail with thumbnail grid and timestamps, "Save & Create Lecture" button wired to completeRecording + navigation, responsive CSS with focus-visible, and 7 new tests. 640 total tests pass. Architecture alignment verified. One major (blob URL leak) deferred to polish week — acceptable for MVP.

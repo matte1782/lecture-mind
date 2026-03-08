@@ -28,6 +28,8 @@ import {
   BookmarkRepository,
   ProgressRepository,
   FLASHCARD_STATUS,
+  RecordingSessionRepository,
+  PhotoCaptureRepository,
   createCourse,
   createLecture,
   createSegment,
@@ -1647,8 +1649,8 @@ function renderDetailStats(container, stats) {
  * @returns {HTMLElement} The tablist element
  */
 function renderDetailTabs(container, activeTab, onTabChange) {
-  const tabNames = ['Segments', 'Flashcards', 'Bookmarks', 'Info', 'Analytics'];
-  const tabIds = ['segments', 'flashcards', 'bookmarks', 'info', 'analytics'];
+  const tabNames = ['Segments', 'Flashcards', 'Bookmarks', 'Photos', 'Info', 'Analytics'];
+  const tabIds = ['segments', 'flashcards', 'bookmarks', 'photos', 'info', 'analytics'];
 
   const tablist = createElement('div', 'sp-detail-tabs');
   tablist.setAttribute('role', 'tablist');
@@ -1954,6 +1956,7 @@ async function renderLectureDetailView(lectureId) {
       if (tabId === 'segments') await renderSegmentsList(tabPanel, lectureId);
       else if (tabId === 'flashcards') await renderFlashcardsList(tabPanel, lectureId);
       else if (tabId === 'bookmarks') await renderBookmarksList(tabPanel, lectureId);
+      else if (tabId === 'photos') await renderPhotoGallery(tabPanel, lectureId);
       else if (tabId === 'info') renderLectureInfo(tabPanel, lecture, stats);
       else if (tabId === 'analytics') await renderLectureAnalyticsTab(tabPanel, lectureId);
     });
@@ -1974,6 +1977,67 @@ async function renderLectureDetailView(lectureId) {
       textContent: 'Error loading lecture'
     }));
   }
+}
+
+// ============================================================================
+// PHOTO GALLERY (v0.5.0 Day 4)
+// ============================================================================
+
+/**
+ * Render photo gallery for a lecture.
+ * Fetches recording sessions linked to the lecture, then photos for each session.
+ * @param {HTMLElement} container
+ * @param {string} lectureId
+ */
+async function renderPhotoGallery(container, lectureId) {
+  clearElement(container);
+
+  const sessions = await RecordingSessionRepository.getByLecture(lectureId);
+  const allPhotos = [];
+
+  for (const session of sessions) {
+    const photos = await PhotoCaptureRepository.getBySession(session.id);
+    allPhotos.push(...photos);
+  }
+
+  // Sort by timestamp
+  allPhotos.sort((a, b) => (a.timestampMs || 0) - (b.timestampMs || 0));
+
+  if (allPhotos.length === 0) {
+    container.appendChild(createElement('p', 'sp-empty-state', { textContent: 'No photos captured for this lecture' }));
+    return;
+  }
+
+  const grid = createElement('div', 'photo-gallery');
+
+  for (const photo of allPhotos) {
+    const thumbWrapper = createElement('div', 'photo-thumb');
+
+    // Create image element with lazy-loaded blob URL
+    const img = createElement('img', 'photo-thumb__img');
+    if (photo.blob) {
+      try {
+        const url = URL.createObjectURL(photo.blob);
+        img.src = url;
+      } catch (_e) {
+        // createObjectURL may not be available in jsdom
+      }
+    }
+
+    // Format timestamp for alt text and label
+    const seconds = Math.round((photo.timestampMs || 0) / 1000);
+    const timeStr = formatTime(seconds);
+    img.alt = `Photo at ${timeStr}`;
+
+    thumbWrapper.appendChild(img);
+
+    const timestamp = createElement('span', 'photo-timestamp', { textContent: timeStr });
+    thumbWrapper.appendChild(timestamp);
+
+    grid.appendChild(thumbWrapper);
+  }
+
+  container.appendChild(grid);
 }
 
 // ============================================================================
@@ -2283,6 +2347,9 @@ export {
   renderFlashcardsList,
   renderBookmarksList,
   renderLectureInfo,
+
+  // v0.5.0 Day 4: Photo gallery
+  renderPhotoGallery,
 
   // Day 5: Favorites
   getFavoriteIds,

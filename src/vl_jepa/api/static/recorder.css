@@ -84,7 +84,8 @@
 
 .record-btn,
 .stop-btn,
-.photo-btn {
+.photo-btn,
+.save-btn {
   min-width: 56px;
   min-height: 56px;
   padding: var(--space-sm, 8px) var(--space-lg, 24px);
@@ -127,15 +128,58 @@
   background: var(--primary-hover, #4f46e5);
 }
 
-.photo-btn:disabled {
+.photo-btn:disabled,
+.save-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.save-btn {
+  background: var(--success, #22c55e);
+  color: #fff;
+}
+
+.save-btn:hover:not(:disabled) {
+  background: var(--success-hover, #16a34a);
+}
+
+/* Photo gallery in lecture detail */
+.photo-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--space-sm, 8px);
+  width: 100%;
+}
+
+.photo-thumb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs, 4px);
+  border: 1px solid var(--border, #d1d5db);
+  border-radius: var(--radius-md, 8px);
+  padding: var(--space-xs, 4px);
+  background: var(--surface, #fff);
+}
+
+.photo-thumb__img {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  border-radius: var(--radius-sm, 4px);
+}
+
+.photo-timestamp {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #6b7280);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Focus visible for keyboard nav */
 .record-btn:focus-visible,
 .stop-btn:focus-visible,
-.photo-btn:focus-visible {
+.photo-btn:focus-visible,
+.save-btn:focus-visible {
   outline: 2px solid var(--primary, #6366f1);
   outline-offset: 2px;
 }
