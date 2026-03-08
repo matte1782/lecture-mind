@@ -18,6 +18,7 @@ import {
   ProgressRepository,
   RecordingSessionRepository,
   PhotoCaptureRepository,
+  ConfusionVoteRepository,
   createCourse,
   createLecture,
   createSegment,
@@ -1175,6 +1176,124 @@ describe('Entity Lists', () => {
 
     const completedItems = container.querySelectorAll('.sp-segment-item--completed');
     expect(completedItems.length).toBe(1);
+  });
+
+  test('renderSegmentsList shows confusion button on each segment with aria-pressed', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'Confusion Btn' }));
+    await SegmentRepository.create(createSegment({
+      lectureId: lecture.id, startTime: 0, endTime: 60, type: 'topic'
+    }));
+    await SegmentRepository.create(createSegment({
+      lectureId: lecture.id, startTime: 60, endTime: 120, type: 'topic'
+    }));
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    await renderSegmentsList(container, lecture.id);
+
+    const buttons = container.querySelectorAll('.sp-segment-item__confused-btn');
+    expect(buttons.length).toBe(2);
+    buttons.forEach(btn => {
+      expect(btn.getAttribute('aria-pressed')).toBe('false');
+      expect(btn.getAttribute('role')).toBe('button');
+      expect(btn.getAttribute('tabindex')).toBe('0');
+    });
+  });
+
+  test('confusion button click toggles vote and updates aria-pressed', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'Click Toggle' }));
+    const seg = await SegmentRepository.create(createSegment({
+      lectureId: lecture.id, startTime: 0, endTime: 60, type: 'topic'
+    }));
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    await renderSegmentsList(container, lecture.id);
+
+    const btn = container.querySelector('.sp-segment-item__confused-btn');
+    expect(btn.getAttribute('aria-pressed')).toBe('false');
+
+    // Click to vote
+    btn.click();
+    // Wait for async toggle
+    await new Promise(r => setTimeout(r, 50));
+
+    expect(btn.getAttribute('aria-pressed')).toBe('true');
+    const votes = await ConfusionVoteRepository.getBySegment(seg.id);
+    expect(votes).toHaveLength(1);
+
+    // Click again to unvote
+    btn.click();
+    await new Promise(r => setTimeout(r, 50));
+
+    expect(btn.getAttribute('aria-pressed')).toBe('false');
+    const votesAfter = await ConfusionVoteRepository.getBySegment(seg.id);
+    expect(votesAfter).toHaveLength(0);
+  });
+
+  test('confusion button shows vote count', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'Vote Count' }));
+    const seg = await SegmentRepository.create(createSegment({
+      lectureId: lecture.id, startTime: 0, endTime: 60, type: 'topic'
+    }));
+
+    // Pre-create a vote
+    await ConfusionVoteRepository.create({ lectureId: lecture.id, segmentId: seg.id });
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    await renderSegmentsList(container, lecture.id);
+
+    const btn = container.querySelector('.sp-segment-item__confused-btn');
+    expect(btn.getAttribute('aria-pressed')).toBe('true');
+    expect(btn.textContent).toMatch(/1/);
+  });
+
+  test('confusion button responds to keyboard Enter and Space', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'Keyboard Toggle' }));
+    const seg = await SegmentRepository.create(createSegment({
+      lectureId: lecture.id, startTime: 0, endTime: 60, type: 'topic'
+    }));
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    await renderSegmentsList(container, lecture.id);
+
+    const btn = container.querySelector('.sp-segment-item__confused-btn');
+
+    // Press Enter
+    btn.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await new Promise(r => setTimeout(r, 50));
+
+    expect(btn.getAttribute('aria-pressed')).toBe('true');
+
+    // Press Space to unvote
+    btn.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+    await new Promise(r => setTimeout(r, 50));
+
+    expect(btn.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  test('confusion button preserves vote state on re-render', async () => {
+    const lecture = await LectureRepository.create(createLecture({ title: 'Persist Vote' }));
+    const seg = await SegmentRepository.create(createSegment({
+      lectureId: lecture.id, startTime: 0, endTime: 60, type: 'topic'
+    }));
+
+    // Create a vote
+    await ConfusionVoteRepository.toggle(seg.id, lecture.id);
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    await renderSegmentsList(container, lecture.id);
+
+    const btn = container.querySelector('.sp-segment-item__confused-btn');
+    expect(btn.getAttribute('aria-pressed')).toBe('true');
+
+    // Re-render — vote should still show
+    await renderSegmentsList(container, lecture.id);
+    const btn2 = container.querySelector('.sp-segment-item__confused-btn');
+    expect(btn2.getAttribute('aria-pressed')).toBe('true');
   });
 
   test('renderFlashcardsList shows edit/delete per card', async () => {

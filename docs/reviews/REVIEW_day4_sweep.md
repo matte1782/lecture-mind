@@ -38,20 +38,22 @@
 | recorder.css | +50 (save-btn, photo-gallery, photo-thumb) | - | MODIFIED |
 | analytics.test.js | +1 (tab count fix) | - | MODIFIED |
 
-## Major Issues
+## Major Issues (from hostile reviewer, 82/100)
 
-| ID | Issue | Fix |
-|----|-------|-----|
-| M1 | URL.createObjectURL blobs never revoked — memory leak with many photos | DEFERRED to W17 photo gallery polish (acceptable for MVP with few photos) |
+| ID | Issue | Status |
+|----|-------|--------|
+| M1 | URL.createObjectURL blobs never revoked — memory leak with many photos | DEFERRED to W19 polish (bounded to Photos tab, acceptable for MVP) |
+| M2 | Save button click handler untested (only DOM presence tested) | DEFERRED to W19 — core logic tested via completeRecording unit tests (Group 9) |
 
 ## Minor Issues (non-blocking)
 
 | ID | Issue | Status |
 |----|-------|--------|
-| m1 | No test for createObjectURL path (jsdom limitation) | ACCEPTED — jsdom doesn't support createObjectURL |
-| m2 | Save button doesn't re-disable after successful navigation | ACCEPTABLE — view is unmounted on navigation |
-| m3 | Photo gallery sorts by timestampMs but doesn't group by session | DEFERRED — single-session per lecture is the common case in v0.5.0 |
+| m1 | renderDetailTabs JSDoc stale — doesn't list 'photos' | LOW — docs only |
+| m2 | Two formatTime functions (library m:ss vs recorder HH:MM:SS) | ACCEPTABLE — gallery matches existing segment timestamp format |
+| m3 | Alt text test only asserts truthy, not format | LOW — regression risk minimal |
+| m4 | .record-container CSS class never applied in JS | PRE-EXISTING from Day 2 — container passed from outside |
 
-## Verdict: GO (90/100)
+## Verdict: GO (82/100 hostile, 90/100 self-review)
 
-Day 4 delivered photo gallery tab in lecture detail with thumbnail grid and timestamps, "Save & Create Lecture" button wired to completeRecording + navigation, responsive CSS with focus-visible, and 7 new tests. 640 total tests pass. Architecture alignment verified. One major (blob URL leak) deferred to polish week — acceptable for MVP.
+Day 4 delivered photo gallery tab in lecture detail with thumbnail grid and timestamps, "Save & Create Lecture" button wired to completeRecording + navigation, responsive CSS with focus-visible, and 7 new tests. 640 total tests pass. Architecture alignment verified. Two majors deferred to polish week — acceptable for MVP. Hostile reviewer approved conditionally.

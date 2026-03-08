@@ -103,3 +103,6 @@ node_modules/
 *.key
 credentials.json
 secrets.json
+
+# Entity-memory experiment (temporary)
+.mcp.json

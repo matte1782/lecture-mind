@@ -914,6 +914,37 @@ export const ConfusionVoteRepository = {
   async countBySegment(segmentId) {
     const votes = await this.getBySegment(segmentId);
     return votes.length;
+  },
+
+  /** @type {Map<string, Promise<boolean>>} Per-segment mutex for toggle */
+  _toggleLocks: new Map(),
+
+  /**
+   * Toggle confusion vote for a segment. Creates if none exists, deletes if one does.
+   * Uses per-segment mutex to prevent read-modify-write race conditions.
+   * @param {string} segmentId - Segment ID
+   * @param {string} lectureId - Lecture ID
+   * @returns {Promise<boolean>} true if vote was created, false if deleted
+   */
+  async toggle(segmentId, lectureId) {
+    const key = `${segmentId}:${lectureId}`;
+    const prev = this._toggleLocks.get(key) || Promise.resolve();
+    const next = prev.then(async () => {
+      const votes = await this.getBySegment(segmentId);
+      const existing = votes.find(v => v.lectureId === lectureId);
+      if (existing) {
+        await this.delete(existing.id);
+        return false;
+      } else {
+        await this.create({ segmentId, lectureId });
+        return true;
+      }
+    });
+    const guard = next.catch(() => {}).finally(() => {
+      if (this._toggleLocks.get(key) === guard) this._toggleLocks.delete(key);
+    });
+    this._toggleLocks.set(key, guard);
+    return next;
   }
 };
 

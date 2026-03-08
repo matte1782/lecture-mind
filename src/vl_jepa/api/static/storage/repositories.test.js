@@ -745,6 +745,44 @@ describe('ConfusionVoteRepository', () => {
     const count = await ConfusionVoteRepository.countBySegment(segmentId);
     expect(count).toBe(2);
   });
+
+  test('toggle creates vote when none exists and returns true', async () => {
+    const result = await ConfusionVoteRepository.toggle(segmentId, lectureId);
+    expect(result).toBe(true);
+
+    const votes = await ConfusionVoteRepository.getBySegment(segmentId);
+    expect(votes).toHaveLength(1);
+    expect(votes[0].lectureId).toBe(lectureId);
+    expect(votes[0].segmentId).toBe(segmentId);
+  });
+
+  test('toggle deletes vote when one exists and returns false', async () => {
+    // Create a vote first
+    await ConfusionVoteRepository.toggle(segmentId, lectureId);
+    const votesBefore = await ConfusionVoteRepository.getBySegment(segmentId);
+    expect(votesBefore).toHaveLength(1);
+
+    // Toggle again — should remove it
+    const result = await ConfusionVoteRepository.toggle(segmentId, lectureId);
+    expect(result).toBe(false);
+
+    const votesAfter = await ConfusionVoteRepository.getBySegment(segmentId);
+    expect(votesAfter).toHaveLength(0);
+  });
+
+  test('toggle handles concurrent calls without duplicates', async () => {
+    // Fire two toggles concurrently on same segment
+    const [r1, r2] = await Promise.all([
+      ConfusionVoteRepository.toggle(segmentId, lectureId),
+      ConfusionVoteRepository.toggle(segmentId, lectureId)
+    ]);
+
+    // One should create, one should delete — net result is 0 or 1, never 2
+    const votes = await ConfusionVoteRepository.getBySegment(segmentId);
+    expect(votes.length).toBeLessThanOrEqual(1);
+    // Exactly one true and one false
+    expect([r1, r2].sort()).toEqual([false, true]);
+  });
 });
 
 describe('SyncQueueRepository', () => {
