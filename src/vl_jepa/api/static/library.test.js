@@ -86,7 +86,13 @@ import {
   renderFavoritesEmptyState,
   enhancedRenderLibraryView,
   // Day 4 v0.5.0: Photo gallery
-  renderPhotoGallery
+  renderPhotoGallery,
+  // W16 Day 1: Confusion heatmap
+  getConfusionHeatmapData,
+  getHeatmapColor,
+  renderConfusionHeatmap,
+  renderConfusionStats,
+  renderConfusionTab
 } from './library.js';
 
 // ============================================================================
@@ -2062,5 +2068,379 @@ describe('renderPhotoGallery', () => {
     if (img) {
       expect(img.getAttribute('alt')).toBeTruthy();
     }
+  });
+});
+
+// ============================================================================
+// W16 Day 1: CONFUSION HEATMAP — AGGREGATION
+// ============================================================================
+
+describe('getConfusionHeatmapData', () => {
+  let lecture, seg1, seg2, seg3;
+
+  beforeEach(async () => {
+    lecture = await LectureRepository.create(
+      createLecture({ title: 'Heatmap Test Lecture' })
+    );
+    seg1 = await SegmentRepository.create(
+      createSegment({ lectureId: lecture.id, type: 'Intro', startTime: 0, endTime: 60, order: 0 })
+    );
+    seg2 = await SegmentRepository.create(
+      createSegment({ lectureId: lecture.id, type: 'Core Concepts', startTime: 60, endTime: 120, order: 1 })
+    );
+    seg3 = await SegmentRepository.create(
+      createSegment({ lectureId: lecture.id, type: 'Advanced', startTime: 120, endTime: 180, order: 2 })
+    );
+  });
+
+  it('returns segments with zero votes when lecture has no confusion votes', async () => {
+    const data = await getConfusionHeatmapData(lecture.id);
+    expect(data.length).toBe(3);
+    expect(data.every(d => d.voteCount === 0)).toBe(true);
+    expect(data.every(d => d.percentage === 0)).toBe(true);
+  });
+
+  it('returns correct aggregated data for multiple segments', async () => {
+    // 2 votes on seg1, 1 vote on seg2, 0 on seg3
+    await ConfusionVoteRepository.create({ segmentId: seg1.id, lectureId: lecture.id });
+    await ConfusionVoteRepository.create({ segmentId: seg1.id, lectureId: lecture.id });
+    await ConfusionVoteRepository.create({ segmentId: seg2.id, lectureId: lecture.id });
+
+    const data = await getConfusionHeatmapData(lecture.id);
+    expect(data.length).toBe(3);
+    // seg1: 2/3 = 67%, seg2: 1/3 = 33%, seg3: 0/3 = 0%
+    const s1 = data.find(d => d.segmentId === seg1.id);
+    expect(s1.voteCount).toBe(2);
+    expect(s1.percentage).toBe(67);
+    expect(s1.segmentTitle).toBe('Intro');
+
+    const s2 = data.find(d => d.segmentId === seg2.id);
+    expect(s2.voteCount).toBe(1);
+    expect(s2.percentage).toBe(33);
+
+    const s3 = data.find(d => d.segmentId === seg3.id);
+    expect(s3.voteCount).toBe(0);
+    expect(s3.percentage).toBe(0);
+  });
+
+  it('sorts results by segment order', async () => {
+    await ConfusionVoteRepository.create({ segmentId: seg3.id, lectureId: lecture.id });
+
+    const data = await getConfusionHeatmapData(lecture.id);
+    expect(data[0].segmentId).toBe(seg1.id);
+    expect(data[1].segmentId).toBe(seg2.id);
+    expect(data[2].segmentId).toBe(seg3.id);
+  });
+
+  it('handles single-segment lecture', async () => {
+    const soloLecture = await LectureRepository.create(
+      createLecture({ title: 'Solo' })
+    );
+    const soloSeg = await SegmentRepository.create(
+      createSegment({ lectureId: soloLecture.id, type: 'Only Segment', startTime: 0, endTime: 60, order: 0 })
+    );
+    await ConfusionVoteRepository.create({ segmentId: soloSeg.id, lectureId: soloLecture.id });
+
+    const data = await getConfusionHeatmapData(soloLecture.id);
+    expect(data.length).toBe(1);
+    expect(data[0].voteCount).toBe(1);
+    expect(data[0].percentage).toBe(100);
+  });
+
+  it('percentage rounds to nearest integer', async () => {
+    // 1 vote on seg1, 2 on seg2 = 1/3 = 33.33...% -> 33
+    await ConfusionVoteRepository.create({ segmentId: seg1.id, lectureId: lecture.id });
+    await ConfusionVoteRepository.create({ segmentId: seg2.id, lectureId: lecture.id });
+    await ConfusionVoteRepository.create({ segmentId: seg2.id, lectureId: lecture.id });
+
+    const data = await getConfusionHeatmapData(lecture.id);
+    const s1 = data.find(d => d.segmentId === seg1.id);
+    expect(typeof s1.percentage).toBe('number');
+    expect(Number.isInteger(s1.percentage)).toBe(true);
+  });
+});
+
+// ============================================================================
+// W16 Day 1: CONFUSION HEATMAP — BAR CHART COMPONENT
+// ============================================================================
+
+describe('renderConfusionHeatmap', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    if (container.parentNode) container.parentNode.removeChild(container);
+  });
+
+  it('renders one row per segment with correct count', () => {
+    const data = [
+      { segmentId: 's1', segmentTitle: 'Intro', voteCount: 3, percentage: 75 },
+      { segmentId: 's2', segmentTitle: 'Middle', voteCount: 1, percentage: 25 },
+    ];
+    renderConfusionHeatmap(container, data);
+
+    const bars = container.querySelectorAll('[data-segment-id]');
+    expect(bars.length).toBe(2);
+  });
+
+  it('renders bars with proportional widths', () => {
+    const data = [
+      { segmentId: 's1', segmentTitle: 'Max', voteCount: 4, percentage: 100 },
+      { segmentId: 's2', segmentTitle: 'Half', voteCount: 2, percentage: 50 },
+    ];
+    renderConfusionHeatmap(container, data);
+
+    const barEls = container.querySelectorAll('.sp-heatmap__bar');
+    // Max should be 100%, half should be 50%
+    expect(barEls[0].style.width).toBe('100%');
+    expect(barEls[1].style.width).toBe('50%');
+  });
+
+  it('handles null data gracefully', () => {
+    renderConfusionHeatmap(container, null);
+    expect(container.textContent.toLowerCase()).toContain('no confusion data');
+  });
+
+  it('has ARIA role="img" with descriptive aria-label', () => {
+    const data = [
+      { segmentId: 's1', segmentTitle: 'Intro', voteCount: 2, percentage: 100 },
+    ];
+    renderConfusionHeatmap(container, data);
+
+    const chart = container.querySelector('[role="img"]');
+    expect(chart).not.toBeNull();
+    expect(chart.getAttribute('aria-label')).toBeTruthy();
+    expect(chart.getAttribute('aria-label').toLowerCase()).toContain('confusion');
+  });
+
+  it('shows segment titles on each bar', () => {
+    const data = [
+      { segmentId: 's1', segmentTitle: 'Introduction', voteCount: 1, percentage: 50 },
+      { segmentId: 's2', segmentTitle: 'Summary', voteCount: 1, percentage: 50 },
+    ];
+    renderConfusionHeatmap(container, data);
+
+    expect(container.textContent).toContain('Introduction');
+    expect(container.textContent).toContain('Summary');
+  });
+
+  it('renders empty state message for empty data', () => {
+    renderConfusionHeatmap(container, []);
+
+    expect(container.textContent.toLowerCase()).toContain('no confusion data');
+  });
+
+  it('renders single segment correctly', () => {
+    const data = [
+      { segmentId: 's1', segmentTitle: 'Only One', voteCount: 5, percentage: 100 },
+    ];
+    renderConfusionHeatmap(container, data);
+
+    const bars = container.querySelectorAll('[data-segment-id]');
+    expect(bars.length).toBe(1);
+    expect(container.textContent).toContain('Only One');
+  });
+
+  it('displays vote count on bars', () => {
+    const data = [
+      { segmentId: 's1', segmentTitle: 'Intro', voteCount: 7, percentage: 70 },
+    ];
+    renderConfusionHeatmap(container, data);
+
+    expect(container.textContent).toContain('7');
+  });
+});
+
+// ============================================================================
+// W16 Day 1: HEATMAP COLOR THRESHOLDS
+// ============================================================================
+
+describe('getHeatmapColor', () => {
+  it('returns low color for 0-33%', () => {
+    expect(getHeatmapColor(0)).toContain('confusion-low');
+    expect(getHeatmapColor(33)).toContain('confusion-low');
+  });
+
+  it('returns medium color for 34-66%', () => {
+    expect(getHeatmapColor(34)).toContain('confusion-medium');
+    expect(getHeatmapColor(66)).toContain('confusion-medium');
+  });
+
+  it('returns critical color for 67-100%', () => {
+    expect(getHeatmapColor(67)).toContain('confusion-critical');
+    expect(getHeatmapColor(100)).toContain('confusion-critical');
+  });
+});
+
+// ============================================================================
+// W16 Day 1: CONFUSION TAB INTEGRATION
+// ============================================================================
+
+describe('renderDetailTabs includes Confusion tab', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    if (container.parentNode) container.parentNode.removeChild(container);
+  });
+
+  it('renders a Confusion tab in the tab bar', () => {
+    renderDetailTabs(container, 'segments');
+
+    const tabs = container.querySelectorAll('[role="tab"]');
+    const confusionTab = Array.from(tabs).find(t =>
+      t.textContent.toLowerCase().includes('confusion')
+    );
+    expect(confusionTab).toBeDefined();
+    expect(confusionTab.dataset.tab).toBe('confusion');
+  });
+
+  it('Confusion tab has correct ARIA attributes when inactive', () => {
+    renderDetailTabs(container, 'segments');
+
+    const tabs = container.querySelectorAll('[role="tab"]');
+    const confusionTab = Array.from(tabs).find(t => t.dataset.tab === 'confusion');
+    expect(confusionTab.getAttribute('aria-selected')).toBe('false');
+    expect(confusionTab.getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('clicking Confusion tab fires onTabChange callback with "confusion"', () => {
+    let firedTabId = null;
+    renderDetailTabs(container, 'segments', (tabId) => { firedTabId = tabId; });
+
+    const tabs = container.querySelectorAll('[role="tab"]');
+    const confusionTab = Array.from(tabs).find(t => t.dataset.tab === 'confusion');
+    confusionTab.click();
+
+    expect(firedTabId).toBe('confusion');
+    expect(confusionTab.getAttribute('aria-selected')).toBe('true');
+    expect(confusionTab.getAttribute('tabindex')).toBe('0');
+  });
+});
+
+// ============================================================================
+// W16 Day 1: CONFUSION TAB RENDER (combined heatmap + stats)
+// ============================================================================
+
+describe('renderConfusionTab', () => {
+  let container, lecture, seg1, seg2;
+
+  beforeEach(async () => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+
+    lecture = await LectureRepository.create(
+      createLecture({ title: 'Tab Confusion Test' })
+    );
+    seg1 = await SegmentRepository.create(
+      createSegment({ lectureId: lecture.id, type: 'Intro', startTime: 0, endTime: 60, order: 0 })
+    );
+    seg2 = await SegmentRepository.create(
+      createSegment({ lectureId: lecture.id, type: 'Core', startTime: 60, endTime: 120, order: 1 })
+    );
+  });
+
+  afterEach(() => {
+    if (container.parentNode) container.parentNode.removeChild(container);
+  });
+
+  it('renders both heatmap and stats sections', async () => {
+    await ConfusionVoteRepository.create({ segmentId: seg1.id, lectureId: lecture.id });
+    await ConfusionVoteRepository.create({ segmentId: seg1.id, lectureId: lecture.id });
+    await ConfusionVoteRepository.create({ segmentId: seg2.id, lectureId: lecture.id });
+
+    await renderConfusionTab(container, lecture.id);
+
+    // Should have heatmap (role="img")
+    const heatmap = container.querySelector('[role="img"]');
+    expect(heatmap).not.toBeNull();
+
+    // Should have stats section
+    const stats = container.querySelector('.sp-confusion-stats');
+    expect(stats).not.toBeNull();
+  });
+
+  it('shows empty state when no votes', async () => {
+    await renderConfusionTab(container, lecture.id);
+
+    expect(container.textContent.toLowerCase()).toContain('no confusion data');
+  });
+});
+
+// ============================================================================
+// W16 Day 1: CONFUSION SUMMARY STATS
+// ============================================================================
+
+describe('renderConfusionStats', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    if (container.parentNode) container.parentNode.removeChild(container);
+  });
+
+  it('displays total votes', () => {
+    const data = [
+      { segmentId: 's1', segmentTitle: 'Intro', voteCount: 3, percentage: 60 },
+      { segmentId: 's2', segmentTitle: 'Core', voteCount: 2, percentage: 40 },
+    ];
+    renderConfusionStats(container, data);
+
+    expect(container.textContent).toContain('5');
+  });
+
+  it('displays most confused segment name', () => {
+    const data = [
+      { segmentId: 's1', segmentTitle: 'Intro', voteCount: 1, percentage: 20 },
+      { segmentId: 's2', segmentTitle: 'Advanced Topics', voteCount: 4, percentage: 80 },
+    ];
+    renderConfusionStats(container, data);
+
+    expect(container.textContent).toContain('Advanced Topics');
+  });
+
+  it('shows count of segments with >50% confusion', () => {
+    const data = [
+      { segmentId: 's1', segmentTitle: 'Intro', voteCount: 1, percentage: 20 },
+      { segmentId: 's2', segmentTitle: 'Core', voteCount: 3, percentage: 60 },
+      { segmentId: 's3', segmentTitle: 'Advanced', voteCount: 4, percentage: 80 },
+    ];
+    renderConfusionStats(container, data);
+
+    // 2 segments above 50%
+    const statsEl = container.querySelector('.sp-confusion-stats');
+    expect(statsEl).not.toBeNull();
+    expect(statsEl.textContent).toContain('2');
+  });
+
+  it('handles zero votes gracefully', () => {
+    const data = [
+      { segmentId: 's1', segmentTitle: 'Intro', voteCount: 0, percentage: 0 },
+    ];
+    renderConfusionStats(container, data);
+
+    expect(container.textContent).toContain('0');
+  });
+
+  it('handles single segment lecture', () => {
+    const data = [
+      { segmentId: 's1', segmentTitle: 'Only One', voteCount: 5, percentage: 100 },
+    ];
+    renderConfusionStats(container, data);
+
+    expect(container.textContent).toContain('Only One');
+    expect(container.textContent).toContain('5');
   });
 });
