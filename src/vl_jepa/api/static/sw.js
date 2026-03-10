@@ -6,10 +6,10 @@
  *   - activate: delete old caches
  *   - fetch: cache-first for /static/*, network-first for /api/*
  *
- * @version 0.4.0
+ * @version 0.5.0
  */
 
-const CACHE_NAME = 'lm-v0.4.0';
+const CACHE_NAME = 'lm-v0.5.0';
 
 const STATIC_ASSETS = [
   '/static/index.html',
@@ -30,6 +30,8 @@ const STATIC_ASSETS = [
   '/static/flashcards.js',
   '/static/library.js',
   '/static/analytics.js',
+  '/static/recorder.js',
+  '/static/recorder.css',
   '/static/sw-utils.js',
   '/static/storage/index.js',
   '/static/storage/db.js',

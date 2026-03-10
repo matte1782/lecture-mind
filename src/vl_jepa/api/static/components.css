@@ -2271,3 +2271,29 @@ body:has(.demo-banner.visible) {
 body:has(.demo-banner.visible) .header {
   top: 48px;
 }
+
+/* Playground mode banner (no backend detected) */
+.playground-mode-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--warning-bg, rgba(245, 158, 11, 0.1));
+  border: 1px solid var(--warning, #f59e0b);
+  border-radius: var(--radius-lg, 8px);
+  margin: var(--space-4) auto;
+  max-width: 600px;
+  font-size: var(--text-sm);
+  color: var(--foreground);
+}
+
+.playground-mode-banner a {
+  color: var(--primary);
+  font-weight: var(--font-semibold);
+  text-decoration: underline;
+}
+
+.playground-mode-banner a:hover {
+  text-decoration: none;
+}

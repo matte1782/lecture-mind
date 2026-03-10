@@ -134,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initBeforeUnloadWarning();
   initFocusTrapManagement();
   checkDemoMode();
+  checkBackendAvailability();
 });
 
 // ============================================
@@ -204,6 +205,54 @@ function showDemoBanner(setupUrl) {
     banner.classList.remove('visible');
     setTimeout(() => banner.remove(), 300);
   });
+}
+
+// ============================================
+// BACKEND AVAILABILITY GUARD
+// Hides demo upload section when no backend is available (GitHub Pages)
+// ============================================
+async function checkBackendAvailability() {
+  const appSection = document.getElementById('app-section');
+  if (!appSection) return;
+
+  try {
+    const response = await fetch('/api/config', {
+      signal: AbortSignal.timeout(2000)
+    });
+    if (response.ok) return; // Backend available — keep demo sections visible
+  } catch {
+    // Backend not available — expected on GitHub Pages
+  }
+
+  // Hide the demo upload section
+  appSection.classList.add('hidden');
+
+  // Show playground mode banner
+  const banner = createElement('div', 'playground-mode-banner', {
+    id: 'playground-mode-banner',
+    role: 'status',
+  });
+  const icon = createElement('span', null, { textContent: '\uD83C\uDF93' });
+  const text = createElement('span', null);
+  const strong = createElement('strong', null, { textContent: 'Playground Mode' });
+  const msg = document.createTextNode(' \u2014 No backend detected. ');
+  const link = createElement('a', null, {
+    href: '#/record',
+    textContent: 'Record a Lecture',
+  });
+  const msg2 = document.createTextNode(' to get started!');
+  text.appendChild(strong);
+  text.appendChild(msg);
+  text.appendChild(link);
+  text.appendChild(msg2);
+  banner.appendChild(icon);
+  banner.appendChild(text);
+
+  // Insert before the playground view
+  const playgroundView = document.getElementById('playground-view');
+  if (playgroundView && playgroundView.parentNode) {
+    playgroundView.parentNode.insertBefore(banner, playgroundView);
+  }
 }
 
 // ============================================

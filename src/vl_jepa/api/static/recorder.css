@@ -35,7 +35,7 @@
 }
 
 .record-title-input:focus {
-  outline: 2px solid var(--primary, #6366f1);
+  outline: 2px solid var(--ring, var(--primary));
   outline-offset: 1px;
 }
 
@@ -120,12 +120,12 @@
 }
 
 .photo-btn {
-  background: var(--primary, #6366f1);
-  color: #fff;
+  background: var(--accent, #6366f1);
+  color: var(--accent-foreground, #fff);
 }
 
 .photo-btn:hover:not(:disabled) {
-  background: var(--primary-hover, #4f46e5);
+  background: var(--accent-hover, #4f46e5);
 }
 
 .photo-btn:disabled,
@@ -180,7 +180,7 @@
 .stop-btn:focus-visible,
 .photo-btn:focus-visible,
 .save-btn:focus-visible {
-  outline: 2px solid var(--primary, #6366f1);
+  outline: 2px solid var(--ring, var(--primary));
   outline-offset: 2px;
 }
 
