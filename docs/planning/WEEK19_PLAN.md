@@ -83,7 +83,7 @@ If Weeks 15-18 complete cleanly, only ~10h needed for release prep. Remaining ~7
 
 | Task | Why Deferred |
 |------|--------------|
-| Professor Dashboard | v0.6.0 |
+| Professor Dashboard | v0.7.0 |
 | Tesseract.js OCR | v0.6.0 |
 | Multi-user features | v1.0.0 |
 | Real Whisper integration | v1.0.0 |

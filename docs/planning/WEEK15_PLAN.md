@@ -153,8 +153,8 @@ W15.3.3 (confusion UI) ----> W15.3.2 (repo exists)
 |------|--------------|
 | Real Whisper backend integration | v1.0.0 -- requires server-side GPU |
 | Tesseract.js OCR on photos | v0.5.1+ -- ship photos first, validate demand |
-| Professor dashboard | v0.6.0 -- needs multi-user backend |
-| Aggregate confusion analytics | v0.6.0 -- needs multi-user data |
+| Professor dashboard | v0.7.0 -- needs multi-user backend |
+| Aggregate confusion analytics | v0.7.0 -- needs multi-user data |
 | Privacy info-toast + Web Speech toggle | Week 16 (privacy features) |
 | Confusion heatmap visualization | Week 16 (visualization pass) |
 | Storage quota UI | Week 16 |

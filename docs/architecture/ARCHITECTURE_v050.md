@@ -23,12 +23,12 @@ v0.5.0 adds live capture capabilities to the Student Playground, enabling studen
 
 **Explicitly cut from v0.5.0 (deferred):**
 
-- Professor Dashboard (needs multi-user backend) -- v0.6.0
+- Professor Dashboard (needs multi-user backend) -- v0.7.0
 - Tesseract.js OCR (ship photos first, validate demand) -- v0.6.0
 - OpenAI API support for notes (no browser CORS) -- v0.6.0 with backend proxy
 - Confusion intensity scale (1-5) -- replaced by binary voting
 - Real Whisper transcription -- stub in v0.5.0, real in v1.0.0
-- Aggregate confusion analytics -- v0.6.0
+- Aggregate confusion analytics -- v0.7.0
 
 All features are local-first. No backend endpoints are introduced in v0.5.0. Transcription is a stub. LLM API calls go directly from browser to Claude API (user's own key).
 
@@ -100,7 +100,7 @@ dom-utils.js <- flashcards.js <- analytics.js  <- library.js
 |----------|-----------|
 | `recorder.js` at L2 | Needs flashcards.js exports (navigateTo, registerViewCleanup) but NOT analytics or library |
 | `recorder.js` does NOT import `library.js` | After recording, calls `navigateTo('#/lecture/:id')`. Library picks it up on next render. No coupling. |
-| No `professor.js` | Professor Dashboard deferred to v0.6.0. No L4 module in this release. |
+| No `professor.js` | Professor Dashboard deferred to v0.7.0. No L4 module in this release. |
 
 ---
 

@@ -42,7 +42,7 @@ If Weeks 15-16 complete on schedule, use for v0.5.1/v0.6.0 preparation spikes.
 |----|------|-------|------|------------|
 | W17.6 | Spike: TextRank/TF-IDF library evaluation | 2 | Evaluate feasibility + pick best JS library for Week 18 Auto-Notes extractive engine | Spike doc in docs/research/ |
 | W17.7 | Spike: Tesseract.js OCR | 2 | OCR integration design for captured photos -- evaluate for v0.6.0 | Spike doc with bundle size impact, accuracy expectations |
-| W17.8 | Spike: Professor Dashboard architecture | 2 | Multi-user design for v0.6.0 -- auth, data model, API surface | Spike doc with architecture diagram, scope estimate |
+| W17.8 | Spike: Professor Dashboard architecture | 2 | Multi-user design for v0.7.0 -- auth, data model, API surface | Spike doc with architecture diagram, scope estimate |
 | W17.10 | Performance baseline measurements | 2 | Measure: IDB read/write latency, photo resize time, audio chunk storage speed | Baseline doc with numbers, identify bottlenecks |
 
 ---
@@ -56,9 +56,9 @@ If Weeks 15-16 complete on schedule, use for v0.5.1/v0.6.0 preparation spikes.
 | Task | Why Deferred |
 |------|--------------|
 | Implementing any v0.5.1/v0.6.0 features | Spikes only -- no implementation |
-| Professor Dashboard build | v0.6.0 -- spike design only |
+| Professor Dashboard build | v0.7.0 -- spike design only |
 | Real Whisper integration | v1.0.0 -- spike feasibility only |
-| Multi-user backend | v0.6.0+ -- architecture spike only |
+| Multi-user backend | v0.7.0+ -- architecture spike only |
 
 ---
 

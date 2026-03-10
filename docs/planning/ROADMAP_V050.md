@@ -376,9 +376,9 @@ April-May 2026
 
 | Feature | Deferred To | Reason |
 |---------|-------------|--------|
-| Professor Dashboard | v0.6.0 | Needs multi-user backend; single-user version is just analytics tab with extra steps |
+| Professor Dashboard | v0.7.0 | Needs multi-user backend; single-user version is just analytics tab with extra steps |
 | Tesseract.js OCR | v0.5.1+ | Ship photos first, validate demand before adding 1MB+ dependency |
-| Aggregate confusion analytics | v0.6.0 | Needs multi-user backend for meaningful aggregation |
+| Aggregate confusion analytics | v0.7.0 | Needs multi-user backend for meaningful aggregation |
 | Real Whisper transcription | v1.0.0 | Requires server-side GPU; stub interface in v0.5.0 preserves upgrade path |
 | Broader audience rebranding | v0.6.0 | Naming and marketing only, not engineering |
 
