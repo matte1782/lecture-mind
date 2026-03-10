@@ -40,6 +40,8 @@ let _stopBtn = null;
 let _photoBtn = null;
 let _lastStoppedSession = null;
 let _lastAudioBlob = null;
+const _shownWarnings = new Set();
+let _privacyBannerReject = null;
 
 // ============================================================================
 // CODEC NEGOTIATION
@@ -444,6 +446,165 @@ export async function completeRecording() {
 }
 
 // ============================================================================
+// PRIVACY BANNER
+// ============================================================================
+
+/**
+ * Show a privacy info-banner. Returns a Promise that resolves when user clicks OK.
+ * If "Don't show again" is checked, sets localStorage key on dismiss.
+ * @param {HTMLElement} container - Parent to insert banner into
+ * @returns {Promise<void>}
+ * @private
+ */
+function _showPrivacyBanner(container) {
+  // Reject any pending banner from a previous render cycle
+  if (_privacyBannerReject) {
+    _privacyBannerReject(new Error('View navigated away'));
+    _privacyBannerReject = null;
+  }
+  return new Promise((resolve, reject) => {
+    _privacyBannerReject = reject;
+
+    const banner = createElement('div', 'record-privacy-banner');
+
+    const infoText = createElement('p', 'record-privacy-text');
+    infoText.textContent = 'Recording may be subject to institutional policies. Audio is stored locally only on your device.';
+
+    const checkLabel = createElement('label', 'record-privacy-check');
+    const checkbox = createElement('input');
+    checkbox.type = 'checkbox';
+    const checkText = createElement('span');
+    checkText.textContent = " Don't show again";
+    checkLabel.appendChild(checkbox);
+    checkLabel.appendChild(checkText);
+
+    const dismissBtn = createElement('button', 'record-privacy-dismiss');
+    dismissBtn.textContent = 'OK';
+    dismissBtn.addEventListener('click', () => {
+      _privacyBannerReject = null;
+      if (checkbox.checked) {
+        localStorage.setItem('lm-privacy-ack', '1');
+      }
+      banner.remove();
+      resolve();
+    });
+
+    banner.appendChild(infoText);
+    banner.appendChild(checkLabel);
+    banner.appendChild(dismissBtn);
+    container.insertBefore(banner, container.firstChild);
+  });
+}
+
+// ============================================================================
+// STORAGE QUOTA
+// ============================================================================
+
+/**
+ * Get storage estimate from the browser Storage API.
+ * @returns {Promise<{usage: number, quota: number, percentage: number}|null>}
+ */
+export async function getStorageEstimate() {
+  if (!navigator.storage || typeof navigator.storage.estimate !== 'function') {
+    return null;
+  }
+  const estimate = await navigator.storage.estimate();
+  const usage = estimate.usage || 0;
+  const quota = estimate.quota || 1;
+  const percentage = Math.round((usage / quota) * 100);
+  return { usage, quota, percentage };
+}
+
+/**
+ * Render storage quota bar into the given parent element.
+ * @param {HTMLElement} parentEl
+ * @returns {Promise<void>}
+ * @private
+ */
+async function _renderStorageQuota(parentEl) {
+  const section = createElement('div', 'record-storage-section');
+  const estimate = await getStorageEstimate();
+
+  if (!estimate) {
+    section.textContent = 'Storage usage unavailable on this browser.';
+    parentEl.appendChild(section);
+    return;
+  }
+
+  const { usage, quota, percentage } = estimate;
+  const usageMB = (usage / (1024 * 1024)).toFixed(1);
+  const quotaMB = (quota / (1024 * 1024)).toFixed(0);
+
+  const label = createElement('div', 'record-storage-label');
+  label.textContent = `${usageMB} MB used of ~${quotaMB} MB`;
+
+  const bar = createElement('div', 'record-storage-bar');
+  const fill = createElement('div', 'record-storage-fill');
+  fill.style.width = percentage + '%';
+
+  if (percentage >= 90) {
+    fill.style.background = 'var(--color-confusion-critical, #e11d48)';
+  } else if (percentage >= 75) {
+    fill.style.background = 'var(--color-confusion-medium, #f59e0b)';
+  } else {
+    fill.style.background = 'var(--color-confusion-low, #22c55e)';
+  }
+
+  bar.appendChild(fill);
+
+  // Warning toasts (once per session)
+  if (percentage >= 90 && !_shownWarnings.has('90')) {
+    _shownWarnings.add('90');
+    showToast('error', 'Storage', 'Storage is over 90% full. Recording may fail.');
+  } else if (percentage >= 75 && !_shownWarnings.has('75')) {
+    _shownWarnings.add('75');
+    showToast('warning', 'Storage', 'Storage is 75% full. Consider freeing space.');
+  }
+
+  const deleteBtn = createElement('button', 'record-storage-delete');
+  deleteBtn.textContent = 'Delete oldest recording';
+  deleteBtn.addEventListener('click', async () => {
+    try {
+      const sessions = await RecordingSessionRepository.getAll();
+      if (!sessions || sessions.length === 0) {
+        showToast('info', 'Storage', 'No recordings to delete.');
+        return;
+      }
+      sessions.sort((a, b) => {
+        const ta = typeof a.createdAt === 'number' ? a.createdAt : new Date(a.createdAt).getTime();
+        const tb = typeof b.createdAt === 'number' ? b.createdAt : new Date(b.createdAt).getTime();
+        return ta - tb;
+      });
+      const oldest = sessions[0];
+      // Cascade-delete linked Lecture + Segments if completeRecording was called
+      if (oldest.lectureId) {
+        await LectureRepository.deleteWithCascade(oldest.lectureId);
+      }
+      // Delete photos for this session
+      const photos = await PhotoCaptureRepository.getBySession(oldest.id);
+      for (const photo of photos) {
+        await PhotoCaptureRepository.delete(photo.id);
+      }
+      // Delete audio data (key-sharing: same ID as session)
+      await AudioDataRepository.delete(oldest.id);
+      // Delete the session
+      await RecordingSessionRepository.delete(oldest.id);
+      showToast('success', 'Storage', 'Oldest recording deleted.');
+      // Re-render storage bar
+      section.remove();
+      await _renderStorageQuota(parentEl);
+    } catch (err) {
+      showToast('error', 'Storage', 'Failed to delete recording.');
+    }
+  });
+
+  section.appendChild(label);
+  section.appendChild(bar);
+  section.appendChild(deleteBtn);
+  parentEl.appendChild(section);
+}
+
+// ============================================================================
 // UI RENDERING
 // ============================================================================
 
@@ -495,6 +656,11 @@ export function renderRecordView(container) {
   _recordBtn.style.minHeight = '56px';
   _recordBtn.addEventListener('click', async () => {
     try {
+      // Privacy banner gate (first-time only)
+      if (!localStorage.getItem('lm-privacy-ack')) {
+        await _showPrivacyBanner(container);
+      }
+
       const title = titleInput.value.trim();
       await startRecording({ title });
       _recordBtn.style.display = 'none';
@@ -502,8 +668,20 @@ export function renderRecordView(container) {
       _photoBtn.disabled = false;
       statusEl.textContent = 'Recording...';
       _startTimer();
+
+      // Start speech recognition if toggle is ON
+      const speechCheckbox = container.querySelector('#record-speech-checkbox');
+      if (speechCheckbox && speechCheckbox.checked) {
+        _speechRecognition = createSpeechRecognition();
+        if (_speechRecognition) {
+          try { _speechRecognition.start(); } catch (_e) { /* ignore */ }
+        }
+      }
+
       showToast('success', 'Recording', 'Recording started');
     } catch (err) {
+      // Silently ignore if view was navigated away during privacy banner
+      if (err && err.message === 'View navigated away') return;
       showToast('error', 'Microphone Error', 'Microphone access denied');
     }
   });
@@ -550,6 +728,21 @@ export function renderRecordView(container) {
     photoInput.click();
   });
 
+  photoInput.addEventListener('change', async (event) => {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    try {
+      if (!localStorage.getItem('lm-photo-ack')) {
+        localStorage.setItem('lm-photo-ack', '1');
+        showToast('info', 'Photo', 'Ensure you have permission to photograph this content.');
+      }
+      await capturePhoto(file);
+    } catch (err) {
+      showToast('error', 'Photo Error', 'Failed to capture photo.');
+    }
+    photoInput.value = '';
+  });
+
   // Save & Create Lecture button (disabled until recording is stopped)
   const saveBtn = createElement('button', 'save-btn');
   saveBtn.setAttribute('aria-label', 'Save and create lecture');
@@ -576,14 +769,37 @@ export function renderRecordView(container) {
   btnRow.appendChild(_photoBtn);
   btnRow.appendChild(saveBtn);
 
+  // Speech toggle row
+  const speechRow = createElement('div', 'record-speech-row');
+  const speechToggle = createElement('label', 'record-speech-toggle');
+  const speechCheckbox = createElement('input', 'record-speech-checkbox');
+  speechCheckbox.type = 'checkbox';
+  speechCheckbox.id = 'record-speech-checkbox';
+  speechCheckbox.checked = localStorage.getItem('lm-speech-enabled') === '1';
+  const speechSlider = createElement('span', 'record-speech-slider');
+  const speechText = createElement('span', 'record-speech-text');
+  speechText.textContent = 'Enable live transcription (sends audio to Google servers)';
+  speechToggle.appendChild(speechCheckbox);
+  speechToggle.appendChild(speechSlider);
+  speechToggle.appendChild(speechText);
+  speechRow.appendChild(speechToggle);
+
+  speechCheckbox.addEventListener('change', () => {
+    localStorage.setItem('lm-speech-enabled', speechCheckbox.checked ? '1' : '0');
+  });
+
   // Assemble
   container.appendChild(titleRow);
+  container.appendChild(speechRow);
   container.appendChild(_timerEl);
   container.appendChild(statusEl);
   container.appendChild(_transcriptEl);
   container.appendChild(photoGrid);
   container.appendChild(btnRow);
   container.appendChild(photoInput);
+
+  // Storage quota (async, non-blocking)
+  _renderStorageQuota(container).catch(() => {});
 }
 
 /**
@@ -610,6 +826,13 @@ setRecordRenderer(renderRecordView);
 
 // Register cleanup for record view — must release microphone if navigating away
 registerViewCleanup('record', () => {
+  // Reject pending privacy banner Promise (C1: prevents dangling async context)
+  if (_privacyBannerReject) {
+    _privacyBannerReject(new Error('View navigated away'));
+    _privacyBannerReject = null;
+  }
+  // Reset per-session storage warning dedup
+  _shownWarnings.clear();
   // Stop active recording and release microphone
   _cleanup();
   // Release post-recording state (can hold 20MB+ audio blob)

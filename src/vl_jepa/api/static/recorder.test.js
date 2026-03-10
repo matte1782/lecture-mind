@@ -642,3 +642,222 @@ describe('W16 Day 0 — Toast and CTA fixes', () => {
     expect(uploadTagMatch[0]).toContain('ghost');
   });
 });
+
+// ============================================================================
+// GROUP 11: PHOTO DISCLAIMER (W16 Day 2)
+// ============================================================================
+
+describe('Photo disclaimer', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    container.id = 'record-view';
+    document.body.appendChild(container);
+    localStorage.removeItem('lm-photo-ack');
+  });
+
+  afterEach(() => {
+    localStorage.removeItem('lm-photo-ack');
+  });
+
+  it('photoInput has a change listener after renderRecordView', async () => {
+    renderRecordView(container);
+    const photoInput = container.querySelector('.photo-input');
+    expect(photoInput).not.toBeNull();
+
+    // Mock files property with a file
+    const file = new File(['img'], 'test.jpg', { type: 'image/jpeg' });
+    Object.defineProperty(photoInput, 'files', {
+      value: [file],
+      writable: true,
+      configurable: true
+    });
+
+    // Dispatch change — listener should set localStorage on first use
+    photoInput.dispatchEvent(new Event('change'));
+
+    // Wait for async handler
+    await new Promise(r => setTimeout(r, 50));
+
+    expect(localStorage.getItem('lm-photo-ack')).toBe('1');
+  });
+});
+
+// ============================================================================
+// GROUP 12: PRIVACY INFO-BANNER (W16 Day 2)
+// ============================================================================
+
+describe('Privacy info-banner', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    container.id = 'record-view';
+    document.body.appendChild(container);
+    localStorage.removeItem('lm-privacy-ack');
+  });
+
+  afterEach(() => {
+    localStorage.removeItem('lm-privacy-ack');
+  });
+
+  it('banner renders when lm-privacy-ack is not set and record button clicked', async () => {
+    renderRecordView(container);
+    const recordBtn = container.querySelector('.record-btn');
+    expect(recordBtn).not.toBeNull();
+
+    // Click record — should show privacy banner before starting
+    recordBtn.click();
+
+    // Allow microtask to settle
+    await new Promise(r => setTimeout(r, 50));
+
+    const banner = container.querySelector('.record-privacy-banner');
+    expect(banner).not.toBeNull();
+    expect(banner.textContent).toContain('institutional policies');
+  });
+
+  it('banner does NOT render when lm-privacy-ack is already set', async () => {
+    localStorage.setItem('lm-privacy-ack', '1');
+    renderRecordView(container);
+    const recordBtn = container.querySelector('.record-btn');
+
+    recordBtn.click();
+    await new Promise(r => setTimeout(r, 50));
+
+    const banner = container.querySelector('.record-privacy-banner');
+    expect(banner).toBeNull();
+  });
+});
+
+// ============================================================================
+// GROUP 13: WEB SPEECH API TOGGLE (W16 Day 2)
+// ============================================================================
+
+describe('Web Speech API toggle', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    container.id = 'record-view';
+    document.body.appendChild(container);
+    localStorage.removeItem('lm-speech-enabled');
+  });
+
+  afterEach(() => {
+    localStorage.removeItem('lm-speech-enabled');
+  });
+
+  it('toggle renders defaulting to OFF when no localStorage key', () => {
+    renderRecordView(container);
+    const checkbox = container.querySelector('#record-speech-checkbox');
+    expect(checkbox).not.toBeNull();
+    expect(checkbox.checked).toBe(false);
+  });
+
+  it('toggle change persists state to localStorage', () => {
+    renderRecordView(container);
+    const checkbox = container.querySelector('#record-speech-checkbox');
+    expect(checkbox).not.toBeNull();
+
+    // Toggle ON
+    checkbox.checked = true;
+    checkbox.dispatchEvent(new Event('change'));
+    expect(localStorage.getItem('lm-speech-enabled')).toBe('1');
+
+    // Toggle OFF
+    checkbox.checked = false;
+    checkbox.dispatchEvent(new Event('change'));
+    expect(localStorage.getItem('lm-speech-enabled')).toBe('0');
+  });
+});
+
+// ============================================================================
+// GROUP 14: STORAGE QUOTA UI (W16 Day 2)
+// ============================================================================
+
+describe('Storage quota UI', () => {
+  let container;
+  let originalStorage;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    container.id = 'record-view';
+    document.body.appendChild(container);
+    originalStorage = navigator.storage;
+  });
+
+  afterEach(() => {
+    // Restore navigator.storage
+    if (originalStorage) {
+      Object.defineProperty(navigator, 'storage', {
+        value: originalStorage,
+        configurable: true,
+        writable: true
+      });
+    }
+  });
+
+  it('getStorageEstimate returns data when API available', async () => {
+    Object.defineProperty(navigator, 'storage', {
+      value: {
+        estimate: jest.fn(() => Promise.resolve({ usage: 50000000, quota: 100000000 }))
+      },
+      configurable: true,
+      writable: true
+    });
+
+    const { getStorageEstimate } = await import('./recorder.js');
+    const result = await getStorageEstimate();
+    expect(result).not.toBeNull();
+    expect(result.usage).toBe(50000000);
+    expect(result.quota).toBe(100000000);
+    expect(result.percentage).toBeCloseTo(50, 0);
+  });
+
+  it('getStorageEstimate returns null when API unavailable', async () => {
+    Object.defineProperty(navigator, 'storage', {
+      value: undefined,
+      configurable: true,
+      writable: true
+    });
+
+    const { getStorageEstimate } = await import('./recorder.js');
+    const result = await getStorageEstimate();
+    expect(result).toBeNull();
+  });
+
+  it('storage bar renders with correct fill percentage', async () => {
+    Object.defineProperty(navigator, 'storage', {
+      value: {
+        estimate: jest.fn(() => Promise.resolve({ usage: 30000000, quota: 100000000 }))
+      },
+      configurable: true,
+      writable: true
+    });
+
+    renderRecordView(container);
+    // Wait for async _renderStorageQuota
+    await new Promise(r => setTimeout(r, 100));
+
+    const fill = container.querySelector('.record-storage-fill');
+    expect(fill).not.toBeNull();
+    expect(fill.style.width).toBe('30%');
+  });
+
+  it('fallback text shown when API unavailable', async () => {
+    Object.defineProperty(navigator, 'storage', {
+      value: undefined,
+      configurable: true,
+      writable: true
+    });
+
+    renderRecordView(container);
+    await new Promise(r => setTimeout(r, 100));
+
+    const section = container.querySelector('.record-storage-section');
+    expect(section).not.toBeNull();
+    expect(section.textContent).toContain('unavailable');
+  });
+});

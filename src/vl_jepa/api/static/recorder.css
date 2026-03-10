@@ -184,6 +184,223 @@
   outline-offset: 2px;
 }
 
+/* ============================================================================
+   PRIVACY BANNER (W16 Day 2)
+   ============================================================================ */
+
+.record-privacy-banner {
+  width: 100%;
+  padding: var(--space-md, 16px);
+  background: var(--surface-raised, #f9fafb);
+  border: 1px solid var(--border, #d1d5db);
+  border-radius: var(--radius-md, 8px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm, 8px);
+}
+
+.record-privacy-text {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text, #111);
+  line-height: 1.5;
+}
+
+.record-privacy-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs, 4px);
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+}
+
+.record-privacy-dismiss {
+  align-self: flex-end;
+  padding: var(--space-xs, 4px) var(--space-md, 16px);
+  background: var(--color-primary-500, #6366f1);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md, 8px);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.record-privacy-dismiss:hover {
+  opacity: 0.9;
+}
+
+.record-privacy-dismiss:focus-visible {
+  outline: 2px solid var(--ring, var(--primary));
+  outline-offset: 2px;
+}
+
+/* ============================================================================
+   SPEECH TOGGLE (W16 Day 2)
+   ============================================================================ */
+
+.record-speech-row {
+  width: 100%;
+  padding: var(--space-sm, 8px) 0;
+}
+
+.record-speech-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 8px);
+  cursor: pointer;
+}
+
+.record-speech-checkbox {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.record-speech-slider {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  background: var(--border, #d1d5db);
+  border-radius: 11px;
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+}
+
+.record-speech-slider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.record-speech-checkbox:checked + .record-speech-slider {
+  background: var(--color-primary-500, #6366f1);
+}
+
+.record-speech-checkbox:checked + .record-speech-slider::after {
+  transform: translateX(18px);
+}
+
+.record-speech-checkbox:focus-visible + .record-speech-slider {
+  outline: 2px solid var(--ring, var(--primary));
+  outline-offset: 2px;
+}
+
+.record-speech-text {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #6b7280);
+  line-height: 1.4;
+}
+
+/* ============================================================================
+   STORAGE QUOTA (W16 Day 2)
+   ============================================================================ */
+
+.record-storage-section {
+  width: 100%;
+  padding: var(--space-md, 16px) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm, 8px);
+}
+
+.record-storage-label {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.record-storage-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--surface-raised, #f3f4f6);
+  border-radius: var(--radius-sm, 4px);
+  overflow: hidden;
+}
+
+.record-storage-fill {
+  height: 100%;
+  border-radius: var(--radius-sm, 4px);
+  transition: width 0.3s ease;
+}
+
+.record-storage-delete {
+  align-self: flex-start;
+  padding: var(--space-xs, 4px) var(--space-sm, 8px);
+  background: transparent;
+  color: var(--text-secondary, #6b7280);
+  border: 1px solid var(--border, #d1d5db);
+  border-radius: var(--radius-md, 8px);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.record-storage-delete:hover {
+  background: var(--surface-raised, #f9fafb);
+  color: var(--text, #111);
+}
+
+.record-storage-delete:focus-visible {
+  outline: 2px solid var(--ring, var(--primary));
+  outline-offset: 2px;
+}
+
+/* ============================================================================
+   DARK MODE (W16 Day 2)
+   ============================================================================ */
+
+.dark .record-privacy-banner {
+  background: var(--surface-raised, #1f2937);
+  border-color: var(--border, #374151);
+}
+
+.dark .record-speech-slider {
+  background: var(--border, #4b5563);
+}
+
+.dark .record-storage-bar {
+  background: var(--surface-raised, #1f2937);
+}
+
+.dark .record-storage-delete {
+  border-color: var(--border, #4b5563);
+  color: var(--text-secondary, #9ca3af);
+}
+
+.dark .record-storage-delete:hover {
+  background: var(--surface-raised, #1f2937);
+  color: var(--text, #f9fafb);
+}
+
+/* ============================================================================
+   REDUCED MOTION (W16 Day 2)
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .record-btn,
+  .stop-btn,
+  .photo-btn,
+  .save-btn,
+  .record-speech-slider,
+  .record-speech-slider::after,
+  .record-storage-fill {
+    transition: none;
+  }
+}
+
 /* Desktop layout */
 @media (min-width: 768px) {
   .record-container {
