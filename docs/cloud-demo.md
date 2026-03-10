@@ -13,7 +13,7 @@ Try Lecture Mind instantly without any installation.
 1. Click the "Upload Video" button
 2. Select a video file from your computer
 3. Supported formats: MP4, WebM, AVI, MOV, MKV
-4. Maximum file size: 100MB
+4. Maximum file size: 500MB
 
 ### Step 2: Wait for Processing
 
@@ -87,7 +87,7 @@ The demo also exposes the REST API:
 ### Rate Limits
 
 - 10 uploads per minute per IP
-- 100MB maximum file size
+- 500MB maximum file size
 
 ---
 

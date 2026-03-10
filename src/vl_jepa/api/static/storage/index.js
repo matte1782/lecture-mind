@@ -44,6 +44,7 @@ export {
   SYNC_STATUS,
   RECORDING_STATUS,
   AUTO_NOTE_SOURCE,
+  OCR_STATUS,
   createSetting,
   createCourse,
   createLecture,

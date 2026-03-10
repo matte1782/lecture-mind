@@ -180,7 +180,7 @@ uvicorn vl_jepa.api.main:app --port 8001
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MAX_FILE_SIZE_MB` | 100 | Maximum upload size |
+| `MAX_FILE_SIZE_MB` | 500 | Maximum upload size |
 | `RATE_LIMIT_REQUESTS` | 10 | Requests per minute |
 | `JOB_TTL_SECONDS` | 3600 | Job expiration time |
 

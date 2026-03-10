@@ -172,7 +172,7 @@ RATE_LIMIT_REQUESTS=20 RATE_LIMIT_WINDOW_SECONDS=120 uvicorn vl_jepa.api.main:ap
 
 | Setting | Default | Environment Variable |
 |---------|---------|---------------------|
-| Maximum upload | 100MB | `MAX_FILE_SIZE_MB` |
+| Maximum upload | 500MB | `MAX_FILE_SIZE_MB` |
 
 ## Supported File Formats
 

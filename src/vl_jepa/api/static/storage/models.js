@@ -87,7 +87,18 @@ export const RECORDING_STATUS = {
  */
 export const AUTO_NOTE_SOURCE = {
   EXTRACTIVE: 'extractive',
-  LLM: 'llm'
+  LLM: 'llm',
+  IMPORTED: 'imported'
+};
+
+/**
+ * Valid OCR processing statuses for photo captures
+ * @enum {string}
+ */
+export const OCR_STATUS = {
+  PENDING: 'pending',
+  COMPLETED: 'completed',
+  FAILED: 'failed'
 };
 
 // ============================================================================
@@ -590,10 +601,12 @@ export function createAudioData({ id, blob = null, size = 0 }) {
  * @param {Blob|null} [data.blob=null] - Image blob
  * @param {number} [data.size=0] - Blob size in bytes
  * @param {string} [data.caption=''] - Optional caption
+ * @param {string|null} [data.ocrText=null] - Extracted text from OCR (v0.6.0+)
+ * @param {string|null} [data.ocrStatus=null] - OCR processing status: null | 'pending' | 'completed' | 'failed'
  * @returns {Object}
  * @throws {Error} If recordingSessionId is missing
  */
-export function createPhotoCapture({ id, recordingSessionId, timestampMs = 0, blob = null, size = 0, caption = '' }) {
+export function createPhotoCapture({ id, recordingSessionId, timestampMs = 0, blob = null, size = 0, caption = '', ocrText = null, ocrStatus = null }) {
   if (!recordingSessionId) {
     throw new Error('recordingSessionId is required');
   }
@@ -604,6 +617,8 @@ export function createPhotoCapture({ id, recordingSessionId, timestampMs = 0, bl
     blob,
     size,
     caption,
+    ocrText,
+    ocrStatus,
     createdAt: now()
   };
 }
@@ -857,6 +872,9 @@ export function validatePhotoCapture(photo) {
   const errors = [];
   if (!photo.id) errors.push('id is required');
   if (!photo.recordingSessionId) errors.push('recordingSessionId is required');
+  if (photo.ocrStatus !== null && photo.ocrStatus !== undefined && !Object.values(OCR_STATUS).includes(photo.ocrStatus)) {
+    errors.push(`ocrStatus must be null or one of: ${Object.values(OCR_STATUS).join(', ')}`);
+  }
   return { valid: errors.length === 0, errors };
 }
 
@@ -884,6 +902,7 @@ export default {
   SYNC_STATUS,
   RECORDING_STATUS,
   AUTO_NOTE_SOURCE,
+  OCR_STATUS,
   // Factory functions
   createSetting,
   createCourse,

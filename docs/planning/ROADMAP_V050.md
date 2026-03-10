@@ -365,8 +365,9 @@ March 2026
   Week 19 (Apr 6-12):  v0.5.0 — Polish + Hostile Review + Release (CONTINGENCY buffer)
 
 April-May 2026
-  Weeks 20-22: v0.6.0 — Tesseract.js OCR, Professor Dashboard, broader audience rebranding
-  Weeks 23+:   v1.0.0 — Real Whisper backend, Y-decoder, multi-user
+  Weeks 20-22: v0.6.0 "Vision" — Tesseract.js OCR, Claude Vision, Auto-Notes v2, notes import
+  Weeks 23-25: v0.7.0 "Community" — Professor Dashboard, aggregate confusion, rebranding
+  Weeks 26+:   v1.0.0 "Production" — Real Whisper backend, Y-decoder, multi-user
 ```
 
 ---
@@ -387,7 +388,8 @@ April-May 2026
 
 | Version | Codename | Key Features | Estimated Duration |
 |---------|----------|-------------|-------------------|
-| v0.6.0 | "Intelligence" | Tesseract.js OCR for photos, Professor Dashboard (multi-user), broader audience rebranding | 3 weeks |
+| v0.6.0 | "Vision" | Tesseract.js OCR on photos, Claude Vision for handwriting/diagrams, Auto-Notes v2 (multi-source), photo-segment correlation, manual notes import | 3-4 weeks |
+| v0.7.0 | "Community" | Professor Dashboard (multi-user), aggregate confusion analytics, broader audience rebranding | 3 weeks |
 | v1.0.0 | "Production" | Real Whisper backend, Y-decoder (Phi-3 mini), multi-user auth, security audit | 4 weeks |
 
 ---

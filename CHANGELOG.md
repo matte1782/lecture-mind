@@ -75,7 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 - C1: Fixed CORS wildcard with credentials issue
-- C2: Added server-side file size limits (100MB default)
+- C2: Added server-side file size limits (500MB default, aligned across all layers)
 - C3: Implemented rate limiting (10 req/min per IP)
 - C4: Replaced innerHTML with safe DOM manipulation methods
 - C5: Fixed path traversal attack via os.path.basename()

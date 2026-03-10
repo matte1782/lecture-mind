@@ -46,6 +46,25 @@
 **Weaknesses:** Desktop only, no mobile, meeting-focused
 **Gap for us:** Same as Meetily -- no mobile, no lecture workflow
 
+### MacWhisper
+**Pricing:** Free (basic) | Pro $29 one-time | Pro+ $49 one-time
+**Strengths:** Native Mac app, local Whisper models, multiple languages, simple "record and transcribe" UX, practically the only ready-to-go solution on the market — download and start using immediately
+**Weaknesses:** Mac-only, no study tools (flashcards, analytics), no mobile, no lecture-specific workflow, no slide/photo integration, output is just transcript text
+**Gap for us:** Wins on accessibility (zero terminal, zero config) but loses on features. Key insight from contributor feedback: MacWhisper's advantage is distribution, not technology. Lecture Mind has more features but the `pip install` barrier kills adoption for average users.
+**Strategic implication:** Distribution/packaging (Electron, Tauri, or native wrapper) is the #1 adoption blocker we must solve post-v0.6.0
+
+### Visual Content / Slide Capture Tools
+
+| Product | Type | OCR/Slide Support | Free | Mobile | Notes |
+|---------|------|-------------------|------|--------|-------|
+| Google Lens | Native app | Full OCR, translate, search | Yes | Yes | Students already use for slide photos |
+| Apple Live Text | OS feature | Built-in OCR in camera/photos | Yes | iOS only | Zero-tap text extraction from any photo |
+| Microsoft Lens | Native app | Document/whiteboard scanner + OCR | Yes | Yes | Exports to OneNote, Word, PDF |
+| GoodNotes | Native app | Handwriting recognition + search | Paid ($9) | iOS/Android | Leading tablet note-taking app |
+| Notability | Native app | Handwriting recognition + search | Paid ($12) | iOS | Popular with university students |
+
+**Key insight:** Students already use Google Lens + a note app as a free slide-capture workflow. Lecture Mind's photo feature without OCR is strictly inferior to pointing Google Lens at a slide. However, **none of these tools integrate slide content with audio transcripts, flashcards, and study analytics** — that's where Lecture Mind v0.6.0 "Vision" can differentiate by combining OCR with the existing study workflow.
+
 ---
 
 ## Differentiation: Lecture Mind's Unique Position
@@ -82,5 +101,7 @@ The lecture transcription market has a clear gap:
 - **Native apps** (Google Recorder) are platform-locked
 - **Open source tools** (Meetily, Char) are desktop-only meeting tools
 - **Nobody** offers a free, mobile-browser, lecture-focused, study-integrated solution
+- **Visual content extraction** (OCR) is a solved problem via Google Lens / Apple Live Text -- Lecture Mind must integrate OCR in v0.6.0 to avoid being inferior for slide capture
+- **No tool** combines slide OCR + audio transcript + flashcards + study analytics in one workflow
 
 Lecture Mind can own this niche by being the tool students actually use during class on whatever phone they have.

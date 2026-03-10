@@ -273,8 +273,8 @@ def _register_routes(app: FastAPI) -> None:
             "local_setup_url": "https://github.com/matte1782/lecture-mind#local-installation",
         }
 
-    # Security fix C2: Server-side file size limit (100MB default, aligned with frontend)
-    MAX_FILE_SIZE_MB = int(os.environ.get("MAX_FILE_SIZE_MB", "100"))
+    # Security fix C2: Server-side file size limit (500MB default, aligned with frontend + processing.py)
+    MAX_FILE_SIZE_MB = int(os.environ.get("MAX_FILE_SIZE_MB", "500"))
     MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
     CHUNK_SIZE = 1024 * 1024  # 1MB chunks for streaming upload
 

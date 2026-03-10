@@ -28,7 +28,7 @@ The web interface provides a simple way to:
 
 ### File Size Limits
 
-- **Maximum**: 100MB
+- **Maximum**: 500MB
 - **Recommended**: Under 50MB for faster processing
 
 ### Upload Process

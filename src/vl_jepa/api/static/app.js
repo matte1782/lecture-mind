@@ -15,7 +15,7 @@ const CONFIG = {
   POLL_INTERVAL: 500,
   SEARCH_DEBOUNCE: 300,
   FETCH_TIMEOUT: 30000,
-  MAX_FILE_SIZE: 100 * 1024 * 1024, // 100MB - aligned with backend default
+  MAX_FILE_SIZE: 500 * 1024 * 1024, // 500MB - aligned with backend, processing.py, and index.html
   TOAST_DURATION: 5000,
   VALID_TYPES: ['video/mp4', 'video/webm', 'video/avi', 'video/quicktime', 'video/x-matroska'],
 };
@@ -826,7 +826,7 @@ async function uploadFile(file) {
 
   // Validate file size
   if (file.size > CONFIG.MAX_FILE_SIZE) {
-    showToast('error', 'File Too Large', 'Maximum file size is 100MB');
+    showToast('error', 'File Too Large', 'Maximum file size is 500MB');
     return;
   }
 

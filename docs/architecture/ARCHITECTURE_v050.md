@@ -248,13 +248,15 @@ Fields:
   timestampMs: number         -- ms offset from recording start
   blob: Blob                  -- JPEG image data
   size: number                -- blob size in bytes
-  caption: string|null        -- optional user caption
+  caption: string              -- optional user caption (defaults to '')
+  ocrText: string|null        -- extracted text from OCR (null until v0.6.0 OCR runs)
+  ocrStatus: string|null      -- null | 'pending' | 'completed' | 'failed'
   createdAt: number
 ```
 
 Photos are captured via `<input type="file" accept="image/*">` (triggers camera on mobile). Images are resized on a canvas element to max 1920px on the longest edge and compressed to 80% JPEG quality (~0.5MB each).
 
-There is no `ocrText` field. OCR is deferred to v0.5.1+.
+Fields `ocrText` and `ocrStatus` are present but always null in v0.5.0. OCR integration populates these in v0.6.0 "Vision".
 
 ### 8.4 ConfusionVote
 
@@ -287,7 +289,7 @@ Fields:
   id: string (UUID)
   lectureId: string
   content: string             -- generated notes (Markdown format)
-  source: 'extractive' | 'llm'  -- how the notes were generated
+  source: 'extractive' | 'llm' | 'imported'  -- how the notes were generated
   model: string|null          -- LLM model used (e.g. 'claude-opus-4-6'), null for extractive
   generatedAt: number
   editedAt: number|null       -- null until student edits the notes
