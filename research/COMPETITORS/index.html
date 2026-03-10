@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -888,6 +888,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#macwhisper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MacWhisper
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#visual-content-slide-capture-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Visual Content / Slide Capture Tools
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1096,6 +1118,68 @@
 <strong>Strengths:</strong> Open source, markdown export, local transcription
 <strong>Weaknesses:</strong> Desktop only, no mobile, meeting-focused
 <strong>Gap for us:</strong> Same as Meetily -- no mobile, no lecture workflow</p>
+<h3 id="macwhisper">MacWhisper</h3>
+<p><strong>Pricing:</strong> Free (basic) | Pro $29 one-time | Pro+ $49 one-time
+<strong>Strengths:</strong> Native Mac app, local Whisper models, multiple languages, simple "record and transcribe" UX, practically the only ready-to-go solution on the market — download and start using immediately
+<strong>Weaknesses:</strong> Mac-only, no study tools (flashcards, analytics), no mobile, no lecture-specific workflow, no slide/photo integration, output is just transcript text
+<strong>Gap for us:</strong> Wins on accessibility (zero terminal, zero config) but loses on features. Key insight from contributor feedback: MacWhisper's advantage is distribution, not technology. Lecture Mind has more features but the <code>pip install</code> barrier kills adoption for average users.
+<strong>Strategic implication:</strong> Distribution/packaging (Electron, Tauri, or native wrapper) is the #1 adoption blocker we must solve post-v0.6.0</p>
+<h3 id="visual-content-slide-capture-tools">Visual Content / Slide Capture Tools</h3>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Type</th>
+<th>OCR/Slide Support</th>
+<th>Free</th>
+<th>Mobile</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Google Lens</td>
+<td>Native app</td>
+<td>Full OCR, translate, search</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Students already use for slide photos</td>
+</tr>
+<tr>
+<td>Apple Live Text</td>
+<td>OS feature</td>
+<td>Built-in OCR in camera/photos</td>
+<td>Yes</td>
+<td>iOS only</td>
+<td>Zero-tap text extraction from any photo</td>
+</tr>
+<tr>
+<td>Microsoft Lens</td>
+<td>Native app</td>
+<td>Document/whiteboard scanner + OCR</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Exports to OneNote, Word, PDF</td>
+</tr>
+<tr>
+<td>GoodNotes</td>
+<td>Native app</td>
+<td>Handwriting recognition + search</td>
+<td>Paid ($9)</td>
+<td>iOS/Android</td>
+<td>Leading tablet note-taking app</td>
+</tr>
+<tr>
+<td>Notability</td>
+<td>Native app</td>
+<td>Handwriting recognition + search</td>
+<td>Paid ($12)</td>
+<td>iOS</td>
+<td>Popular with university students</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key insight:</strong> Students already use Google Lens + a note app as a free slide-capture workflow. Lecture Mind's photo feature without OCR is strictly inferior to pointing Google Lens at a slide. However, <strong>none of these tools integrate slide content with audio transcripts, flashcards, and study analytics</strong> — that's where Lecture Mind v0.6.0 "Vision" can differentiate by combining OCR with the existing study workflow.</p>
 <hr />
 <h2 id="differentiation-lecture-minds-unique-position">Differentiation: Lecture Mind's Unique Position</h2>
 <h3 id="what-no-competitor-offers-combined">What no competitor offers (combined):</h3>
@@ -1162,6 +1246,8 @@
 <li><strong>Native apps</strong> (Google Recorder) are platform-locked</li>
 <li><strong>Open source tools</strong> (Meetily, Char) are desktop-only meeting tools</li>
 <li><strong>Nobody</strong> offers a free, mobile-browser, lecture-focused, study-integrated solution</li>
+<li><strong>Visual content extraction</strong> (OCR) is a solved problem via Google Lens / Apple Live Text -- Lecture Mind must integrate OCR in v0.6.0 to avoid being inferior for slide capture</li>
+<li><strong>No tool</strong> combines slide OCR + audio transcript + flashcards + study analytics in one workflow</li>
 </ul>
 <p>Lecture Mind can own this niche by being the tool students actually use during class on whatever phone they have.</p>
 

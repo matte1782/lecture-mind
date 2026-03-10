@@ -502,9 +502,9 @@ export function renderRecordView(container) {
       _photoBtn.disabled = false;
       statusEl.textContent = 'Recording...';
       _startTimer();
-      showToast('Recording started');
+      showToast('success', 'Recording', 'Recording started');
     } catch (err) {
-      showToast('Microphone access denied');
+      showToast('error', 'Microphone Error', 'Microphone access denied');
     }
   });
 
@@ -524,12 +524,12 @@ export function renderRecordView(container) {
       _photoBtn.disabled = true;
       statusEl.textContent = 'Recording saved — click Save to create lecture';
       if (result && result.session) {
-        showToast('Recording saved');
+        showToast('success', 'Recording', 'Recording saved');
         saveBtn.disabled = false;
       }
     } catch (err) {
       statusEl.textContent = 'Error saving recording';
-      showToast('Error saving recording');
+      showToast('error', 'Recording Error', 'Error saving recording');
     }
   });
 
@@ -561,12 +561,12 @@ export function renderRecordView(container) {
       statusEl.textContent = 'Creating lecture...';
       const lectureId = await completeRecording();
       if (lectureId) {
-        showToast('Lecture created');
+        showToast('success', 'Lecture', 'Lecture created successfully');
         navigateTo(`#/lecture/${lectureId}`);
       }
     } catch (err) {
       statusEl.textContent = 'Error creating lecture';
-      showToast('Error creating lecture');
+      showToast('error', 'Lecture Error', 'Error creating lecture');
       saveBtn.disabled = false;
     }
   });

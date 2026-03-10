@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -1420,12 +1420,12 @@
 </ol>
 <p><strong>Explicitly cut from v0.5.0 (deferred):</strong></p>
 <ul>
-<li>Professor Dashboard (needs multi-user backend) -- v0.6.0</li>
+<li>Professor Dashboard (needs multi-user backend) -- v0.7.0</li>
 <li>Tesseract.js OCR (ship photos first, validate demand) -- v0.6.0</li>
 <li>OpenAI API support for notes (no browser CORS) -- v0.6.0 with backend proxy</li>
 <li>Confusion intensity scale (1-5) -- replaced by binary voting</li>
 <li>Real Whisper transcription -- stub in v0.5.0, real in v1.0.0</li>
-<li>Aggregate confusion analytics -- v0.6.0</li>
+<li>Aggregate confusion analytics -- v0.7.0</li>
 </ul>
 <p>All features are local-first. No backend endpoints are introduced in v0.5.0. Transcription is a stub. LLM API calls go directly from browser to Claude API (user's own key).</p>
 <hr />
@@ -1519,7 +1519,7 @@
 </tr>
 <tr>
 <td>No <code>professor.js</code></td>
-<td>Professor Dashboard deferred to v0.6.0. No L4 module in this release.</td>
+<td>Professor Dashboard deferred to v0.7.0. No L4 module in this release.</td>
 </tr>
 </tbody>
 </table>
@@ -1733,11 +1733,13 @@
 <a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>  timestampMs: number         -- ms offset from recording start
 <a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>  blob: Blob                  -- JPEG image data
 <a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>  size: number                -- blob size in bytes
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>  caption: string|null        -- optional user caption
-<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>  createdAt: number
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>  caption: string              -- optional user caption (defaults to &#39;&#39;)
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>  ocrText: string|null        -- extracted text from OCR (null until v0.6.0 OCR runs)
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>  ocrStatus: string|null      -- null | &#39;pending&#39; | &#39;completed&#39; | &#39;failed&#39;
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>  createdAt: number
 </code></pre></div>
 <p>Photos are captured via <code>&lt;input type="file" accept="image/*"&gt;</code> (triggers camera on mobile). Images are resized on a canvas element to max 1920px on the longest edge and compressed to 80% JPEG quality (~0.5MB each).</p>
-<p>There is no <code>ocrText</code> field. OCR is deferred to v0.5.1+.</p>
+<p>Fields <code>ocrText</code> and <code>ocrStatus</code> are present but always null in v0.5.0. OCR integration populates these in v0.6.0 "Vision".</p>
 <h3 id="84-confusionvote">8.4 ConfusionVote</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>Store: confusionVotes        -- EXISTS IN v1 (not new in v2)
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>KeyPath: id
@@ -1763,7 +1765,7 @@ existing <code>ConfusionVoteRepository</code> (with a per-key mutex — see CLAU
 <a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>  id: string (UUID)
 <a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>  lectureId: string
 <a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>  content: string             -- generated notes (Markdown format)
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>  source: &#39;extractive&#39; | &#39;llm&#39;  -- how the notes were generated
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>  source: &#39;extractive&#39; | &#39;llm&#39; | &#39;imported&#39;  -- how the notes were generated
 <a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>  model: string|null          -- LLM model used (e.g. &#39;claude-opus-4-6&#39;), null for extractive
 <a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>  generatedAt: number
 <a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>  editedAt: number|null       -- null until student edits the notes

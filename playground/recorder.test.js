@@ -586,3 +586,59 @@ describe('Save & Create Lecture button', () => {
     }
   });
 });
+
+// ============================================================================
+// GROUP 9: W16 DAY 0 — TOAST SIGNATURE + EMPTY STATE CTA
+// ============================================================================
+
+describe('W16 Day 0 — Toast and CTA fixes', () => {
+  it('recorder.js has no 1-arg showToast calls (all use 3-arg variant/title/message)', async () => {
+    const { readFileSync } = await import('fs');
+    const { join } = await import('path');
+    const src = readFileSync(join(process.cwd(), 'recorder.js'), 'utf8');
+    // Find all showToast calls: should all have at least 2 commas (3 args)
+    const callPattern = /showToast\([^)]+\)/g;
+    const calls = src.match(callPattern) || [];
+    expect(calls.length).toBeGreaterThanOrEqual(6);
+    for (const call of calls) {
+      const commaCount = (call.match(/,/g) || []).length;
+      expect(commaCount).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it('recorder.js showToast calls include a valid variant as first arg', async () => {
+    const { readFileSync } = await import('fs');
+    const { join } = await import('path');
+    const src = readFileSync(join(process.cwd(), 'recorder.js'), 'utf8');
+    const callPattern = /showToast\('([^']+)'/g;
+    let match;
+    const variants = [];
+    while ((match = callPattern.exec(src)) !== null) {
+      variants.push(match[1]);
+    }
+    expect(variants.length).toBeGreaterThanOrEqual(6);
+    const validVariants = ['success', 'error', 'info', 'warning'];
+    for (const v of variants) {
+      expect(validVariants).toContain(v);
+    }
+  });
+
+  it('empty state in index.html has Record a Lecture CTA', async () => {
+    const { readFileSync } = await import('fs');
+    const { join } = await import('path');
+    const html = readFileSync(join(process.cwd(), 'index.html'), 'utf8');
+    expect(html).toContain('Record a Lecture');
+    expect(html).toContain('href="#/record"');
+    expect(html).toContain('library-record-link');
+  });
+
+  it('empty state Upload link is demoted to ghost variant', async () => {
+    const { readFileSync } = await import('fs');
+    const { join } = await import('path');
+    const html = readFileSync(join(process.cwd(), 'index.html'), 'utf8');
+    // Find the full <a> tag containing library-upload-link
+    const uploadTagMatch = html.match(/<a[^>]*id="library-upload-link"[^>]*>/);
+    expect(uploadTagMatch).not.toBeNull();
+    expect(uploadTagMatch[0]).toContain('ghost');
+  });
+});

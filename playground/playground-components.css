@@ -1104,7 +1104,8 @@
   .sp-confusion-btn,
   .sp-detail-tabs__tab,
   .sp-favorite-btn,
-  .sp-results-table tbody tr {
+  .sp-results-table tbody tr,
+  .sp-heatmap__bar {
     transition: none;
   }
 
@@ -1120,4 +1121,115 @@
   .sp-study-controls__quality-btn:active {
     transform: none;
   }
+}
+
+/* ============================================
+   W16 Day 1: Confusion Heatmap Bar Chart
+   ============================================ */
+
+.sp-heatmap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.sp-heatmap__row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sp-heatmap__label {
+  flex: 0 0 30%;
+  min-width: 80px;
+  font-size: 0.875rem;
+  color: var(--foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sp-heatmap__bar-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 1.5rem;
+  background: var(--background-subtle, #f1f5f9);
+  border-radius: var(--radius-sm, 4px);
+  overflow: hidden;
+  position: relative;
+}
+
+.sp-heatmap__bar {
+  height: 100%;
+  border-radius: var(--radius-sm, 4px);
+  transition: width 0.3s ease;
+  min-width: 2px;
+}
+
+.sp-heatmap__count {
+  position: absolute;
+  right: 0.5rem;
+  z-index: 1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 0 0.25rem;
+  border-radius: 2px;
+}
+
+@media (min-width: 768px) {
+  .sp-heatmap__label {
+    flex: 0 0 25%;
+  }
+}
+
+/* Confusion Summary Stats */
+
+.sp-confusion-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: var(--background-subtle, #f1f5f9);
+  border-radius: var(--radius, 8px);
+}
+
+.sp-confusion-stats__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 120px;
+}
+
+.sp-confusion-stats__label {
+  font-size: 0.75rem;
+  color: var(--foreground-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sp-confusion-stats__value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+/* Dark mode overrides for heatmap + stats */
+.dark .sp-heatmap__bar-wrapper {
+  background: var(--background-subtle, #1e293b);
+}
+
+.dark .sp-heatmap__count {
+  background: rgba(0, 0, 0, 0.7);
+  color: var(--foreground, #f1f5f9);
+}
+
+.dark .sp-confusion-stats {
+  background: var(--background-subtle, #1e293b);
 }

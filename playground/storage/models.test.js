@@ -34,6 +34,7 @@ import {
   SYNC_STATUS,
   RECORDING_STATUS,
   AUTO_NOTE_SOURCE,
+  OCR_STATUS,
   // v0.5.0 Factory functions
   createRecordingSession,
   createAudioData,
@@ -748,7 +749,18 @@ describe('AUTO_NOTE_SOURCE constant', () => {
   test('contains all valid auto note sources', () => {
     expect(AUTO_NOTE_SOURCE).toEqual({
       EXTRACTIVE: 'extractive',
-      LLM: 'llm'
+      LLM: 'llm',
+      IMPORTED: 'imported'
+    });
+  });
+});
+
+describe('OCR_STATUS constant', () => {
+  test('contains all valid OCR statuses', () => {
+    expect(OCR_STATUS).toEqual({
+      PENDING: 'pending',
+      COMPLETED: 'completed',
+      FAILED: 'failed'
     });
   });
 });
@@ -848,6 +860,8 @@ describe('PhotoCapture Entity', () => {
       expect(photo.blob).toBeNull();
       expect(photo.size).toBe(0);
       expect(photo.caption).toBe('');
+      expect(photo.ocrText).toBeNull();
+      expect(photo.ocrStatus).toBeNull();
       expect(photo.createdAt).toBeDefined();
     });
 
@@ -866,6 +880,25 @@ describe('PhotoCapture Entity', () => {
       const result = validatePhotoCapture({ id: 'test', timestampMs: 0 });
       expect(result.valid).toBe(false);
       expect(result.errors).toContain('recordingSessionId is required');
+    });
+
+    test('returns error for invalid ocrStatus', () => {
+      const photo = createPhotoCapture({ recordingSessionId: generateId() });
+      photo.ocrStatus = 'banana';
+      const result = validatePhotoCapture(photo);
+      expect(result.valid).toBe(false);
+      expect(result.errors[0]).toMatch(/ocrStatus must be null or one of/);
+    });
+
+    test('accepts valid ocrStatus values', () => {
+      const photo = createPhotoCapture({ recordingSessionId: generateId(), ocrStatus: 'pending' });
+      expect(validatePhotoCapture(photo)).toEqual({ valid: true, errors: [] });
+    });
+
+    test('accepts null ocrStatus', () => {
+      const photo = createPhotoCapture({ recordingSessionId: generateId() });
+      expect(photo.ocrStatus).toBeNull();
+      expect(validatePhotoCapture(photo)).toEqual({ valid: true, errors: [] });
     });
   });
 });

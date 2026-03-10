@@ -19,11 +19,11 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
-        <title>Week 16 Task Plan - Lecture Mind</title>
+        <title>Week 16 Task Plan (REVISED) - Lecture Mind</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#week-16-task-plan" class="md-skip">
+        <a href="#week-16-task-plan-revised" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Week 16 Task Plan
+              Week 16 Task Plan (REVISED)
             
           </span>
         </div>
@@ -833,6 +833,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#day-0-ux-bug-fixes-4h" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Day 0: UX Bug Fixes (4h)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#days-1-2-sp4-lite-confusion-heatmap-8h" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -866,10 +877,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#estimated-total-15h" class="md-nav__link">
+  <a href="#estimated-total-1935h" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Estimated Total: 15h
+        Estimated Total: ~19.35h
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dependency-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependency Chain
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cut-line-if-behind-schedule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cut Line (if behind schedule)
       
     </span>
   </a>
@@ -940,20 +973,82 @@
   
 
 
-<h1 id="week-16-task-plan">Week 16 Task Plan</h1>
+<h1 id="week-16-task-plan-revised">Week 16 Task Plan (REVISED)</h1>
 <p><strong>Date Range:</strong> 2026-03-16 to 2026-03-22
-<strong>Goal:</strong> Confusion heatmap visualization, privacy controls, storage quota UI
-<strong>Status:</strong> DRAFT</p>
+<strong>Goal:</strong> Fix P1 UX bugs from Day 6 research, then confusion heatmap, privacy controls, storage quota UI
+<strong>Status:</strong> DRAFT
+<strong>Revision:</strong> v2.0 — incorporates Day 6 UX findings (~4h added, total ~19h)</p>
 <hr />
 <h2 id="prerequisites">Prerequisites</h2>
 <ul>
-<li>[ ] Week 15 gate passed (live audio capture + photo capture + confusion voting working)</li>
-<li>[ ] 592+ tests passing</li>
-<li>[ ] No P0 bugs from Week 15</li>
-<li>[ ] recorder.js at L2, parallel to analytics.js (AD-1 preserved)</li>
+<li>[x] Week 15 gate passed (live audio capture + photo capture + confusion voting working)</li>
+<li>[x] 652 tests passing (11 suites)</li>
+<li>[x] No P0 bugs from Week 15</li>
+<li>[x] recorder.js at L2, parallel to analytics.js (AD-1 preserved)</li>
+<li>[ ] Day 6 UX research findings reviewed and prioritized</li>
 </ul>
 <hr />
+<h2 id="day-0-ux-bug-fixes-4h">Day 0: UX Bug Fixes (4h)</h2>
+<p><strong>Rationale:</strong> These are visible bugs on the live GitHub Pages demo. Users see blank toasts, broken dark mode, and wrong colors. Fix before adding new features.</p>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Task</th>
+<th>Hours</th>
+<th>Spec</th>
+<th>Acceptance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>W16.0.1</td>
+<td>SW cache version bump</td>
+<td>0.1</td>
+<td>Change <code>sw.js:12</code> from <code>'lm-v0.4.0'</code> to <code>'lm-v0.5.0'</code></td>
+<td><code>grep 'lm-v0.5.0' sw.js</code> returns match</td>
+</tr>
+<tr>
+<td>W16.0.2</td>
+<td>Fix recorder toast calls (6 sites)</td>
+<td>0.5</td>
+<td><code>recorder.js:505-570</code> calls <code>showToast('text')</code> with 1 arg. Fix to <code>showToast('info', 'Recording', 'Recording started')</code> (3-arg variant/title/message). All 6 call sites.</td>
+<td>Test: toast renders with visible title+message text, not blank white box</td>
+</tr>
+<tr>
+<td>W16.0.3</td>
+<td>Fix analytics dark mode (CSS tokens)</td>
+<td>1</td>
+<td><code>analytics.css:1-14</code> defines its own <code>:root</code> block with <code>--sp-primary</code>, <code>--sp-card-bg</code> etc. Replace all 8 variable names with <code>token.css</code> equivalents (<code>--color-primary-500</code>, <code>--color-surface-100</code>, etc.). Remove duplicate <code>:root</code> block.</td>
+<td>Dark mode toggle changes dashboard colors. Test: no <code>--sp-</code> tokens remain in analytics.css</td>
+</tr>
+<tr>
+<td>W16.0.4</td>
+<td>Fix recorder CSS tokens</td>
+<td>0.5</td>
+<td><code>recorder.css:8-35</code> uses <code>var(--primary, #6366f1)</code> (purple). Replace with <code>var(--color-primary-500, #22d3ee)</code> (app cyan) and align all token names with <code>token.css</code>.</td>
+<td>Visual: recorder UI uses cyan, not purple. Test: no <code>--primary</code> bare token in recorder.css</td>
+</tr>
+<tr>
+<td>W16.0.5</td>
+<td>Backend availability guard</td>
+<td>1</td>
+<td>Add <code>isBackendAvailable()</code> in <code>app.js</code> — fetch <code>/api/health</code> with 2s timeout. If no backend (GitHub Pages), hide demo upload sections, show info banner: "Running in Playground mode — use Record to capture lectures."</td>
+<td>Test: when fetch fails, banner visible, upload sections hidden</td>
+</tr>
+<tr>
+<td>W16.0.6</td>
+<td>Empty state CTA update</td>
+<td>0.25</td>
+<td>Update playground-view empty state to add "Record a Lecture" button as primary CTA alongside existing "Upload" link. Link navigates to <code>#/record</code>.</td>
+<td>Test: empty state contains link/button to <code>#/record</code> with text "Record a Lecture"</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Day 0 test target:</strong> +6 tests (658 total)</p>
+<hr />
 <h2 id="days-1-2-sp4-lite-confusion-heatmap-8h">Days 1-2: SP4-lite Confusion Heatmap (8h)</h2>
+<p><strong>Dependencies:</strong> W15.5 (confusion voting data exists in IDB)</p>
 <table>
 <thead>
 <tr>
@@ -969,34 +1064,36 @@
 <td>W16.1.1</td>
 <td>Aggregate confusion data: <code>getConfusionHeatmapData(lectureId)</code></td>
 <td>2</td>
-<td>Returns <code>{segmentId, voteCount, percentage}[]</code> sorted by segment order</td>
-<td>Unit tests with fixture data pass</td>
+<td>Returns <code>{segmentId, voteCount, percentage}[]</code> sorted by segment order. Uses batch-fetch pattern: <code>ConfusionVoteRepository.getByLecture()</code> + Map grouping.</td>
+<td>Unit tests with fixture data pass; empty lecture returns <code>[]</code></td>
 </tr>
 <tr>
 <td>W16.1.2</td>
-<td>SVG heatmap component (analytics-style)</td>
+<td>HTML/CSS heatmap component (bar chart)</td>
 <td>3</td>
-<td>Horizontal bar chart, color gradient green-yellow-red, segment labels, responsive</td>
-<td>Renders with mock data, ARIA description present</td>
+<td>Horizontal bar chart using <code>div</code> elements with CSS gradient (green-yellow-red). Each bar = one segment, width proportional to confusion %. Responsive. ARIA <code>role="img"</code> with <code>aria-label</code> description. Fallback from SVG to HTML/CSS per R1 risk mitigation.</td>
+<td>Renders with mock data, ARIA description present, responsive at 320px-1200px</td>
 </tr>
 <tr>
 <td>W16.1.3</td>
 <td>Integrate heatmap into lecture detail "Confusion" tab</td>
 <td>1.5</td>
-<td>New tab alongside segments/flashcards/bookmarks in lecture detail view</td>
-<td>Tab renders heatmap, empty state when no votes, roving tabindex on tab bar</td>
+<td>New tab alongside segments/flashcards/bookmarks/photos in lecture detail view. Roving tabindex on tab bar. Empty state: "No confusion data yet -- vote on segments to see your heatmap."</td>
+<td>Tab renders heatmap, empty state when no votes, roving tabindex correct, tab count assertion in analytics.test.js updated</td>
 </tr>
 <tr>
 <td>W16.1.4</td>
 <td>Confusion summary stats on lecture detail</td>
 <td>1.5</td>
-<td>Total votes, most confused segment, segments with &gt;50% confusion</td>
-<td>Stats render correctly, edge cases tested (0 votes, 1 segment)</td>
+<td>Total votes cast, most confused segment (name + %), segments with &gt;50% confusion count. Edge cases: 0 votes, 1 segment, all confused, none confused.</td>
+<td>Stats render correctly for all edge cases, unit tests cover each</td>
 </tr>
 </tbody>
 </table>
+<p><strong>Days 1-2 test target:</strong> +12 tests (670 total)</p>
 <hr />
 <h2 id="days-3-4-privacy-storage-quota-5h">Days 3-4: Privacy + Storage Quota (5h)</h2>
+<p><strong>Dependencies:</strong> W15.2 (record view exists), W15.1 (IDB stores exist)</p>
 <table>
 <thead>
 <tr>
@@ -1012,34 +1109,36 @@
 <td>W16.2.1</td>
 <td>Privacy info-toast at first recording</td>
 <td>1.5</td>
-<td>Toast: "Recording may be subject to policies. Audio stored locally only." + "Don't show again" checkbox. Stored in localStorage. NOT a blocking dialog.</td>
-<td>Toast shows on first record tap, dismissible, not shown again after acknowledgment</td>
+<td>Toast: "Recording may be subject to institutional policies. Audio is stored locally only on your device." + "Don't show again" checkbox. Stored in <code>localStorage</code> key <code>lm-privacy-ack</code>. NOT a blocking dialog. Shown when user taps Record for the first time.</td>
+<td><code>pytest</code>-style: toast shows when <code>localStorage</code> has no key, dismissible, not shown after acknowledgment. 2 tests.</td>
 </tr>
 <tr>
 <td>W16.2.2</td>
 <td>Web Speech API privacy toggle (default OFF)</td>
 <td>1</td>
-<td>Toggle in record view: "Enable live transcription (sends audio to Google)". Default OFF. Stored in localStorage. When OFF, only MediaRecorder runs.</td>
-<td>Toggle persists across sessions, Web Speech only activates when ON</td>
+<td>Toggle switch in record view: "Enable live transcription (sends audio to Google servers)". Default OFF. Stored in <code>localStorage</code> key <code>lm-speech-enabled</code>. When OFF, only MediaRecorder runs (no SpeechRecognition created).</td>
+<td>Toggle persists across sessions, Web Speech only activates when ON. 2 tests.</td>
 </tr>
 <tr>
 <td>W16.2.3</td>
 <td>Storage quota UI: usage indicator + warning</td>
 <td>2</td>
-<td>Storage usage bar using <code>navigator.storage.estimate()</code>, shows "X MB used of ~Y MB". Warning toast at 80% quota. Bulk delete option for old recordings. Feature-detect fallback.</td>
-<td>Usage displays correctly, warning triggers at threshold</td>
+<td>Storage usage bar using <code>navigator.storage.estimate()</code>. Shows "X MB used of ~Y MB". Warning toast at 75% and 90% (two thresholds per CLAUDE.md). Bulk delete option for old recording sessions (oldest first). Feature-detect: if <code>estimate()</code> unavailable, show "Storage usage unavailable on this browser."</td>
+<td>Usage displays correctly, warning triggers at thresholds, bulk delete removes oldest session + cascade. 4 tests.</td>
 </tr>
 <tr>
 <td>W16.2.4</td>
 <td>Photo capture disclaimer (first-use)</td>
 <td>0.5</td>
-<td>One-time toast: "You are responsible for ensuring you have permission to photograph this content." Stored in localStorage.</td>
-<td>Shows once on first photo, never shown again</td>
+<td>One-time toast: "Ensure you have permission to photograph this content." Stored in <code>localStorage</code> key <code>lm-photo-ack</code>.</td>
+<td>Shows once on first photo capture, never shown again. 1 test.</td>
 </tr>
 </tbody>
 </table>
+<p><strong>Days 3-4 test target:</strong> +9 tests (679 total)</p>
 <hr />
 <h2 id="day-5-accessibility-audit-2h">Day 5: Accessibility Audit (2h)</h2>
+<p><strong>Dependencies:</strong> W16.1, W16.2, W16.0 (all new components exist)</p>
 <table>
 <thead>
 <tr>
@@ -1055,13 +1154,129 @@
 <td>W16.3.1</td>
 <td>Accessibility audit of all new v0.5.0 components</td>
 <td>2</td>
-<td>All new components: role, tabindex, keyboard handlers, focus-visible, ARIA labels. Record button 56px+ touch target. Timer <code>aria-live="polite"</code>.</td>
-<td>Manual + automated check passes, no ARIA violations</td>
+<td>Audit scope: recorder controls, photo button, confusion vote button, heatmap, privacy toggle, storage quota bar, info-toasts. Check: <code>role</code>, <code>tabindex</code>, keyboard handlers (<code>Enter</code>/<code>Space</code>), <code>focus-visible</code>, ARIA labels, touch targets &gt;= 44px (WCAG) / 56px (preferred). Timer <code>aria-live="polite"</code>. Color contrast on heatmap bars.</td>
+<td>Zero ARIA violations found. All interactive elements keyboard-operable. Touch targets meet minimum. Fixes applied in-session.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Day 5 test target:</strong> +2 tests (681 total)</p>
+<hr />
+<h2 id="estimated-total-1935h">Estimated Total: ~19.35h</h2>
+<table>
+<thead>
+<tr>
+<th>Block</th>
+<th>Hours</th>
+<th>Tests</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Day 0: UX Bug Fixes</td>
+<td>4.35</td>
+<td>+6</td>
+</tr>
+<tr>
+<td>Days 1-2: Confusion Heatmap</td>
+<td>8</td>
+<td>+12</td>
+</tr>
+<tr>
+<td>Days 3-4: Privacy + Storage Quota</td>
+<td>5</td>
+<td>+9</td>
+</tr>
+<tr>
+<td>Day 5: Accessibility Audit</td>
+<td>2</td>
+<td>+2</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>~19.35</strong></td>
+<td><strong>+29 (681 target)</strong></td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h2 id="estimated-total-15h">Estimated Total: 15h</h2>
+<h2 id="dependency-chain">Dependency Chain</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Day 0 (UX fixes):
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  W16.0.1 (SW version) ---------&gt; no dependencies
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  W16.0.2 (toast fix) ----------&gt; no dependencies
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  W16.0.3 (analytics CSS) ------&gt; no dependencies
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  W16.0.4 (recorder CSS) -------&gt; no dependencies
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  W16.0.5 (backend guard) ------&gt; no dependencies
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  W16.0.6 (empty state CTA) ----&gt; no dependencies
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  (All Day 0 tasks are independent — can be done in any order)
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>Days 1-2 (heatmap):
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>  W16.1.1 (aggregation fn) -----&gt; W15.5 (confusion vote data exists)
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>  W16.1.2 (bar chart component)-&gt; no dependencies (takes data as input)
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>  W16.1.3 (tab integration) ----&gt; W16.1.1 + W16.1.2
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>  W16.1.4 (summary stats) ------&gt; W16.1.1
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>Days 3-4 (privacy + storage):
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>  W16.2.1 (privacy toast) ------&gt; W15.2 (record view exists)
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>  W16.2.2 (speech toggle) ------&gt; W15.2 (record view exists)
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>  W16.2.3 (storage quota) ------&gt; W15.1 (IDB stores exist)
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>  W16.2.4 (photo disclaimer) ---&gt; W15.3 (photo capture exists)
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>  (W16.2.x tasks are independent of each other)
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>Day 5 (a11y audit):
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>  W16.3.1 ----------------------&gt; W16.0.x + W16.1.x + W16.2.x (all components must exist)
+</code></pre></div>
+<hr />
+<h2 id="cut-line-if-behind-schedule">Cut Line (if behind schedule)</h2>
+<p>Cut from bottom up. W17 contingency absorbs overflow.</p>
+<table>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Task</th>
+<th>Cut Impact</th>
+<th>Push To</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CUT LAST</td>
+<td>Day 0 UX fixes (W16.0.x)</td>
+<td>Live demo stays broken — unacceptable</td>
+<td>N/A (must ship)</td>
+</tr>
+<tr>
+<td>CUT 5th</td>
+<td>Privacy toast + speech toggle (W16.2.1-2.2)</td>
+<td>P0 scope — should not cut</td>
+<td>W17</td>
+</tr>
+<tr>
+<td>CUT 4th</td>
+<td>Heatmap aggregation + component (W16.1.1-1.2)</td>
+<td>Voting data captured but invisible</td>
+<td>W17</td>
+</tr>
+<tr>
+<td>CUT 3rd</td>
+<td>Heatmap tab integration + stats (W16.1.3-1.4)</td>
+<td>Partial heatmap, no tab yet</td>
+<td>W17</td>
+</tr>
+<tr>
+<td>CUT 2nd</td>
+<td>Storage quota UI (W16.2.3)</td>
+<td>No usage visibility — acceptable short-term</td>
+<td>W17</td>
+</tr>
+<tr>
+<td>CUT 1st</td>
+<td>A11y audit (W16.3.1)</td>
+<td>Deferred polish — lowest risk</td>
+<td>W19</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Minimum viable W16:</strong> Day 0 UX fixes + Privacy controls (W16.2.1-2.2). This fixes live demo and ships P0 privacy requirements. Heatmap and quota can overflow to W17 contingency.</p>
 <hr />
 <h2 id="blocked-tasks">Blocked Tasks</h2>
 <table>
@@ -1078,7 +1293,7 @@
 <td>W16.B1</td>
 <td>Aggregate confusion across users</td>
 <td>Multi-user auth system</td>
-<td>v0.6.0 -- local personal data only for v0.5.0</td>
+<td>v0.7.0 — local personal data only for v0.5.0</td>
 </tr>
 </tbody>
 </table>
@@ -1094,23 +1309,27 @@
 <tbody>
 <tr>
 <td>Professor Dashboard</td>
-<td>v0.6.0 -- CUT from v0.5.0, needs multi-user backend</td>
+<td>v0.7.0 — needs multi-user backend</td>
 </tr>
 <tr>
 <td>Tesseract.js OCR on photos</td>
-<td>v0.6.0 -- ship photos first, validate demand</td>
+<td>v0.6.0 — ship photos first, validate demand</td>
 </tr>
 <tr>
 <td>Real Whisper transcription</td>
-<td>v1.0.0 -- stub is sufficient for v0.5.0</td>
+<td>v1.0.0 — stub is sufficient for v0.5.0</td>
 </tr>
 <tr>
 <td>Auto-Notes Framework</td>
-<td>Week 18 -- separate focus week</td>
+<td>Week 18 — separate focus week</td>
 </tr>
 <tr>
 <td>v0.5.0 release</td>
-<td>Week 19 -- release after all features complete</td>
+<td>Week 19 — release after all features complete</td>
+</tr>
+<tr>
+<td>W19 deferred tech debt (blob revoke, save click test, etc.)</td>
+<td>Week 19 polish — tracked in CLAUDE.md</td>
 </tr>
 </tbody>
 </table>
@@ -1132,14 +1351,14 @@
 <td>SVG heatmap complexity (responsive + accessible)</td>
 <td>HIGH</td>
 <td>MEDIUM</td>
-<td>analytics.js uses Chart.js — there are NO hand-written SVG patterns to reuse. Fallback: HTML/CSS bar chart (div height proportional to vote count, CSS gradient fill) — simpler and WCAG compliant. If SVG attempted, allocate 6h not 3h.</td>
+<td>Plan already uses HTML/CSS bar chart (not SVG). analytics.js has no hand-written SVG to reuse. HTML div bars with CSS gradient are simpler and WCAG compliant.</td>
 </tr>
 <tr>
 <td>R2</td>
-<td>Week 15 delays push tasks into Week 16</td>
+<td>UX fixes take longer than 4h (hidden complexity)</td>
 <td>MEDIUM</td>
-<td>MEDIUM</td>
-<td>Cut line: heatmap can degrade to simple table, Week 17 contingency available</td>
+<td>LOW</td>
+<td>Day 0 tasks are all isolated one-file changes. W17 contingency available if overflow.</td>
 </tr>
 <tr>
 <td>R3</td>
@@ -1148,19 +1367,39 @@
 <td>MEDIUM</td>
 <td>Feature-detect with fallback to "storage usage unavailable" message</td>
 </tr>
+<tr>
+<td>R4</td>
+<td>Backend guard in app.js touches legacy code (~3500 lines)</td>
+<td>MEDIUM</td>
+<td>LOW</td>
+<td>Minimal change: add guard function + call at init. Do not refactor surrounding code.</td>
+</tr>
+<tr>
+<td>R5</td>
+<td>analytics.css token replacement breaks existing dashboard styling</td>
+<td>MEDIUM</td>
+<td>MEDIUM</td>
+<td>Map each <code>--sp-*</code> token to exact <code>token.css</code> equivalent before editing. Visual regression check on dashboard after change.</td>
+</tr>
 </tbody>
 </table>
 <hr />
 <h2 id="completion-criteria">Completion Criteria</h2>
 <ul>
+<li>[ ] All 6 UX bugs from Day 6 research fixed and tested</li>
+<li>[ ] Recorder toasts show visible text (not blank white boxes)</li>
+<li>[ ] Analytics dashboard responds to dark mode toggle</li>
+<li>[ ] Recorder UI uses app cyan, not purple</li>
+<li>[ ] Backend guard hides demo sections on GitHub Pages</li>
+<li>[ ] SW cache version is <code>lm-v0.5.0</code></li>
 <li>[ ] Confusion heatmap renders on lecture detail view with color gradient</li>
 <li>[ ] Privacy info-toast and Web Speech toggle working and persisted</li>
-<li>[ ] Storage quota indicator showing usage with warning at 80%</li>
+<li>[ ] Storage quota indicator showing usage with warning at 75%/90%</li>
 <li>[ ] Photo capture disclaimer shows on first use</li>
 <li>[ ] All new components keyboard accessible with proper ARIA</li>
-<li>[ ] 20+ new tests added (target: 612+ total)</li>
-<li>[ ] All tests pass</li>
-<li>[ ] No release in this week -- release is in Week 19</li>
+<li>[ ] 29+ new tests added (target: 681 total)</li>
+<li>[ ] All 652+ existing tests still pass (zero regressions)</li>
+<li>[ ] No release in this week — release is in Week 19</li>
 </ul>
 
 

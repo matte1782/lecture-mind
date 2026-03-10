@@ -5,7 +5,7 @@
  * @version 1.0.0
  */
 
-const CACHE_VERSION = 'lm-v0.4.0';
+const CACHE_VERSION = 'lm-v0.5.0';
 
 /**
  * Static assets to pre-cache during SW install.
@@ -28,12 +28,14 @@ function getStaticAssetList() {
     '/static/playground-components.css',
     '/static/analytics.css',
     '/static/app-components.css',
+    '/static/recorder.css',
     // JS
     '/static/app.js',
     '/static/dom-utils.js',
     '/static/flashcards.js',
     '/static/library.js',
     '/static/analytics.js',
+    '/static/recorder.js',
     '/static/sw-utils.js',
     '/static/storage/index.js',
     '/static/storage/db.js',

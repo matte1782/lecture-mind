@@ -1645,13 +1645,13 @@ function renderDetailStats(container, stats) {
 /**
  * Render ARIA-compliant tab bar for lecture detail view.
  * @param {HTMLElement} container
- * @param {string} activeTab - 'segments'|'flashcards'|'bookmarks'|'info'
+ * @param {string} activeTab - 'segments'|'flashcards'|'bookmarks'|'photos'|'confusion'|'info'|'analytics'
  * @param {Function} [onTabChange] - Callback when tab changes
  * @returns {HTMLElement} The tablist element
  */
 function renderDetailTabs(container, activeTab, onTabChange) {
-  const tabNames = ['Segments', 'Flashcards', 'Bookmarks', 'Photos', 'Info', 'Analytics'];
-  const tabIds = ['segments', 'flashcards', 'bookmarks', 'photos', 'info', 'analytics'];
+  const tabNames = ['Segments', 'Flashcards', 'Bookmarks', 'Photos', 'Confusion', 'Info', 'Analytics'];
+  const tabIds = ['segments', 'flashcards', 'bookmarks', 'photos', 'confusion', 'info', 'analytics'];
 
   const tablist = createElement('div', 'sp-detail-tabs');
   tablist.setAttribute('role', 'tablist');
@@ -2002,6 +2002,7 @@ async function renderLectureDetailView(lectureId) {
       else if (tabId === 'flashcards') await renderFlashcardsList(tabPanel, lectureId);
       else if (tabId === 'bookmarks') await renderBookmarksList(tabPanel, lectureId);
       else if (tabId === 'photos') await renderPhotoGallery(tabPanel, lectureId);
+      else if (tabId === 'confusion') await renderConfusionTab(tabPanel, lectureId);
       else if (tabId === 'info') renderLectureInfo(tabPanel, lecture, stats);
       else if (tabId === 'analytics') await renderLectureAnalyticsTab(tabPanel, lectureId);
     });
@@ -2332,6 +2333,190 @@ registerViewCleanup(VIEWS.LECTURE_DETAIL, cleanupPlaylistNav);
 handleRouteChange();
 
 // ============================================================================
+// W16 DAY 1: CONFUSION HEATMAP — AGGREGATION + COMPONENT
+// ============================================================================
+
+/**
+ * Aggregate confusion vote data for a lecture's heatmap visualization.
+ * Uses batch-fetch pattern: getByLecture() + Map grouping.
+ * @param {string} lectureId - Lecture ID
+ * @returns {Promise<Array<{segmentId: string, segmentTitle: string, voteCount: number, percentage: number}>>}
+ *   Sorted by segment order. Empty array if no segments.
+ */
+async function getConfusionHeatmapData(lectureId) {
+  const [votes, segments] = await Promise.all([
+    ConfusionVoteRepository.getByLecture(lectureId),
+    SegmentRepository.getByLecture(lectureId)
+  ]);
+
+  if (segments.length === 0) return [];
+
+  // Group votes by segmentId
+  const voteMap = new Map();
+  for (const vote of votes) {
+    voteMap.set(vote.segmentId, (voteMap.get(vote.segmentId) || 0) + 1);
+  }
+
+  const totalVotes = votes.length;
+
+  // Sort segments by order field
+  const sorted = [...segments].sort((a, b) => (a.order || 0) - (b.order || 0));
+
+  return sorted.map(seg => {
+    const count = voteMap.get(seg.id) || 0;
+    return {
+      segmentId: seg.id,
+      segmentTitle: seg.type || 'Segment',
+      voteCount: count,
+      percentage: totalVotes > 0 ? Math.round(100 * count / totalVotes) : 0
+    };
+  });
+}
+
+/**
+ * Get heatmap bar color based on confusion percentage.
+ * Green (low) → Yellow (medium) → Red (high).
+ * @param {number} pct - Percentage (0-100)
+ * @returns {string} CSS color
+ */
+function getHeatmapColor(pct) {
+  if (pct <= 33) return 'var(--color-confusion-low, #10b981)';
+  if (pct <= 66) return 'var(--color-confusion-medium, #f59e0b)';
+  return 'var(--color-confusion-critical, #f43f5e)';
+}
+
+/**
+ * Render a horizontal bar chart showing confusion distribution across segments.
+ * Uses safe DOM (createElement + textContent only).
+ * @param {HTMLElement} container - Container element
+ * @param {Array<{segmentId: string, segmentTitle: string, voteCount: number, percentage: number}>} data
+ */
+function renderConfusionHeatmap(container, data) {
+  clearElement(container);
+
+  if (!data || data.length === 0) {
+    const empty = createElement('p', 'sp-empty-state', {
+      textContent: 'No confusion data yet \u2014 vote on segments to see your heatmap.'
+    });
+    container.appendChild(empty);
+    return;
+  }
+
+  // Find max percentage for proportional bar widths
+  const maxPct = Math.max(...data.map(d => d.percentage), 1);
+
+  // Chart wrapper with ARIA
+  const chart = createElement('div', 'sp-heatmap', {
+    role: 'img',
+    'aria-label': `Confusion heatmap: ${data.length} segments, ${data.reduce((s, d) => s + d.voteCount, 0)} total votes`
+  });
+
+  for (const item of data) {
+    const row = createElement('div', 'sp-heatmap__row', {
+      'data-segment-id': item.segmentId
+    });
+
+    const label = createElement('span', 'sp-heatmap__label', {
+      textContent: item.segmentTitle
+    });
+
+    const barWrapper = createElement('div', 'sp-heatmap__bar-wrapper');
+
+    const bar = createElement('div', 'sp-heatmap__bar');
+    const widthPct = maxPct > 0 ? Math.round(100 * item.percentage / maxPct) : 0;
+    bar.style.width = `${Math.max(widthPct, 2)}%`;
+    bar.style.backgroundColor = getHeatmapColor(item.percentage);
+
+    const count = createElement('span', 'sp-heatmap__count', {
+      textContent: `${item.voteCount}`
+    });
+
+    barWrapper.appendChild(bar);
+    barWrapper.appendChild(count);
+    row.appendChild(label);
+    row.appendChild(barWrapper);
+    chart.appendChild(row);
+  }
+
+  container.appendChild(chart);
+}
+
+// ============================================================================
+// W16 DAY 1: CONFUSION SUMMARY STATS
+// ============================================================================
+
+/**
+ * Render summary stats for confusion data.
+ * Shows total votes, most confused segment, and count of segments >50%.
+ * @param {HTMLElement} container
+ * @param {Array<{segmentId: string, segmentTitle: string, voteCount: number, percentage: number}>} data
+ */
+function renderConfusionStats(container, data) {
+  if (!data || data.length === 0) return;
+
+  const stats = createElement('div', 'sp-confusion-stats');
+
+  const totalVotes = data.reduce((sum, d) => sum + d.voteCount, 0);
+
+  // Total votes
+  const totalEl = createElement('div', 'sp-confusion-stats__item');
+  const totalLabel = createElement('span', 'sp-confusion-stats__label', { textContent: 'Total votes' });
+  const totalValue = createElement('span', 'sp-confusion-stats__value', { textContent: `${totalVotes}` });
+  totalEl.appendChild(totalLabel);
+  totalEl.appendChild(totalValue);
+  stats.appendChild(totalEl);
+
+  // Most confused segment
+  const mostConfused = data.reduce((max, d) => d.voteCount > max.voteCount ? d : max, data[0]);
+  const mostEl = createElement('div', 'sp-confusion-stats__item');
+  const mostLabel = createElement('span', 'sp-confusion-stats__label', { textContent: 'Most confused' });
+  const mostValue = createElement('span', 'sp-confusion-stats__value', {
+    textContent: `${mostConfused.segmentTitle} (${mostConfused.percentage}%)`
+  });
+  mostEl.appendChild(mostLabel);
+  mostEl.appendChild(mostValue);
+  stats.appendChild(mostEl);
+
+  // Segments >50%
+  const highConfusionCount = data.filter(d => d.percentage > 50).length;
+  const highEl = createElement('div', 'sp-confusion-stats__item');
+  const highLabel = createElement('span', 'sp-confusion-stats__label', { textContent: 'Segments >50% confused' });
+  const highValue = createElement('span', 'sp-confusion-stats__value', { textContent: `${highConfusionCount}` });
+  highEl.appendChild(highLabel);
+  highEl.appendChild(highValue);
+  stats.appendChild(highEl);
+
+  container.appendChild(stats);
+}
+
+/**
+ * Render the full confusion tab content: heatmap + summary stats.
+ * @param {HTMLElement} container
+ * @param {string} lectureId
+ */
+async function renderConfusionTab(container, lectureId) {
+  clearElement(container);
+
+  try {
+    const data = await getConfusionHeatmapData(lectureId);
+    const hasVotes = data.some(d => d.voteCount > 0);
+
+    if (!hasVotes) {
+      renderConfusionHeatmap(container, []);
+      return;
+    }
+
+    renderConfusionHeatmap(container, data);
+    renderConfusionStats(container, data);
+  } catch (_err) {
+    clearElement(container);
+    container.appendChild(createElement('p', 'sp-empty-state', {
+      textContent: 'Error loading confusion data.'
+    }));
+  }
+}
+
+// ============================================================================
 // EXPORTS
 // ============================================================================
 
@@ -2414,5 +2599,12 @@ export {
   initLibraryKeyboardShortcuts,
   renderCourseEmptyState,
   renderSearchEmptyState,
-  renderFavoritesEmptyState
+  renderFavoritesEmptyState,
+
+  // W16 Day 1: Confusion heatmap + tab
+  getConfusionHeatmapData,
+  getHeatmapColor,
+  renderConfusionHeatmap,
+  renderConfusionStats,
+  renderConfusionTab
 };

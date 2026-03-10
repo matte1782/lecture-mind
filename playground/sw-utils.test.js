@@ -23,8 +23,8 @@ describe('SW Utils — Day 0: Service Worker', () => {
   // --------------------------------------------------------------------------
 
   describe('getCacheVersion', () => {
-    test('returns lm-v0.4.0', () => {
-      expect(getCacheVersion()).toBe('lm-v0.4.0');
+    test('returns lm-v0.5.0', () => {
+      expect(getCacheVersion()).toBe('lm-v0.5.0');
     });
   });
 
@@ -135,6 +135,26 @@ describe('SW Utils — Day 0: Service Worker', () => {
 
       const result = registerServiceWorker();
       expect(result).toBeInstanceOf(Promise);
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  // W16 Day 0: v0.5.0 asset additions
+  // --------------------------------------------------------------------------
+
+  describe('v0.5.0 static asset list', () => {
+    test('includes recorder.js and recorder.css', () => {
+      const assets = getStaticAssetList();
+      expect(assets).toContain('/static/recorder.js');
+      expect(assets).toContain('/static/recorder.css');
+    });
+
+    test('recorder assets are listed before sw-utils.js', () => {
+      const assets = getStaticAssetList();
+      const recorderIdx = assets.indexOf('/static/recorder.js');
+      const swUtilsIdx = assets.indexOf('/static/sw-utils.js');
+      expect(recorderIdx).toBeGreaterThan(-1);
+      expect(recorderIdx).toBeLessThan(swUtilsIdx);
     });
   });
 });
