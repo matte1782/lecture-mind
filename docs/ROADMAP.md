@@ -1,11 +1,11 @@
-# Lecture Mind — Product Roadmap v4.0
+# Lecture Mind — Product Roadmap v5.0
 
-> **Last Updated**: 2026-03-04
-> **Current Version**: v0.4.0 (RELEASED 2026-03-04)
-> **Status**: v0.4.0 RELEASED — 557 tests, 10 suites, hostile review 88/100, security review 91/100
+> **Last Updated**: 2026-03-10
+> **Current Version**: v0.4.0 (RELEASED 2026-03-05), v0.5.0 IN PROGRESS (W16 Day 2)
+> **Status**: v0.5.0 W16 Day 2 complete — 693 tests, 11 suites
 > **Docs Site**: https://matte1782.github.io/lecture-mind/
 > **Cloud Demo**: https://lecture-mind.onrender.com
-> **Architecture**: FastAPI + Premium Vanilla JS (Cloud Demo + Local Full)
+> **Architecture**: FastAPI + Premium Vanilla JS (Cloud Demo + Local Full + Desktop via Electron)
 
 ---
 
@@ -17,12 +17,15 @@
 | Gate 0 | Technical Validation | 12h | Week 1 | Complete |
 | v0.2.0 | Real Models + Audio | 80h | Weeks 2-5 | Released |
 | v0.3.0 | Cloud Demo + Security | 60h | Weeks 6-9 | Released |
-| **v0.4.0** | **Student Playground** | **100h** | **Weeks 10-14** | **RELEASED** (2026-03-04) |
-| v0.5.0 | Professor Edition | 40h | Weeks 15-16 | Next |
-| v1.0.0 | Production | 80h | Weeks 17-20 | Blocked by v0.5.0 |
+| v0.4.0 | Student Playground | 100h | Weeks 10-14 | **RELEASED** (2026-03-05) |
+| **v0.5.0** | **Live Capture** | **68h** | **Weeks 15-19** | **IN PROGRESS** (W16 Day 2) |
+| v0.6.0 | Vision + Electron Shell | 62h | Weeks 20-23 | Planned |
+| v0.7.0 | Community | 56h | Weeks 24-29 | Planned |
+| v0.8.0 | Desktop Full | 54h | Weeks 30-34 | Planned |
+| v1.0.0 | Production | 80h | Weeks 35-38 | Planned |
 
 **Assumptions:**
-- Work velocity: 20 hours/week
+- Work velocity: ~20 hours/week (5h/session, ~4 sessions/week)
 - Single developer + AI agents for specialized tasks
 - Part-time project
 
@@ -207,55 +210,186 @@ Week 14 Gate: FINAL — hostile review 91/100 SHIP            PASSED (557 tests)
 
 ---
 
-## v0.5.0 — Professor Edition (PLANNED)
+## v0.5.0 — Live Capture (IN PROGRESS)
 
-**Theme**: Educator analytics and confusion detection
-**Effort**: 40 hours (2 weeks @ 20h/week)
-**Prerequisites**: v0.4.0 complete, Student Playground stable
-**Target Users**: Professors, Teaching Assistants
+**Theme**: Transform from review-only to full capture-study-review tool
+**Effort**: 68 hours (5 weeks @ ~14h/week)
+**Prerequisites**: v0.4.0 complete
+**Target Users**: Students (mobile + desktop)
+**Status**: W16 Day 2 complete — 693 tests
 
 ### Goals
 
-| ID | Goal | PASS Criteria | FAIL Criteria |
-|----|------|---------------|---------------|
-| SP4 | Confusion Analytics | Aggregate anonymous confusion votes, heatmap per lecture | No aggregation |
-| SP7 | Professor Dashboard | View class confusion hotspots, export reports | Student-only features |
+| ID | Goal | PASS Criteria | Status |
+|----|------|---------------|--------|
+| LC1 | Live Audio Capture | MediaRecorder + Web Speech API, store in IDB | DONE (W15) |
+| LC2 | Photo Capture | Timestamped photos, canvas resize, IDB storage | DONE (W15) |
+| LC3 | Confusion Markers | Personal confusion voting + heatmap per lecture | DONE (W15-16) |
+| LC4 | DB Migration v1-v2 | 4 new IDB stores, storage quota UI | DONE (W15-16) |
+| LC5 | Privacy + Controls | Privacy banner, speech toggle, photo disclaimer | DONE (W16) |
+| LC6 | Auto-Notes Framework | Extractive (TextRank/TF-IDF) + Claude API LLM | W18 |
+| LC7 | Polish + Release | Accessibility audit, W19 deferred fixes, hostile review | W16/W19 |
 
-### Feature Breakdown
+### Week-by-Week Progress
 
-#### Confusion Analytics (SP4)
-```
-Features:
-  Student confusion voting (anonymous)
-  Aggregate heatmap per lecture
-  Compare across lecture series
-  Export confusion reports
-```
+| Week | Focus | Tests | Status |
+|------|-------|-------|--------|
+| W15 Day 0 | Tech debt + dependabot + DB migration v1-v2 | 607 | DONE |
+| W15 Days 1-4 | Audio capture + photo capture + post-recording flow | 640 | DONE |
+| W15 Day 5 | SP4-lite confusion voting on segment cards | 648 | DONE |
+| W15 Day 6 | File size fix + gamification design + W16 plan | 652 | DONE |
+| W16 Day 0 | 6 UX bug fixes + dark mode + backend guard | 658 | DONE |
+| W16 Day 1 | Confusion heatmap + tab integration + summary stats | 684 | DONE |
+| W16 Day 2 | Privacy banner + speech toggle + storage quota + photo disclaimer | 693 | DONE |
+| W16 Day 5 | Accessibility audit | ~695 | Next |
+| W17 | iOS spike + buffer | — | Planned |
+| W18 | Auto-Notes framework (extractive + LLM) | ~715 | Planned |
+| W19 | Polish + deferred fixes + hostile review + release | ~720 | Planned |
 
-#### Professor Dashboard (SP7)
-```
-Features:
-  Class-wide confusion heatmap
-  Most-replayed segments
-  Quiz performance analytics (aggregate)
-  Export for course improvement
-  Anonymous (privacy-first)
-```
+### Remaining (~29h)
 
-### Task Breakdown
-
-| Week | Focus | Hours |
-|------|-------|-------|
-| Week 15 | Confusion voting + aggregation backend | 20h |
-| Week 16 | Dashboard UI + export + privacy audit | 20h |
+| Block | Hours |
+|-------|-------|
+| W16 Day 5: Accessibility audit | 2h |
+| W17: iOS spike + buffer | 5h |
+| W18: Auto-Notes (extractive + LLM API) | 12h |
+| W19: Polish + deferred fixes + release | 10h |
 
 ---
 
-## v1.0.0 — Production Stable
+## v0.6.0 — Vision + Electron Shell (PLANNED)
+
+**Theme**: OCR on captured photos + thin Electron desktop wrapper
+**Effort**: ~62 hours (4 weeks)
+**Prerequisites**: v0.5.0 released
+**Target Users**: Students (desktop + mobile)
+
+### Goals
+
+| ID | Goal | PASS Criteria |
+|----|------|---------------|
+| V1 | Tesseract.js OCR | Zero-tap OCR on every captured photo, Web Worker, <5s mobile |
+| V2 | OCR Search | Photos searchable by slide text content |
+| V3 | Auto-Notes v2 | Multi-source: transcript + slide texts combined |
+| V4 | Claude Vision | "Enhance with AI" for handwriting/diagrams |
+| V5 | Manual Notes Import | Photo -> OCR -> Notes tab |
+| V6 | Electron Shell | Thin wrapper: exe/dmg/AppImage, loads existing web app |
+
+### Week-by-Week Plan
+
+| Week | Focus | Hours |
+|------|-------|-------|
+| W20 | Tesseract.js OCR + pipeline + search integration | 16h |
+| W21 | Auto-Notes v2 + Claude Vision + photo-segment correlation | 14h |
+| W22 | Manual notes import + batch OCR + Electron shell (thin wrapper) | 14h |
+| W23 | Hostile review + fixes + release v0.6.0 | 10h + 8h contingency |
+
+### Electron Shell (v0.6.0 — thin wrapper)
+
+The thin Electron wrapper ships alongside v0.6.0 as the first downloadable desktop app:
+
+| Component | Scope |
+|-----------|-------|
+| **Main process** | `electron/main.js` — loads `index.html`, window management |
+| **Packaging** | electron-builder: Windows `.exe`, macOS `.dmg`, Linux `.AppImage` |
+| **Storage** | Same IndexedDB (via Chromium in Electron) — no migration needed |
+| **Auto-update** | electron-updater connected to GitHub Releases |
+| **Native features** | System tray icon, native notifications, file drag-drop |
+| **NOT included** | SQLite migration, local Whisper — deferred to v0.8.0 |
+
+Cross-platform packaging:
+```
+electron-builder config:
+  win: nsis (.exe installer)
+  mac: dmg
+  linux: AppImage (universal, no install needed)
+```
+
+---
+
+## v0.7.0 — Community (PLANNED)
+
+**Theme**: Multi-user backend, professor dashboard, aggregate analytics
+**Effort**: ~56 hours (5-6 weeks)
+**Prerequisites**: v0.6.0 released
+**Target Users**: Professors, Teaching Assistants, Student groups
+
+### Goals
+
+| ID | Goal | PASS Criteria |
+|----|------|---------------|
+| C1 | Multi-user Backend | Auth (JWT), user accounts, API server |
+| C2 | Professor Dashboard | Class-wide confusion heatmap, most-replayed segments |
+| C3 | Aggregate Confusion | Anonymous confusion voting across students |
+| C4 | OpenAI API Support | Server-side proxy for OpenAI (no browser CORS issue) |
+| C5 | Export Reports | PDF/CSV confusion reports for educators |
+
+### Week-by-Week Plan
+
+| Week | Focus | Hours |
+|------|-------|-------|
+| W24-25 | Multi-user backend: auth, user model, API | 20h |
+| W26 | Professor Dashboard UI | 12h |
+| W27 | Aggregate confusion analytics | 8h |
+| W28 | OpenAI API server-side proxy + export reports | 6h |
+| W29 | Polish + hostile review + release | 10h |
+
+---
+
+## v0.8.0 — Desktop Full (PLANNED)
+
+**Theme**: Full-featured native desktop app with local AI
+**Effort**: ~54 hours (4-5 weeks)
+**Prerequisites**: v0.7.0 released, Electron shell from v0.6.0
+**Target Users**: Power users, offline-first users, privacy-conscious users
+
+### Goals
+
+| ID | Goal | PASS Criteria |
+|----|------|---------------|
+| D1 | SQLite Migration | Replace IndexedDB with better-sqlite3 for desktop |
+| D2 | Native File Storage | Recordings saved to disk (no IDB blob limits) |
+| D3 | Local Whisper | whisper.cpp integration — real transcription, no API |
+| D4 | Code Signing | Signed installers for Windows + macOS |
+| D5 | Auto-Updater | Seamless updates via GitHub Releases |
+| D6 | Cross-Platform Polish | Windows, macOS, Linux testing + fixes |
+
+### Week-by-Week Plan
+
+| Week | Focus | Hours |
+|------|-------|-------|
+| W30 | SQLite migration (better-sqlite3) + native file storage | 16h |
+| W31 | Local Whisper integration (whisper.cpp binding) | 16h |
+| W32 | Auto-updater + code signing + installer polish | 10h |
+| W33 | Cross-platform testing + fixes | 8h |
+| W34 | Hostile review + release v0.8.0 | 4h |
+
+### Architecture
+
+```
+Electron App (v0.8.0)
+├── main.js (Node.js main process)
+│   ├── better-sqlite3 (replaces IndexedDB)
+│   ├── whisper.cpp (local transcription via node-whisper)
+│   ├── Native file system (recordings on disk)
+│   └── electron-updater (auto-updates)
+├── renderer (existing web app, unchanged)
+│   ├── index.html
+│   ├── flashcards.js, library.js, analytics.js, recorder.js
+│   └── storage/ (abstraction layer: IDB in browser, SQLite in Electron)
+└── Packaging
+    ├── Windows: .exe (NSIS installer)
+    ├── macOS: .dmg (notarized)
+    └── Linux: .AppImage (universal)
+```
+
+---
+
+## v1.0.0 — Production Stable (PLANNED)
 
 **Theme**: Production-ready with real AI summaries
-**Effort**: 80 hours (4 weeks @ 20h/week)
-**Prerequisites**: v0.5.0 complete
+**Effort**: ~80 hours (4 weeks)
+**Prerequisites**: v0.8.0 complete
 
 ### Goals
 
@@ -264,7 +398,7 @@ Features:
 | G1 | Real Y-decoder | Generate actual summaries (Phi-3 mini) |
 | G2 | Performance | Query latency p99 <200ms |
 | G3 | Security audit | bandit + safety pass |
-| G4 | AWS deployment | Step-by-step guide |
+| G4 | Deployment guide | AWS/self-hosted step-by-step |
 | G5 | Test coverage 85%+ | pytest --cov >=85% |
 
 ---
@@ -273,70 +407,51 @@ Features:
 
 ```
 January 2026
-  Week 1 (Jan 1-7): Gate 0 COMPLETE
-  Weeks 2-5 (Jan 8 - Feb 4): v0.2.0 RELEASED
+  Week 1: Gate 0 COMPLETE
+  Weeks 2-5: v0.2.0 RELEASED
 
 February 2026
-  Weeks 6-9 (Feb 5 - Mar 4): v0.3.0 RELEASED
-    Week 6: FastAPI + Frontend COMPLETE
-    Week 7: UI Features COMPLETE
-    Week 8: Security + Stability COMPLETE
-    Week 9: Docs + Release COMPLETE
+  Weeks 6-9: v0.3.0 RELEASED
 
 March 2026
-  Weeks 10-14: v0.4.0 - Student Playground
-    Week 10: Architecture + Design System    COMPLETE (292 tests)
-    Week 11: Flashcard System                COMPLETE (91 tests)
-    Week 12: Multi-Lecture Library            COMPLETE (483 tests)
-    Week 13: Study Analytics + Progress       COMPLETE (545 tests)
-    Week 14: Polish + Offline + Release       COMPLETE (557 tests) — RELEASED 2026-03-05
+  Weeks 10-14: v0.4.0 Student Playground — RELEASED (557 tests)
+  Weeks 15-16: v0.5.0 Live Capture — IN PROGRESS (693 tests at W16 Day 2)
 
 April 2026
-  Weeks 15-16: v0.5.0 - Professor Edition
-    Week 15: Confusion voting + aggregation
-    Week 16: Dashboard UI + export + release
+  Weeks 17-19: v0.5.0 Live Capture — Auto-Notes + polish + RELEASE
 
 May 2026
-  Weeks 17-20: v1.0.0 - Production
+  Weeks 20-23: v0.6.0 Vision + Electron Shell — OCR + thin desktop app + RELEASE
+
+June-July 2026
+  Weeks 24-29: v0.7.0 Community — Multi-user backend + professor dashboard + RELEASE
+
+August-September 2026
+  Weeks 30-34: v0.8.0 Desktop Full — SQLite + local Whisper + RELEASE
+
+September-October 2026
+  Weeks 35-38: v1.0.0 Production
 ```
 
 ---
 
 ## Next Actions
 
-### Completed (v0.3.0)
-1. ~~Fix security issues C1-C6 (12 issues total)~~
-2. ~~Run hostile-reviewer to verify fixes~~
-3. ~~Complete Week 9 documentation~~
-4. ~~Release v0.3.0~~
-5. ~~Deploy docs to GitHub Pages~~
+### Completed (v0.4.0)
+1. ~~Weeks 10-14: Student Playground~~ (557 tests, hostile review 91/100)
+2. ~~v0.4.0 tagged + pushed + GitHub release created~~
 
-### Completed (v0.4.0 Weeks 10-12)
-1. ~~Week 10: Storage layer + design system~~ (292 storage tests)
-2. ~~Week 11: Flashcard system~~ (91 flashcard tests)
-3. ~~Week 12 Day 0: dom-utils extraction, router extensions~~ (committed `7fbbbde`)
-4. ~~Week 12 Day 1: Course sidebar, toolbar, sorting, CRUD~~ (hostile review: 72 -> fixed)
-5. ~~Week 12 Day 2: Import pipeline, organization, context menu~~ (committed `7fbbbde`)
-6. ~~Week 12 Day 3: Cross-lecture search~~ (committed `643b684`, 437 tests)
-7. ~~Week 12 Day 4: Lecture detail view~~ (committed `954d923`, 453 tests)
-8. ~~Week 12 Day 5: Playlist navigation + favorites~~ (committed `fba9bb5`, 469 tests)
-9. ~~Week 12 Day 6: Integration, performance, polish~~ (committed `7fc6fa3`, 483 tests)
+### Completed (v0.5.0 so far)
+1. ~~W15 Days 0-6: Audio/photo capture, confusion voting, DB migration~~ (652 tests)
+2. ~~W16 Day 0: UX fixes + dark mode + backend guard~~ (658 tests)
+3. ~~W16 Day 1: Confusion heatmap + tab + stats~~ (684 tests)
+4. ~~W16 Day 2: Privacy banner + speech toggle + storage quota + photo disclaimer~~ (693 tests)
 
-### Completed (v0.4.0 Weeks 13-14)
-1. ~~Week 13: Study analytics + dashboard~~ (545 tests)
-2. ~~Week 14 Day 0: Service Worker + index.html fix~~ (545 tests)
-3. ~~Week 14 Day 1: Loading skeletons + animation polish~~ (557 tests)
-4. ~~Week 14 Day 2-3: Hostile review fixes, docs, GH Pages~~ (557 tests)
-5. ~~Week 14: UI/UX audit + P0 bug fixes + README rewrite~~
-6. ~~Week 14: Final hostile review 91/100 SHIP~~
-7. ~~v0.4.0 tagged + pushed + GitHub release created~~
-
-### Now: v0.5.0 — Professor Edition
-1. Plan v0.5.0 implementation (Weeks 15-16)
-2. Confusion voting backend (anonymous)
-3. Aggregate confusion heatmap per lecture
-4. Professor dashboard UI
-5. Export confusion reports
+### Now: v0.5.0 remaining
+1. W16 Day 5: Accessibility audit (~2h)
+2. W17: iOS spike + buffer (~5h)
+3. W18: Auto-Notes framework (extractive + LLM API) (~12h)
+4. W19: Polish + W19 deferred fixes + hostile review + release (~10h)
 
 ---
 
@@ -347,15 +462,17 @@ May 2026
 | 2026-01-09 | Add v0.4.0 Student Playground | Transform from tool to learning platform |
 | 2026-01-09 | Cloud demo + local full features | Free tier limits require placeholder mode |
 | 2026-01-09 | Multi-agent workflow | Specialized agents for UI, ML, security |
-| 2026-01-09 | Professor dashboard | Expand audience beyond students |
 | 2026-01-09 | Offline-first architecture | Students need to study anywhere |
 | 2026-02-27 | Extract dom-utils.js from flashcards.js | Shared utilities for library.js without circular deps (AD-1) |
-| 2026-02-27 | Favorites via SettingsRepository | Avoids misusing BookmarkRepository (AD-2) |
-| 2026-02-27 | Dedup imports via SettingsRepository | Lecture model has no metadata field (AD-2 pattern) |
 | 2026-02-27 | setLibraryRenderer callback pattern | One-directional dependency: library.js -> flashcards.js, never reverse |
-| 2026-03-04 | Defer SP4+SP7 to v0.5.0 | Confusion analytics + professor dashboard need backend ML + classroom data — out of scope for student-focused v0.4.0 |
-| 2026-03-04 | Reduce v0.4.0 to 5 weeks (10-14) | Week 12 completed all library features; remaining scope is analytics + polish only |
-| 2026-03-04 | Add v0.5.0 Professor Edition | Separates student features from educator features for cleaner releases |
+| 2026-03-04 | Defer SP4+SP7 to v0.5.0 scope | Confusion analytics needs per-user capture first |
+| 2026-03-04 | v0.5.0 = "Live Capture" not "Professor Edition" | Professor features need multi-user backend; live capture is student-facing |
+| 2026-03-10 | v0.6.0 = combined OCR + Gamification + thin Electron | Ship OCR + downloadable desktop app in same release |
+| 2026-03-10 | v0.7.0 = "Community" (multi-user backend) | Professor Dashboard + aggregate analytics need shared backend |
+| 2026-03-10 | v0.8.0 = "Desktop Full" (SQLite + local Whisper) | Full native features deferred; thin Electron shell ships with v0.6.0 |
+| 2026-03-10 | Option C for Electron: thin wrapper first, full later | Quick tangible deliverable without blocking community features |
+| 2026-03-10 | Linux via AppImage | Universal Linux packaging, no install needed |
+| 2026-03-10 | Run hostile-reviewer + code-reviewer in parallel | Different agents catch different issues — broader coverage |
 
 ---
 
@@ -363,16 +480,10 @@ May 2026
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v4.1 | 2026-03-05 | v0.4.0 RELEASED: Weeks 13-14 complete, 557 tests, hostile review 91/100, tagged+pushed |
-| v4.0 | 2026-03-04 | Roadmap optimization: Week 12 complete, defer SP4+SP7 to v0.5.0, accurate deliverables |
-| v3.4 | 2026-02-27 | Week 12 Days 0-2: library.js, import pipeline, context menu (418 tests) |
-| v3.3 | 2026-02-27 | Week 12 plan approved: Rev 2 scored 91/100 (Days 0-3) and 92/100 (Days 4-6) |
-| v3.2 | 2026-02-27 | Week 11 complete: Flashcard system (91 tests), Week 10 complete: Storage layer (292 tests) |
-| v3.1 | 2026-01-09 | v0.3.0 RELEASED: Docs complete, GitHub Pages live, all tests passing |
-| v3.0 | 2026-01-09 | Added v0.4.0 Student Playground, multi-agent workflow, security gates |
-| v2.6 | 2026-01-09 | Week 8: Demo mode, bug fixes (NaN%, 404 polling) |
-| v2.5 | 2026-01-08 | Week 6-7 complete: FastAPI + Premium Vanilla JS |
-| v2.4 | 2026-01-07 | v0.2.0 release ready |
+| v5.0 | 2026-03-10 | Major roadmap revision: v0.5.0="Live Capture", add v0.6.0 Vision+Electron, v0.7.0 Community, v0.8.0 Desktop Full. Electron Option C (thin wrapper first). Linux AppImage support. |
+| v4.1 | 2026-03-05 | v0.4.0 RELEASED: 557 tests, hostile review 91/100 |
+| v4.0 | 2026-03-04 | Roadmap optimization: defer SP4+SP7, accurate deliverables |
+| v3.0 | 2026-01-09 | Added v0.4.0 Student Playground |
 | v2.0 | 2026-01-01 | Added Gate 0, realistic estimates |
 | v1.0 | 2026-01-01 | Initial roadmap |
 
