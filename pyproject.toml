@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "lecture-mind"
-version = "0.3.0"
-description = "Event-aware lecture summarizer using V-JEPA"
+version = "0.4.0"
+description = "Event-aware lecture summarizer with embedded study tools"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"

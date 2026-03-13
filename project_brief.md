@@ -1,4 +1,7 @@
 Idea 1 – Lecture Event Summarizer and Embedded Study Assistant
+
+> **Note (2026-03-13):** V-JEPA integration is planned but not yet implemented. The current version uses placeholder embeddings. The architecture is designed to swap in V-JEPA or other visual encoders when weights become available.
+
 	1.	Name: Event‑Aware Lecture Summarizer.
 	2.	Value proposition: Provide students with real‑time, context‑aware summaries and retrieval of lecture segments using latent‑space vision‑language understanding rather than token‑by‑token generation.
 	3.	Problem + users: Undergraduate courses often record lectures, yet students struggle to revisit relevant segments and compile concise notes.  Traditional video summarization tools produce generic summaries and require heavy hardware.  Target users are students and teaching staff who need real‑time summarization, event segmentation and Q&A around lecture videos.
