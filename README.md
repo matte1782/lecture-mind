@@ -162,14 +162,15 @@ lecture-mind events data/
 
 ```python
 from vl_jepa import (
-    VideoInput, FrameSampler, VisualEncoder,
+    VideoInput, FrameSampler,
     TextEncoder, MultimodalIndex,
 )
+from vl_jepa.encoders import PlaceholderVisualEncoder
 
 with VideoInput.from_file("lecture.mp4") as video:
     frames = FrameSampler(fps=1.0).sample(video)
 
-encoder = VisualEncoder.load()
+encoder = PlaceholderVisualEncoder()
 embeddings = encoder.encode_batch(frames)
 
 index = MultimodalIndex()

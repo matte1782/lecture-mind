@@ -408,9 +408,9 @@ def test_fm_gpu_fallback() -> None:
     IMPLEMENTS: FM001
     """
     with patch('torch.cuda.is_available', return_value=False):
-        from vl_jepa.encoder import VisualEncoder
+        from vl_jepa.encoders import PlaceholderVisualEncoder
 
-        encoder = VisualEncoder(device="auto")
+        encoder = PlaceholderVisualEncoder(device="auto")
 
         # Should detect no GPU and use CPU
         assert encoder.device.type == "cpu"
@@ -422,11 +422,11 @@ def test_fm_model_missing() -> None:
 
     IMPLEMENTS: FM002
     """
-    from vl_jepa.encoder import VisualEncoder
-    from vl_jepa.exceptions import ModelLoadError
+    from vl_jepa.encoders import PlaceholderVisualEncoder
+    from vl_jepa.encoders import DINOv2LoadError
 
-    with pytest.raises(ModelLoadError) as exc_info:
-        VisualEncoder(checkpoint_path="/nonexistent/model.safetensors")
+    with pytest.raises(DINOv2LoadError) as exc_info:
+        PlaceholderVisualEncoder(checkpoint_path="/nonexistent/model.safetensors")
 
     assert "download" in str(exc_info.value).lower()
     assert "https://" in str(exc_info.value)
@@ -539,17 +539,17 @@ def test_encoder_cpu_gpu_equivalence() -> None:
     if not torch.cuda.is_available():
         pytest.skip("GPU not available")
 
-    from vl_jepa.encoder import VisualEncoder
+    from vl_jepa.encoders import PlaceholderVisualEncoder
 
     # Same input
     frames = torch.randn(4, 3, 224, 224)
 
     # CPU inference
-    encoder_cpu = VisualEncoder(device="cpu")
+    encoder_cpu = PlaceholderVisualEncoder(device="cpu")
     embeddings_cpu = encoder_cpu.encode(frames)
 
     # GPU inference
-    encoder_gpu = VisualEncoder(device="cuda")
+    encoder_gpu = PlaceholderVisualEncoder(device="cuda")
     embeddings_gpu = encoder_gpu.encode(frames.cuda()).cpu()
 
     # Compare
@@ -737,9 +737,9 @@ def test_gpu_inference() -> None:
 def test_automatic_gpu_fallback() -> None:
     """Verify system works when GPU is unavailable."""
     with patch('torch.cuda.is_available', return_value=False):
-        from vl_jepa.encoder import VisualEncoder
+        from vl_jepa.encoders import PlaceholderVisualEncoder
 
-        encoder = VisualEncoder(device="auto")
+        encoder = PlaceholderVisualEncoder(device="auto")
         result = encoder.encode(sample_frames)
 
         assert result.shape == (batch_size, 768)

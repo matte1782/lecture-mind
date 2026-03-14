@@ -47,7 +47,7 @@
 |:-----|:-----|:------|:---------|
 | `test_video_input.py` | S001, S002 | 8 | T001.1-T001.6, T002.1, T002.3 |
 | `test_frame_sampler.py` | S003 | 5 | T003.1-T003.5 |
-| `test_visual_encoder.py` | S004 | 6 | T004.1-T004.6 |
+| ~~`test_visual_encoder.py`~~ | S004 | ~~6~~ 0 | ~~T004.1-T004.6~~ (deleted — encoder.py removed, tests in `encoders/`) |
 | `test_event_detector.py` | S005 | 5 | T005.1-T005.5 |
 | `test_text_encoder.py` | S006 | 5 | T006.1-T006.5 |
 | `test_embedding_index.py` | S007 | 6 | T007.1-T007.6 |

@@ -9,7 +9,6 @@ __version__ = "0.3.0"
 
 from vl_jepa.decoder import YDecoder
 from vl_jepa.detector import EventDetector
-from vl_jepa.encoder import ModelLoadError, VisualEncoder
 from vl_jepa.frame import FrameSampler
 from vl_jepa.index import EmbeddingIndex
 from vl_jepa.multimodal_index import (
@@ -28,8 +27,6 @@ __all__ = [
     "VideoMetadata",
     "Frame",
     "FrameSampler",
-    "VisualEncoder",
-    "ModelLoadError",
     "EventDetector",
     "Storage",
     "TextEncoder",

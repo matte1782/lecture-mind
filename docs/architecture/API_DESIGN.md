@@ -316,8 +316,8 @@ class Match:
 #### 2.3.1 Visual Encoder
 
 ```python
-class VisualEncoder(Protocol):
-    """Protocol for visual encoders."""
+class VisualEncoderProtocol(Protocol):
+    """Protocol for visual encoders (from vl_jepa.encoders.base)."""
 
     @property
     def embed_dim(self) -> int:
@@ -340,8 +340,8 @@ class VisualEncoder(Protocol):
         ...
 
 
-class VJEPAEncoder:
-    """V-JEPA visual encoder implementation."""
+class DINOv2Encoder:
+    """DINOv2 visual encoder implementation (from vl_jepa.encoders.dino)."""
 
     def __init__(
         self,
@@ -693,7 +693,7 @@ if TYPE_CHECKING:
 | Component | Thread Safe | Notes |
 |:----------|:------------|:------|
 | LectureSummarizer | No | Create per-thread instances |
-| VisualEncoder | Yes | Stateless after init |
+| DINOv2Encoder / PlaceholderVisualEncoder | Yes | Stateless after init |
 | TextEncoder | Yes | Stateless after init |
 | EventDetector | No | Maintains state |
 | EmbeddingIndex | Read: Yes, Write: No | Lock for concurrent writes |
